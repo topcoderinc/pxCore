@@ -1042,9 +1042,11 @@ public:
 
     // Hack to try and reduce leaks until garbage collection can
     // be cleaned up
-    
-    if (mScene)
-      mScene.send("dispose");
+
+    // TODO: remove these two lines
+    // gladish
+    // if (mScene)
+    //   mScene.send("dispose");
   }
 
   virtual unsigned long AddRef() 

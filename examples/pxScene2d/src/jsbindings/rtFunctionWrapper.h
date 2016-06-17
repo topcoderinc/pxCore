@@ -59,6 +59,8 @@ public:
   }
 
   void signal(rtValue const& returnValue);
+  void clearPersistentHandle();
+  static void clearAllPersistentHandles(uint32_t contextId);
 
 private:
   virtual rtError Send(int numArgs, const rtValue* args, rtValue* result);
@@ -96,6 +98,7 @@ private:
 #endif
 
   rtValue mReturnValue;
+  uint32_t mCreationContextId;
 };
 
 class rtResolverFunction : public rtAbstractFunction

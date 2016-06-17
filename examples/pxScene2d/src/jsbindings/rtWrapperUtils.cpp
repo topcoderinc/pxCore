@@ -84,7 +84,7 @@ void weakCallback_rt2v8(const WeakCallbackData<Object, rtIObject>& data)
     // before inserting it into the objectMap_rt2v8 map.
     // assert(p->IsWeak());
     //
-    j->second->PersistentObject.ClearWeak();
+    // j->second->PersistentObject.ClearWeak();
     j->second->PersistentObject.Reset();
 #if 0
     if (!p->IsWeak())
@@ -111,8 +111,8 @@ void weakCallback_rt2v8(const WeakCallbackData<Object, rtIObject>& data)
 void
 HandleMap::clearAllForContext(uint32_t contextId)
 {
-  // JRJR Bail for now a bit crashy
-  return;
+  jsFunctionWrapper::clearAllPersistentHandles(contextId);
+  jsObjectWrapper::clearAllPersistentHandles(contextId);
 
   typedef ObjectReferenceMap::iterator iterator;
 

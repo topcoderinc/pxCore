@@ -6,6 +6,15 @@
 
 static const char* kClassName = "Function";
 static Persistent<Function> ctor;
+static ObjectMap<jsFunctionWrapper> sObjectMap;
+
+void
+jsFunctionWrapper::clearAllPersistentHandles(uint32_t contextId)
+{
+  rtLogInfo("clearing all persistent handles for: %u", contextId);
+  int n = sObjectMap.clearAllForContext(contextId);
+  rtLogInfo("cleared %d persistent handles for: %u", n, contextId);
+}
 
 static void jsFunctionCompletionHandler(void* argp, rtValue const& result)
 {
@@ -247,14 +256,17 @@ jsFunctionWrapper::jsFunctionWrapper(Local<Context>& ctx, const Handle<Value>& v
   , mComplete(false)
   , mTeardownThreadingPrimitives(false)
 {
+  mCreationContextId = GetContextId(ctx);
   mIsolate = ctx->GetIsolate();
   mContext.Reset(ctx->GetIsolate(), ctx);
+  sObjectMap.add(mCreationContextId, this);
   assert(val->IsFunction());
 }
 
 jsFunctionWrapper::~jsFunctionWrapper()
 {
-  mFunction.Reset();
+  sObjectMap.remove(this);
+  clearPersistentHandle();
   mContext.Reset();
 
   if (mTeardownThreadingPrimitives)
@@ -353,6 +365,14 @@ rtError jsFunctionWrapper::Send(int numArgs, const rtValue* args, rtValue* resul
   //
 
   Locker locker(mIsolate);
+
+  rtLogInfo("%p isEmpty():%d", this, mContext.IsEmpty());
+  if (mContext.IsEmpty())
+    return RT_OBJECT_NO_LONGER_AVAILABLE;
+
+  if (mFunction.IsEmpty())
+    return RT_OBJECT_NO_LONGER_AVAILABLE;
+
   HandleScope handleScope(mIsolate);
   Local<Context> ctx = PersistentToLocal(mIsolate, mContext);
   Context::Scope contextScope(ctx);
@@ -398,3 +418,11 @@ Local<Function> jsFunctionWrapper::FunctionLookup::lookup(v8::Local<v8::Context>
   return handleScope.Escape(func);
 }
 
+void jsFunctionWrapper::clearPersistentHandle()
+{
+  rtLogInfo("clear: %p", this);
+  mFunction.Reset();
+  mContext.Reset();
+  assert(mFunction.IsEmpty());
+  assert(mContext.IsEmpty());
+}

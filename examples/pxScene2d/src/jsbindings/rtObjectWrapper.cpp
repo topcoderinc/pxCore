@@ -9,8 +9,17 @@ using namespace v8;
 static const char* kClassName   = "rtObject";
 static const char* kFuncAllKeys = "allKeys";
 static const char* kPropLength = "length";
+static ObjectMap<jsObjectWrapper> sObjectMap;
 
 const char* jsObjectWrapper::kIsJavaScriptObjectWrapper = "8907a0a6-ef86-4c3d-aea1-c40c0aa2f6f0";
+
+void
+jsObjectWrapper::clearAllPersistentHandles(uint32_t contextId)
+{
+  rtLogInfo("clearing all persistent handles for: %u", contextId);
+  int n = sObjectMap.clearAllForContext(contextId);
+  rtLogInfo("cleared %d persistent handles for: %u", n, contextId);
+}
 
 bool jsObjectWrapper::isJavaScriptObjectWrapper(const rtObjectRef& obj)
 {
@@ -288,11 +297,18 @@ jsObjectWrapper::jsObjectWrapper(Isolate* isolate, const Handle<Value>& obj, boo
   , mIsolate(isolate)
   , mIsArray(isArray)
 {
+  HandleScope scope(isolate);
+  Handle<Object> h = Handle<Object>::Cast(obj);
+  Local<Context> ctx = h->CreationContext();
+  mCreationContextId = GetContextId(ctx);
+
+  sObjectMap.add(mCreationContextId, this);
 }
 
 jsObjectWrapper::~jsObjectWrapper()
 {
-  mObject.Reset();
+  sObjectMap.remove(this);
+  clearPersistentHandle();
 }
 
 unsigned long jsObjectWrapper::AddRef()
@@ -450,3 +466,7 @@ Local<Object> jsObjectWrapper::getWrappedObject()
   return scope.Escape(PersistentToLocal(mIsolate, mObject));
 }
 
+void jsObjectWrapper::clearPersistentHandle()
+{
+  mObject.Reset();
+}

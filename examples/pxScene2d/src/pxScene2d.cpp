@@ -2125,6 +2125,7 @@ rtNode script;
 
 pxScriptView::pxScriptView(const char* url, const char* /*lang*/): mViewContainer(NULL), mRefCount(0)
   {
+    rtLogInfo("creating pxScriptView");
     mCtx = script.createContext();
     if (mCtx)
     {
@@ -2148,6 +2149,7 @@ rtError pxScriptView::getScene(int numArgs, const rtValue* args, rtValue* result
     if (numArgs == 1)
     {
       rtString sceneType = args[0].toString();
+      rtLogInfo("@@@@@@@@@@  In getScene %s", sceneType.cString());
       // JR Todo can specify what scene version/type to create in args
       if (!v->mScene)
       {

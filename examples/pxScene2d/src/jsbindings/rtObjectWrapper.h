@@ -63,6 +63,9 @@ public:
   virtual rtError Set(const char* name, const rtValue* value);
   virtual rtError Set(uint32_t i, const rtValue* value);
 
+  void clearPersistentHandle();
+  static void clearAllPersistentHandles(uint32_t contextId);
+
   Local<Object> getWrappedObject();
 
 private:
@@ -73,6 +76,7 @@ private:
   Persistent<Object> mObject;
   Isolate* mIsolate;
   bool mIsArray;
+  uint32_t mCreationContextId;
 };
 
 

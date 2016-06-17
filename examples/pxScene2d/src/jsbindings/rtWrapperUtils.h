@@ -218,5 +218,88 @@ private:
   bool m_hadLock;
 };
 
+template< class T>
+class ObjectMap
+{
+private:
+
+public:
+  ObjectMap()
+  {
+    pthread_mutex_init(&mMutex, NULL);
+  }
+
+  ~ObjectMap()
+  {
+    pthread_mutex_lock(&mMutex);
+    pthread_mutex_unlock(&mMutex);
+  }
+
+  bool add(uint32_t contextId, T* item)
+  {
+    bool inserted = false;
+    pthread_mutex_lock(&mMutex);
+    Iterator itr = mMap.find(item);
+    if (itr == mMap.end())
+    {
+      mMap.insert(ValueType(item, contextId));
+      inserted = true;
+    }
+    pthread_mutex_unlock(&mMutex);
+    return inserted;
+  }
+
+  bool remove(T* item)
+  {
+    bool removed = false;
+    pthread_mutex_lock(&mMutex);
+    Iterator itr = mMap.find(item);
+    if (itr != mMap.end())
+    {
+      reset(itr->first);
+      mMap.erase(itr);
+      removed = true;
+    }
+    pthread_mutex_unlock(&mMutex);
+    return removed;
+  }
+
+  int clearAllForContext(uint32_t contextId)
+  {
+    int n = 0;
+    pthread_mutex_lock(&mMutex);
+    for (Iterator begin = mMap.begin(), end = mMap.end(); begin != end;)
+    {
+      if (begin->second == contextId)
+      {
+        reset(begin->first);
+        mMap.erase(begin++);
+        n++;
+      }
+      else
+      {
+        ++begin;
+      }
+    }
+    pthread_mutex_unlock(&mMutex);
+    return n;
+  }
+
+private:
+  void reset(T* obj)
+  {
+    if (obj)
+      obj->clearPersistentHandle();
+  }
+
+private:
+  typedef std::map< T*, uint32_t > Map;
+  typedef typename std::map< T*, uint32_t >::iterator Iterator;
+  typedef typename std::map< T*, uint32_t >::value_type ValueType;
+
+  pthread_mutex_t mMutex;
+  Map mMap;
+};
+
 #endif
 

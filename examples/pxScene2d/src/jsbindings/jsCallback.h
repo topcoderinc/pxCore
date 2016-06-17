@@ -3,6 +3,7 @@
 
 #include "node_headers.h"
 #include <rtValue.h>
+#include <string>
 #include <vector>
 
 using namespace v8;
@@ -51,6 +52,8 @@ private:
   void* mCompletionContext;
 
   jsCallback(v8::Local<v8::Context>& ctx);
+
+  std::string mName;
 };
 
 #endif

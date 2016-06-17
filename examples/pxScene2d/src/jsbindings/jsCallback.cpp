@@ -54,6 +54,20 @@ Handle<Value>* jsCallback::makeArgs(Local<Context>& ctx)
 jsCallback* jsCallback::setFunctionLookup(jsIFunctionLookup* functionLookup)
 {
   mFunctionLookup = functionLookup;
+
+  Locker locker(mIsolate);
+  Isolate::Scope isolateScope(mIsolate);
+  HandleScope scope(mIsolate);
+
+  Local<Context> ctx = PersistentToLocal(mIsolate, mContext);
+  Local<Function> func = functionLookup->lookup(ctx);
+  if (!func.IsEmpty())
+  {
+    Local<String> s = func->ToString();
+    String::Utf8Value value(s);
+    mName = *value;
+  }
+
   return this;
 }
 
@@ -80,8 +94,10 @@ rtValue jsCallback::run()
   Handle<Value>* args = this->makeArgs(ctx);
   Local<Function> func = this->mFunctionLookup->lookup(ctx);
 
-  assert(!func.IsEmpty());
-  assert(!func->IsUndefined());
+  if (func.IsEmpty())
+  {
+    rtLogDebug("running: %s", mName.c_str());
+  }
 
   // This is really nice debugging
   #if 0

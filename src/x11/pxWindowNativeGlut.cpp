@@ -408,7 +408,7 @@ void pxWindow::setVisibility(bool visible)
   }
 }
 
-pxError pxWindow::setAnimationFPS(long fps)
+pxError pxWindow::setAnimationFPS(uint32_t fps)
 {
   mTimerFPS = fps;
   mLastAnimationTime = pxMilliseconds();
@@ -416,7 +416,7 @@ pxError pxWindow::setAnimationFPS(long fps)
   return PX_OK;
 }
 
-void pxWindow::setTitle(char* title)
+void pxWindow::setTitle(const char* title)
 {
   glutSetWindowTitle(title);
 }
