@@ -11,6 +11,7 @@
 #include "rtRemoteConfig.h"
 #include "rtRemoteFactory.h"
 
+#include <limits>
 #include <sstream>
 #include <set>
 #include <algorithm>
@@ -176,7 +177,7 @@ namespace
 rtRemoteServer::rtRemoteServer(rtRemoteEnvironment* env)
   : m_listen_fd(-1)
   , m_resolver(nullptr)
-  , m_keep_alive_interval(15)
+  , m_keep_alive_interval(std::numeric_limits<uint32_t>::max())
   , m_env(env)
 {
   memset(&m_rpc_endpoint, 0, sizeof(m_rpc_endpoint));

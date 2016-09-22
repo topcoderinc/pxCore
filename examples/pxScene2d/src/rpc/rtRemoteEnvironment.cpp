@@ -29,11 +29,17 @@ rtRemoteEnvironment::~rtRemoteEnvironment()
 void
 rtRemoteEnvironment::start()
 {
+  static int const kNumWorkers = 4;
+
   m_running = true;
   if (Config->server_use_dispatch_thread())
   {
     rtLogInfo("starting worker thread");
-    m_worker.reset(new std::thread(&rtRemoteEnvironment::processRunQueue, this));
+    for (int i = 0; i < kNumWorkers; ++i)
+    {
+      thread_ptr p(new std::thread(&rtRemoteEnvironment::processRunQueue, this));
+      m_workers.push_back(std::move(p));
+    }
   }
 }
 
@@ -105,14 +111,13 @@ rtRemoteEnvironment::removeResponseHandler(rtRemoteCorrelationKey k)
 void
 rtRemoteEnvironment::shutdown()
 {
-  if (m_worker)
-  {
-    std::unique_lock<std::mutex> lock(m_queue_mutex);
-    m_running = false;
-    lock.unlock();
-    m_queue_cond.notify_all();
-    m_worker->join();
-  }
+  std::unique_lock<std::mutex> lock(m_queue_mutex);
+  m_running = false;
+  lock.unlock();
+  m_queue_cond.notify_all();
+
+  for (auto& t : m_workers)
+    t->join();
 
   if (Server)
   {

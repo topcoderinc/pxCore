@@ -68,10 +68,12 @@ private:
     return (itr != m_waiters.end()) && (itr->second == ResponseState::Dispatched);
   }
 
+  using thread_ptr = std::unique_ptr<std::thread>;
+
   mutable std::mutex            m_queue_mutex;
   std::condition_variable       m_queue_cond;
   std::queue<WorkItem>          m_queue;
-  std::unique_ptr<std::thread>  m_worker;
+  std::vector< thread_ptr >     m_workers;
   bool                          m_running;
   ResponseHandlerMap            m_response_handlers;
   ResponseMap                   m_waiters;
