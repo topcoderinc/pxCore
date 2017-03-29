@@ -1,4 +1,21 @@
-// rtCore CopyRight 2005-2015 John Robinson
+/*
+
+ rtCore Copyright 2005-2017 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // rtObject.cpp
 
 #include "rtObject.h"
@@ -121,7 +138,7 @@ rtError rtEmit::Send(int numArgs, const rtValue* args, rtValue* result)
           rtLogInfo("failed to send. %s", rtStrError(err));
 
         // EPIPE means it's disconnected
-        if (err == rtErrorFromErrno(EPIPE))
+        if (err == rtErrorFromErrno(EPIPE) || err == RT_ERROR_STREAM_CLOSED)
         {
           rtLogInfo("removing entry from remote client");
           it = mEntries.erase(it);
@@ -163,7 +180,7 @@ rtError rtArrayObject::Get(const char* name, rtValue* value) const
     return RT_FAIL;
   if (!strcmp(name, "length"))
   {
-    value->setUInt32(mElements.size());
+    value->setUInt32((uint32_t)mElements.size());
     return RT_OK;
   }
   else
@@ -377,6 +394,11 @@ rtError rtObject::Set(const char* name, const rtValue* value)
           rtSetPropertyThunk t = e->mSetThunk;
           hr = (*this.*t)(*value);
         }
+        else
+        {
+          hr = RT_FAIL;
+          rtLogError("setter for %s is missing thunk.", name);
+        }
         return hr;
       }
       e = e->mNext;
@@ -385,7 +407,7 @@ rtError rtObject::Set(const char* name, const rtValue* value)
     m = m->parentsMap;
   }
   
-  return RT_OK;
+  return hr;
 }
 
 // rtObjectBase

@@ -70,6 +70,10 @@ function reload(u) {
   else
     url.text = u;
 
+  // Remove Leading/Trailing whitespace...
+  u.trim();
+  url.text.trim();
+  
   console.log("RELOADING.... [ " + u + " ]");
 
   if (u.indexOf("local:") == 0) // LOCAL shorthand
@@ -462,6 +466,8 @@ scene.root.on("onPreKeyDown", function(e) {
     //scene.setFocus(inputBg);
     inputBg.focus = true;
     url.text = "";
+    // TODO cursor_pos handling a bit weak overall
+    cursor_pos = 0;    
     prompt.a = (url.text)?0:1;
     cursor.x = 10;
     e.stopPropagation();

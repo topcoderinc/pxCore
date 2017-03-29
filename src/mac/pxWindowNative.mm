@@ -5,8 +5,8 @@
 #include <iostream>
 
 #include "pxWindow.h"
-#include "pxKeycodes.h"
 #include "pxWindowNative.h"
+#include "pxKeycodes.h"
 #include "../pxWindowUtil.h"
 
 #import <Cocoa/Cocoa.h>
@@ -28,7 +28,7 @@
 
 #endif
 
-#include <CoreFoundation/CoreFoundation.h>
+#include "CoreFoundation/CoreFoundation.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -123,12 +123,14 @@
 
 @end
 
+#ifdef GLGL
+NSOpenGLContext *openGLContext;
+#endif //GLGL
 
 @interface MyView()
 {
 #ifdef GLGL
   NSOpenGLPixelFormat *pixelFormat;
-  NSOpenGLContext *openGLContext;
   
   GLint virtualScreen;
   BOOL enableMultisample;

@@ -1,4 +1,21 @@
-// pxCore Copyright 2007-2015 John Robinson
+/*
+
+ pxCore Copyright 2005-2017 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // pxScene2d.cpp
 
 #include "pxScene2d.h"
@@ -93,7 +110,7 @@ void stopProfiling()
   CALLGRIND_STOP_INSTRUMENTATION;
 }
 #endif //ENABLE_VALGRIND
-
+int pxObjectCount = 0;
 static char encoding_table[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
                                 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
                                 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
@@ -255,6 +272,44 @@ private:
 
 
 // pxObject methods
+pxObject::pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my(0), ma(1.0), mr(0),
+#ifdef ANIMATION_ROTATE_XYZ
+    mrx(0), mry(0), mrz(1.0),
+#endif //ANIMATION_ROTATE_XYZ
+    msx(1), msy(1), mw(0), mh(0),
+    mInteractive(true),
+    mSnapshotRef(), mPainting(true), mClip(false), mMask(false), mDraw(true), mHitTest(true), mReady(),
+    mFocus(false),mClipSnapshotRef(),mCancelInSet(true),mUseMatrix(false), mRepaint(true)
+#ifdef PX_DIRTY_RECTANGLES
+    , mIsDirty(false), mLastRenderMatrix(), mScreenCoordinates()
+#endif //PX_DIRTY_RECTANGLES
+    ,mDrawableSnapshotForMask(), mMaskSnapshot()
+  {
+    pxObjectCount++;
+    mScene = scene;
+    mReady = new rtPromise;
+    mEmit = new rtEmit;
+  }
+
+pxObject::~pxObject()
+{
+//    rtString d;
+    // TODO... why is this bad
+//    sendReturns<rtString>("description",d);
+    //rtLogDebug("**************** pxObject destroyed: %s\n",getMap()->className);
+    pxObjectCount--;
+    rtValue nullValue;
+    mReady.send("reject",nullValue);
+    deleteSnapshot(mSnapshotRef);
+    deleteSnapshot(mClipSnapshotRef);
+    deleteSnapshot(mDrawableSnapshotForMask);
+    deleteSnapshot(mMaskSnapshot);
+    mSnapshotRef = NULL;
+    mClipSnapshotRef = NULL;
+    mDrawableSnapshotForMask = NULL;
+    mMaskSnapshot = NULL;
+}
+
 void pxObject::sendPromise()
 {
   if(mInitialized && !((rtPromise*)mReady.getPtr())->status())
@@ -480,19 +535,14 @@ void pxObject::cancelAnimation(const char* prop, bool fastforward, bool rewind, 
       // If not, send it now.
       if( a.count != pxConstantsAnimation::COUNT_FOREVER)
       {
-        #if 0
         if (a.ended)
           a.ended.send(this);
-          #endif
         if (a.promise)
         {
           if( resolve)
             a.promise.send("resolve",this);
-            // TODO review this with Connie... this causes a hidden js exception not sure why interop issue... and should we really reject here... it likely is "user cancelled"
-        #if 0
           else
             a.promise.send("reject",this);
-        #endif
         }
       }
 #if 0
@@ -515,7 +565,7 @@ void pxObject::animateToInternal(const char* prop, double to, double duration,
                          pxInterp interp, pxConstantsAnimation::animationOptions at,
                          int32_t count, rtObjectRef promise)
 {
-  cancelAnimation(prop,(at & pxConstantsAnimation::OPTION_FASTFORWARD), (at & pxConstantsAnimation::OPTION_REWIND));
+  cancelAnimation(prop,(at & pxConstantsAnimation::OPTION_FASTFORWARD), (at & pxConstantsAnimation::OPTION_REWIND), true);
 
   // schedule animation
   animation a;
@@ -539,10 +589,8 @@ void pxObject::animateToInternal(const char* prop, double to, double duration,
   // resolve promise immediately if this is COUNT_FOREVER
   if( count == pxConstantsAnimation::COUNT_FOREVER)
   {
-    #if 0
     if (a.ended)
       a.ended.send(this);
-    #endif
     if (a.promise)
       a.promise.send("resolve",this);
   }
@@ -586,10 +634,8 @@ void pxObject::update(double t)
 
       if (a.count != pxConstantsAnimation::COUNT_FOREVER && a.actualCount >= a.count )
       {
-    #if 0
         if (a.ended)
           a.ended.send(this);
-    #endif
         if (a.promise)
           a.promise.send("resolve",this);
 
@@ -1035,13 +1081,17 @@ bool pxObject::hitTest(pxPoint2f& pt)
 }
 
 
-void pxObject::createSnapshot(pxContextFramebufferRef& fbo)
+void pxObject::createSnapshot(pxContextFramebufferRef& fbo, bool separateContext)
 {
   pxMatrix4f m;
 
 //  float parentAlpha = ma;
 
   float parentAlpha = 1.0;
+  if (separateContext)
+  {
+    context.enableInternalContext(true);
+  }
 
   context.setMatrix(m);
   context.setAlpha(parentAlpha);
@@ -1075,6 +1125,10 @@ void pxObject::createSnapshot(pxContextFramebufferRef& fbo)
     }
   }
   context.setFramebuffer(previousRenderSurface);
+  if (separateContext)
+  {
+    context.enableInternalContext(false);
+  }
 }
 
 void pxObject::createSnapshotOfChildren()
@@ -1437,6 +1491,15 @@ rtError pxScene2d::createScene(rtObjectRef p, rtObjectRef& o)
   return RT_OK;
 }
 
+rtError pxScene2d::logDebugMetrics()
+{
+  script.garbageCollect();
+  rtLogInfo("pxobjectcount is [%d]",pxObjectCount);
+  rtLogInfo("texture memory usage is [%ld]",context.currentTextureMemoryUsageInBytes());
+  return RT_OK;
+}
+
+
 rtError pxScene2d::clock(uint64_t & time)
 {
   time = (uint64_t)pxMilliseconds();
@@ -1463,7 +1526,7 @@ rtError pxScene2d::createWayland(rtObjectRef p, rtObjectRef& o)
   return RT_FAIL;
 #else
   rtRef<pxWaylandContainer> c = new pxWaylandContainer(this);
-  c->setView(new pxWayland);
+  c->setView(new pxWayland(true));
   o = c.getPtr();
   o.set(p);
   o.send("init");
@@ -2276,6 +2339,7 @@ rtDefineProperty(pxScene2d, showOutlines);
 rtDefineProperty(pxScene2d, showDirtyRect);
 rtDefineMethod(pxScene2d, create);
 rtDefineMethod(pxScene2d, clock);
+rtDefineMethod(pxScene2d, logDebugMetrics);
 //rtDefineMethod(pxScene2d, createWayland);
 rtDefineMethod(pxScene2d, addListener);
 rtDefineMethod(pxScene2d, delListener);
@@ -2403,9 +2467,9 @@ rtDefineProperty(pxSceneContainer, ready);
 rtError pxSceneContainer::setUrl(rtString url)
 {
   rtLogDebug("pxSceneContainer::setUrl(%s)",url.cString());
-  // If old promise is still unfulfilled reject it
+  // If old promise is still unfulfilled resolve it
   // and create a new promise for the context of this Url
-  mReady.send("reject", this);
+  mReady.send("resolve", this);
   mReady = new rtPromise( std::string("pxSceneContainer >> ") + std::string(url) );
 
   mUrl = url;
