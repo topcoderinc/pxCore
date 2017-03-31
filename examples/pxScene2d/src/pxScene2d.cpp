@@ -35,6 +35,7 @@
 #include "pxTimer.h"
 #include "pxWindowUtil.h"
 
+#include "pxGraphic.h"
 #include "pxRectangle.h"
 #include "pxFont.h"
 #include "pxText.h"
@@ -1371,6 +1372,8 @@ rtError pxScene2d::create(rtObjectRef p, rtObjectRef& o)
     e = createText(p,o);
   else if (!strcmp("textBox",t.cString()))
     e = createTextBox(p,o);
+  else if (!strcmp("graphic",t.cString()))
+    e = createGraphic(p,o);
   else if (!strcmp("image",t.cString()))
     e = createImage(p,o);
   else if (!strcmp("image9",t.cString()))
@@ -1443,7 +1446,12 @@ rtError pxScene2d::createTextBox(rtObjectRef p, rtObjectRef& o)
   o.send("init");
   return RT_OK;
 }
-
+rtError pxScene2d::createGraphic(rtObjectRef p, rtObjectRef &o) {
+  o = new pxGraphic(this);
+  o.set(p);
+  o.send("init");
+  return RT_OK;
+}
 rtError pxScene2d::createImage(rtObjectRef p, rtObjectRef& o)
 {
   o = new pxImage(this);
@@ -2395,7 +2403,7 @@ void RT_STDCALL testView::onDraw()
   float black[] = {0,0,0,1};
   float red[]= {1,0,0,1};
   float green[] = {0,1,0,1};
-  context.drawRect(mw, mh, 1, mEntered?green:red, white);
+  context.drawRect(mw, mh, 1, mEntered?green:red, white,0);
   context.drawDiagLine(0,mMouseY,mw,mMouseY,black);
   context.drawDiagLine(mMouseX,0,mMouseX,mh,black);
 }

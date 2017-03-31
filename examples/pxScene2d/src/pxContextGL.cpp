@@ -106,8 +106,14 @@ extern uv_async_t gcTrigger;
 extern pxContext context;
 rtThreadQueue gUIThreadQueue;
 
-enum pxCurrentGLProgram { PROGRAM_UNKNOWN = 0, PROGRAM_SOLID_SHADER,  PROGRAM_A_TEXTURE_SHADER, PROGRAM_TEXTURE_SHADER,
-    PROGRAM_TEXTURE_MASKED_SHADER};
+enum pxCurrentGLProgram { 
+  PROGRAM_UNKNOWN = 0,
+  PROGRAM_SOLID_SHADER,
+  PROGRAM_A_TEXTURE_SHADER,
+  PROGRAM_A_LABEL_OUTLINE_SHADER,
+  PROGRAM_TEXTURE_BLUR_SHADER,
+  PROGRAM_TEXTURE_SHADER,
+  PROGRAM_TEXTURE_MASKED_SHADER};
 
 pxCurrentGLProgram currentGLProgram = PROGRAM_UNKNOWN;
 
@@ -170,11 +176,140 @@ static const char *fATextureShaderText =
   "uniform float u_alpha;"
   "uniform vec4 a_color;"
   "varying vec2 v_uv;"
+  "uniform vec2 u_resolution;"
+  "uniform vec4 u_dirColor;"
+  "uniform float blurRadius;"
   "void main()"
   "{"
-  "  float a = u_alpha * texture2D(s_texture, v_uv).a;"
-  "  gl_FragColor = a_color*a;"
+    "  vec4 col;"
+    "  float lp = v_uv.y;"
+    "  col = u_dirColor * (1.0-lp) + a_color*lp;"
+    "  float a = u_alpha *  texture2D(s_texture, v_uv).a;"
+  "  gl_FragColor = col*a;"
   "}";
+
+
+// assume premultiplied
+static const char *fTextOutlineShaderText =
+#if defined(PX_PLATFORM_WAYLAND_EGL) || defined(PX_PLATFORM_GENERIC_EGL)
+  "precision mediump float;"
+#endif
+
+  "uniform sampler2D s_texture;"
+  "varying vec2 v_uv;"
+  "uniform float u_alpha;"
+  "uniform vec4 u_effectColor;"
+  "uniform vec4 a_color;"
+  "uniform vec4 u_dirColor;"
+  "vec4 posColor(vec2 uv)"
+  "{"
+  "  vec4 col;"
+  "  float lp = uv.y;"
+  "  col = u_dirColor * (1.0-lp) + a_color*lp;"
+  "  vec4 sample = texture2D(s_texture, uv);"
+  "  float fontAlpha = sample.a;"
+  "  float outlineAlpha = sample.r; "
+  "  if ((fontAlpha + outlineAlpha) > 0.0){"
+  "      vec4 color =  col * fontAlpha + u_effectColor * (1.0 - fontAlpha);"
+  "      return vec4( color.rgb,color.a*u_alpha);"
+   // "      return vec4( color.rgb,max(fontAlpha,outlineAlpha)*color.a*u_alpha);"
+  // "      return vec4( color.rgb,max(fontAlpha,outlineAlpha)*u_alpha);"
+  "  }"
+  "  else {"
+  "      return vec4(0.0,0.0,0.0,0.0);"
+  "  }"
+  "}"
+  "void main()"
+  "{"
+  "  gl_FragColor =  posColor(v_uv);"
+  "}";
+
+// assume premultiplied
+static const char *fTextureBlurShaderText =
+#if defined(PX_PLATFORM_WAYLAND_EGL) || defined(PX_PLATFORM_GENERIC_EGL)
+  "precision mediump float;"
+#endif
+  "uniform sampler2D s_texture;"
+  "uniform float u_alpha;"
+  "uniform vec4 a_color;"
+  "varying vec2 v_uv;"
+  "uniform vec2 u_resolution;"
+  "uniform float u_blurRadius;"
+  "vec4 blur(vec2 p)"
+  "{"
+    "vec4 col = vec4(0);"
+    "vec2 unit = 1.0 / u_resolution.xy;"
+    "float count = 0.0;"
+    "float r = u_blurRadius;"
+    "for(float x = -r; x <= r; x += 1.0)"
+    "{"
+      "for(float y = -r; y <= r; y += 1.0)"
+      "{"
+          "float weight = (r- abs(x)) * (r- abs(y));"
+          "col += texture2D(s_texture, p + vec2(x * unit.x, y * unit.y)) * weight;"
+          "count += weight;"
+      "}"
+    "}"
+    "return col / count;"
+  "}"
+  "void main()"
+  "{"
+    "  float a = u_alpha *  blur(v_uv).a;"
+    // "  gl_FragColor = vec4(a_color.rgb, a_color.a*a);"
+    "  gl_FragColor = vec4(a_color.rgb, a);"
+  "}";
+
+
+// assume premultiplied
+static const char *fTextureBlurForOutlineShaderText =
+#if defined(PX_PLATFORM_WAYLAND_EGL) || defined(PX_PLATFORM_GENERIC_EGL)
+  "precision mediump float;"
+#endif
+
+  "uniform sampler2D s_texture;"
+  "varying vec2 v_uv;"
+  "uniform float u_alpha;"
+  "uniform vec4 a_color;"  
+  "uniform vec2 u_resolution;"
+  "uniform float u_blurRadius;"
+  "vec4 posColor(vec2 uv)"
+  "{"
+  "  vec4 sample = texture2D(s_texture, uv);"
+  "  float fontAlpha = sample.a;"
+  "  float outlineAlpha = sample.r; "
+  "  if ((fontAlpha + outlineAlpha) > 0.0){"
+  "      float a = max(fontAlpha,outlineAlpha);"
+  "      return vec4( a_color.rgb, a);"
+  // "      return vec4( a_color.rgb, a_color.a*a);"
+  "  }"
+  "  else {"
+  "      return vec4(0.0,0.0,0.0,0.0);"
+  "  }"
+  "}"
+  "vec4 blur(vec2 p)"
+  "{"
+    "vec4 col = vec4(0);"
+    "vec2 unit = 1.0 / u_resolution.xy;"
+    "float count = 0.0;"
+    "float r = u_blurRadius;"
+    "for(float x = -r; x <= r; x += 1.0)"
+    "{"
+      "for(float y = -r; y <= r; y += 1.0)"
+      "{"
+          "float weight = (r- abs(x)) * (r- abs(y));"
+          "col += posColor(p + vec2(x * unit.x, y * unit.y)) * weight;"
+          "count += weight;"
+      "}"
+    "}"
+    "return col / count;"
+  "}"
+  "void main()"
+  "{"
+    "  float a = u_alpha *  blur(v_uv).a;"
+    "  gl_FragColor = vec4(a_color.rgb, a);"
+    // "  gl_FragColor = vec4(a_color.rgb, a_color.a*a);"
+  "}";
+
 
 static const char *vShaderText =
   "uniform vec2 u_resolution;"
@@ -195,6 +330,39 @@ static const char *vShaderText =
   "}";
 
 
+
+//================================== vec2 math ==================================================================================================================================================
+
+static inline Vec2 v2f(float x, float y) {
+  Vec2 ret(x, y);
+  return ret;
+}
+
+static inline Vec2 v2fadd(const Vec2 &v0, const Vec2 &v1) {
+  return v2f(v0.x + v1.x, v0.y + v1.y);
+}
+
+static inline Vec2 v2fsub(const Vec2 &v0, const Vec2 &v1) {
+  return v2f(v0.x - v1.x, v0.y - v1.y);
+}
+
+static inline Vec2 v2fmult(const Vec2 &v, float s) {
+  return v2f(v.x * s, v.y * s);
+}
+
+static inline Vec2 v2fperp(const Vec2 &p0) {
+  return v2f(-p0.y, p0.x);
+}
+
+static inline float v2fdot(const Vec2 &p0, const Vec2 &p1) {
+  return p0.x * p1.x + p0.y * p1.y;
+}
+
+static inline Vec2 v2fnormalize(const Vec2 &p) {
+  Vec2 r(p.x, p.y);
+  r.normalize();
+  return v2f(r.x, r.y);
+}
 //====================================================================================================================================================================================
 
 inline void premultiply(float* d, const float* s)
@@ -720,7 +888,7 @@ public:
                    GL_UNSIGNED_BYTE, mOffscreen.base());
       mTextureUploaded = true;
       context.adjustCurrentTextureMemorySize(mOffscreen.width()*mOffscreen.height()*4);
-      
+
       //free up unneeded offscreen memory
       freeOffscreenDataInBackground();
     }
@@ -770,7 +938,7 @@ private:
   }
 
   pxOffscreen mOffscreen;
-  
+
   bool mInitialized;
   GLuint mTextureName;
   bool mTextureUploaded;
@@ -795,31 +963,54 @@ public:
     mTextureType = PX_TEXTURE_ALPHA;
   }
 
-  pxTextureAlpha(float w, float h, float iw, float ih, void* buffer)
+  pxTextureAlpha(float w, float h, float iw, float ih, void* buffer, pxTextureType type)
     : mDrawWidth(w),    mDrawHeight (h),
       mImageWidth(iw), mImageHeight(ih),
       mTextureId(0), mInitialized(false), mBuffer(NULL)
   {
-    mTextureType = PX_TEXTURE_ALPHA;
+    mTextureType = type;
 
-    // copy the pixels
-    int bitmapSize = ih*iw;
-    mBuffer = malloc(bitmapSize);
-
-    // TODO consider iw,ih as ints rather than floats...
-    int32_t bw = (int32_t)iw;
-    int32_t bh = (int32_t)ih;
-
-    //memcpy(mBuffer, buffer, bitmapSize);
-    // Flip here so that we match FBO layout...
-    for (int32_t i = 0; i < bh; i++)
+    if (mTextureType == PX_TEXTURE_ALPHA_88)
     {
-      uint8_t *s = (uint8_t*)buffer+(bw*i);
-      uint8_t *d = (uint8_t*)mBuffer+(bw*(bh-i-1));
-      uint8_t *de = d+bw;
-      while(d<de)
-        *d++ = *s++;
+      // copy the pixels
+      int bitmapSize = ih*iw*2;
+      mBuffer = malloc(bitmapSize);
+
+      // TODO consider iw,ih as ints rather than floats...
+      int32_t bw = (int32_t)iw;
+      int32_t bh = (int32_t)ih;
+
+      //memcpy(mBuffer, buffer, bitmapSize);
+      // Flip here so that we match FBO layout...
+      for (int32_t i = 0; i < bh; i++)
+      {
+        unsigned short *s = (unsigned short*)buffer+(bw*i);
+        unsigned short *d = (unsigned short*)mBuffer+(bw*(bh-i-1));
+        unsigned short *de = d+bw;
+        while(d<de)
+          *d++ = *s++;
+      }
     }
+    else
+    {
+      int bitmapSize = ih*iw;
+      mBuffer = malloc(bitmapSize);
+      // TODO consider iw,ih as ints rather than floats...
+      int32_t bw = (int32_t)iw;
+      int32_t bh = (int32_t)ih;
+
+      //memcpy(mBuffer, buffer, bitmapSize);
+      // Flip here so that we match FBO layout...
+      for (int32_t i = 0; i < bh; i++)
+      {
+        uint8_t *s = (uint8_t*)buffer+(bw*i);
+        uint8_t *d = (uint8_t*)mBuffer+(bw*(bh-i-1));
+        uint8_t *de = d+bw;
+        while(d<de)
+          *d++ = *s++;
+      }
+    }
+
 
 // TODO Moved this to bindTexture because of more pain from JS thread calls
 //    createTexture(w, h, iw, ih);
@@ -852,26 +1043,51 @@ public:
     mDrawHeight  = h;
     mImageWidth  = iw;
     mImageHeight = ih;
-
 //    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, mTextureId);   TRACK_TEX_CALLS();
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, PX_TEXTURE_MIN_FILTER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, PX_TEXTURE_MAG_FILTER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(
-      GL_TEXTURE_2D,
-      0,
-      GL_ALPHA,
-      iw,
-      ih,
-      0,
-      GL_ALPHA,
-      GL_UNSIGNED_BYTE,
-      mBuffer
-    );
-    context.adjustCurrentTextureMemorySize(iw*ih);
+
+    if (mTextureType == PX_TEXTURE_ALPHA_88)
+    {
+      glBindTexture(GL_TEXTURE_2D, mTextureId);   TRACK_TEX_CALLS();
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, PX_TEXTURE_MIN_FILTER);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, PX_TEXTURE_MAG_FILTER);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+      glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_ALPHA,
+        iw,
+        ih,
+        0,
+        GL_ALPHA,
+        GL_UNSIGNED_SHORT,
+        mBuffer
+      );
+      context.adjustCurrentTextureMemorySize(iw*ih*2);
+    }
+    else
+    {
+      glBindTexture(GL_TEXTURE_2D, mTextureId);   TRACK_TEX_CALLS();
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, PX_TEXTURE_MIN_FILTER);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, PX_TEXTURE_MAG_FILTER);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+      glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_ALPHA,
+        iw,
+        ih,
+        0,
+        GL_ALPHA,
+        GL_UNSIGNED_BYTE,
+        mBuffer
+      );
+      context.adjustCurrentTextureMemorySize(iw*ih);
+    }
+
 
     mInitialized = true;
   }
@@ -1126,7 +1342,9 @@ protected:
     mMatrixLoc = getUniformLocation("amymatrix");
     mColorLoc = getUniformLocation("a_color");
     mAlphaLoc = getUniformLocation("u_alpha");
+    mBlurRadiusLoc = getUniformLocation("blurRadius");
     mTextureLoc = getUniformLocation("s_texture");
+    mDirColorLoc = getUniformLocation("u_dirColor");
   }
 
 public:
@@ -1135,17 +1353,21 @@ public:
             const void* pos,
             const void* uv,
             pxTextureRef texture,
-            const float* color)
+            const float* color, const float* dirColor)
   {
     if (currentGLProgram != PROGRAM_A_TEXTURE_SHADER)
     {
       use();
       currentGLProgram = PROGRAM_A_TEXTURE_SHADER;
     }
+
     glUniform2f(mResolutionLoc, resW, resH);
+    glUniform1f(mBlurRadiusLoc, 10);
+
     glUniformMatrix4fv(mMatrixLoc, 1, GL_FALSE, matrix);
     glUniform1f(mAlphaLoc, alpha);
     glUniform4fv(mColorLoc, 1, color);
+    glUniform4fv(mDirColorLoc, 1, dirColor);
 
     if (texture->bindGLTexture(mTextureLoc) != PX_OK)
     {
@@ -1172,6 +1394,9 @@ private:
 
   GLint mColorLoc;
   GLint mAlphaLoc;
+  GLint mDirColorLoc;
+
+  GLint mBlurRadiusLoc;
 
   GLint mTextureLoc;
 
@@ -1251,6 +1476,158 @@ private:
 }; //CLASS - textureShaderProgram
 
 textureShaderProgram *gTextureShader = NULL;
+//====================================================================================================================================================================================
+
+class textOutlineShaderProgram: public shaderProgram
+{
+protected:
+  virtual void prelink()
+  {
+    mPosLoc = 0;
+    mUVLoc = 1;
+    glBindAttribLocation(mProgram, mPosLoc, "pos");
+    glBindAttribLocation(mProgram, mUVLoc, "uv");
+  }
+
+  virtual void postlink()
+  {
+    mResolutionLoc = getUniformLocation("u_resolution");
+    mMatrixLoc = getUniformLocation("amymatrix");
+    mColorLoc = getUniformLocation("a_color");
+    mAlphaLoc = getUniformLocation("u_alpha");
+    mDirColorLoc = getUniformLocation("u_dirColor");
+    mEffectColor = getUniformLocation("u_effectColor");
+    mTextureLoc = getUniformLocation("s_texture");
+  }
+
+public:
+  pxError draw(int resW, int resH, float* matrix, float alpha,
+            int count,
+            const void* pos,
+            const void* uv,
+            pxTextureRef texture,
+            const float* color, const float* dirColor,
+            const float* outlineColor)
+  {
+    if (currentGLProgram != PROGRAM_A_LABEL_OUTLINE_SHADER)
+    {
+      use();
+      currentGLProgram = PROGRAM_A_LABEL_OUTLINE_SHADER;
+    }
+    glUniform2f(mResolutionLoc, resW, resH);
+    glUniformMatrix4fv(mMatrixLoc, 1, GL_FALSE, matrix);
+    glUniform1f(mAlphaLoc, alpha);
+    glUniform4fv(mColorLoc, 1, color);
+    glUniform4fv(mEffectColor, 1, outlineColor);
+    glUniform4fv(mDirColorLoc, 1, dirColor);
+    if (texture->bindGLTexture(mTextureLoc) != PX_OK)
+    {
+      return PX_FAIL;
+    }
+
+    glVertexAttribPointer(mPosLoc, 2, GL_FLOAT, GL_FALSE, 0, pos);
+    glVertexAttribPointer(mUVLoc, 2, GL_FLOAT, GL_FALSE, 0, uv);
+    glEnableVertexAttribArray(mPosLoc);
+    glEnableVertexAttribArray(mUVLoc);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, count);  TRACK_DRAW_CALLS();
+    glDisableVertexAttribArray(mPosLoc);
+    glDisableVertexAttribArray(mUVLoc);
+
+    return PX_OK;
+  }
+
+private:
+  GLint mResolutionLoc;
+  GLint mMatrixLoc;
+
+  GLint mPosLoc;
+  GLint mUVLoc;
+
+  GLint mColorLoc;
+  GLint mAlphaLoc;
+
+  GLint mEffectColor;
+  GLint mDirColorLoc;
+  GLint mTextureLoc;
+
+}; //CLASS - textureShaderProgram
+
+textOutlineShaderProgram *gTextOutlineShader = NULL;
+//====================================================================================================================================================================================
+
+class textureBlurShaderProgram: public shaderProgram
+{
+protected:
+  virtual void prelink()
+  {
+    mPosLoc = 0;
+    mUVLoc = 1;
+    glBindAttribLocation(mProgram, mPosLoc, "pos");
+    glBindAttribLocation(mProgram, mUVLoc, "uv");
+  }
+
+  virtual void postlink()
+  {
+    mResolutionLoc = getUniformLocation("u_resolution");
+    mMatrixLoc = getUniformLocation("amymatrix");
+    mColorLoc = getUniformLocation("a_color");
+    mAlphaLoc = getUniformLocation("u_alpha");
+    mBlurRadiusLoc = getUniformLocation("u_blurRadius");
+    mTextureLoc = getUniformLocation("s_texture");
+  }
+
+public:
+  pxError draw(int resW, int resH, float* matrix, float alpha,
+            int count,
+            const void* pos,
+            const void* uv,
+            pxTextureRef texture,
+            const float blur, const float* color)
+  {
+    if (currentGLProgram != PROGRAM_TEXTURE_BLUR_SHADER)
+    {
+      use();
+      currentGLProgram = PROGRAM_TEXTURE_BLUR_SHADER;
+    }
+    glUniform2f(mResolutionLoc, resW, resH);
+    glUniformMatrix4fv(mMatrixLoc, 1, GL_FALSE, matrix);
+    glUniform1f(mAlphaLoc, alpha);
+    glUniform1f(mBlurRadiusLoc, blur);
+    glUniform4fv(mColorLoc, 1, color);
+
+    if (texture->bindGLTexture(mTextureLoc) != PX_OK)
+    {
+      return PX_FAIL;
+    }
+
+    glVertexAttribPointer(mPosLoc, 2, GL_FLOAT, GL_FALSE, 0, pos);
+    glVertexAttribPointer(mUVLoc, 2, GL_FLOAT, GL_FALSE, 0, uv);
+    glEnableVertexAttribArray(mPosLoc);
+    glEnableVertexAttribArray(mUVLoc);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, count);  TRACK_DRAW_CALLS();
+    glDisableVertexAttribArray(mPosLoc);
+    glDisableVertexAttribArray(mUVLoc);
+
+    return PX_OK;
+  }
+
+private:
+  GLint mResolutionLoc;
+  GLint mMatrixLoc;
+
+  GLint mPosLoc;
+  GLint mUVLoc;
+
+  GLint mColorLoc;
+  GLint mAlphaLoc;
+  GLint mBlurRadiusLoc;
+
+  GLint mTextureLoc;
+
+}; //CLASS - textureShaderProgram
+
+textureBlurShaderProgram *gTextureBlurShader = NULL;
+textureBlurShaderProgram *gTextureBlurForOutlineShader = NULL;
 
 //====================================================================================================================================================================================
 
@@ -1353,38 +1730,101 @@ static void drawRect2(GLfloat x, GLfloat y, GLfloat w, GLfloat h, const float* c
 }
 
 
-static void drawRectOutline(GLfloat x, GLfloat y, GLfloat w, GLfloat h, GLfloat lw, const float* c)
+
+
+static void drawRectOutline(GLfloat x, GLfloat y, GLfloat w, GLfloat h, GLfloat lw, const float* c , float radius , bool fill)
 {
   // args are tested at call site...
+  int circleStep = 5;
+  int pointNumber = (180 * 2 / circleStep + 4) * 4 + 8 * 4;
+  GLfloat *newVerts = (GLfloat *) malloc(pointNumber * sizeof(GLfloat));
+  memset(newVerts, pointNumber * sizeof(GLfloat), 0);
+  float PI = acos(-1); // PI
+  int count = 0;
 
-  float ox1  = x;
-  float ix1  = x+lw;
-  float ox2  = x+w;
-  float ix2  = x+w-lw;
-  float oy1  = y;
-  float iy1  = y+lw;
-  float oy2  = y+h;
-  float iy2  = y+h-lw;
+  auto makeRadiusPoints = [&](float cx, float cy, int start, int end, int step) {
+    for(int i = start ; i <= end ; i += step){
+      GLfloat innerRadius = radius - lw;
+      if (innerRadius < 0) {
+        innerRadius = 0;
+      }
 
-  const GLfloat verts[10][2] =
-  {
-    { ox1,oy1 },
-    { ix1,iy1 },
-    { ox2,oy1 },
-    { ix2,iy1 },
-    { ox2,oy2 },
-    { ix2,iy2 },
-    { ox1,oy2 },
-    { ix1,iy2 },
-    { ox1,oy1 },
-    { ix1,iy1 }
+      float cosValue = 0;
+      float sinValue = 0;
+      if (radius > 0) {
+        cosValue = cos(i * PI / 180.0);
+        sinValue = sin(i * PI / 180.0);
+      }
+      newVerts[count++] = cosValue * radius + cx;
+      newVerts[count++] = sinValue * radius + cy;
+      newVerts[count++] = cosValue * innerRadius + cx;
+      newVerts[count++] = sinValue * innerRadius + cy;
+    }
   };
+
+
+
+  newVerts[count++] = x + radius;
+  newVerts[count++] = y;
+  newVerts[count++] = x + radius;
+  newVerts[count++] = y + lw;
+  newVerts[count++] = x + w - radius;
+  newVerts[count++] = y;
+  newVerts[count++] = x + w - radius;
+  newVerts[count++] = y + lw;
+  makeRadiusPoints(x + w - radius, y + radius, 270, 360, circleStep);  // right - top
+
+  newVerts[count++] = x + w;
+  newVerts[count++] = y + radius;
+  newVerts[count++] = x + w - lw;
+  newVerts[count++] = y + radius;
+  newVerts[count++] = x + w;
+  newVerts[count++] = y + h - radius;
+  newVerts[count++] = x + w - lw;
+  newVerts[count++] = y + h - radius;
+  makeRadiusPoints(x + w - radius, y + h - radius, 0, 90, circleStep); // right bottom
+
+
+  newVerts[count++] = x + w - radius;
+  newVerts[count++] = y + h;
+  newVerts[count++] = x + w - radius;
+  newVerts[count++] = y + h - lw;
+  newVerts[count++] = x + radius;
+  newVerts[count++] = y + h;
+  newVerts[count++] = x + radius;
+  newVerts[count++] = y + h - lw;
+  makeRadiusPoints(x + radius, y + h - radius, 90, 180, circleStep);  // left bottom
+
+
+  newVerts[count++] = x;
+  newVerts[count++] = y + h - radius;
+  newVerts[count++] = x + lw;
+  newVerts[count++] = y + h - radius;
+  newVerts[count++] = x;
+  newVerts[count++] = y + radius;
+  newVerts[count++] = x + lw;
+  newVerts[count++] = y + radius;
+  makeRadiusPoints(x + radius, y + radius, 180, 270, circleStep); // left up
 
   float colorPM[4];
   premultiply(colorPM,c);
-
-  gSolidShader->draw(gResW,gResH,gMatrix.data(),gAlpha,GL_TRIANGLE_STRIP,verts,10,colorPM);
+  if (fill) {
+    GLfloat fillVerts[8] = {
+        x + radius, y + lw,
+        x + w - radius, y + lw,
+        x + radius, y + h - lw,
+        x + w - radius, y + h - lw
+    };
+    gSolidShader->draw(gResW, gResH, gMatrix.data(), gAlpha, GL_TRIANGLE_STRIP, fillVerts, 4, colorPM);
+  }
+  gSolidShader->draw(gResW,gResH,gMatrix.data(),gAlpha,GL_TRIANGLE_STRIP,newVerts,pointNumber/2,colorPM);
+  free(newVerts);
 }
+
+// draw rect with rounded
+static void drawRectWithRounded(GLfloat x, GLfloat y, GLfloat w, GLfloat h, const float *c, float radius) {
+  drawRectOutline(x, y, w, h, radius, c, radius, true);
+};
 
 static void drawImageTexture(float x, float y, float w, float h, pxTextureRef texture,
                              pxTextureRef mask, bool useTextureDimsAlways, float* color, // default: "color = BLACK"
@@ -1475,7 +1915,14 @@ static void drawImageTexture(float x, float y, float w, float h, pxTextureRef te
   }
   else if (mask.getPtr() == NULL && texture->getType() == PX_TEXTURE_ALPHA)
   {
-    if (gATextureShader->draw(gResW,gResH,gMatrix.data(),gAlpha,4,verts,uv,texture,colorPM) != PX_OK)
+
+    float dirColorPM[4];
+    dirColorPM[0] = colorPM[0];
+    dirColorPM[1] = colorPM[1];
+    dirColorPM[2] = colorPM[2];
+    dirColorPM[3] = colorPM[3];
+
+    if (gATextureShader->draw(gResW,gResH,gMatrix.data(),gAlpha,4,verts,uv,texture,colorPM,dirColorPM) != PX_OK)
     {
       drawRect2(0, 0, iw, ih, blackColor);
     }
@@ -1492,6 +1939,137 @@ static void drawImageTexture(float x, float y, float w, float h, pxTextureRef te
     rtLogError("Unhandled case");
   }
 }
+
+static void drawLabelImageTexture(float x, float y, float w, float h, pxTextureRef texture,
+                                  bool useTextureDimsAlways, float *color, float *gradientColor, float *strokeColor)
+{
+  // args are tested at call site...
+
+  float iw = texture->width();
+  float ih = texture->height();
+
+  if( useTextureDimsAlways)
+  {
+      w = iw;
+      h = ih;
+  }
+  else
+  {
+    if (w == -1)
+      w = iw;
+    if (h == -1)
+      h = ih;
+  }
+
+   const float verts[4][2] =
+   {
+     { x,     y },
+     { x+w,   y },
+     { x,   y+h },
+     { x+w, y+h }
+   };
+
+  float tw = w/iw;
+  float th = h/ih;
+
+  float firstTextureY  = 1.0;
+  float secondTextureY = 1.0-th;
+
+  const float uv[4][2] =
+  {
+    { 0,  firstTextureY  },
+    { tw, firstTextureY  },
+    { 0,  secondTextureY },
+    { tw, secondTextureY }
+  };
+
+  if(gradientColor == nullptr || gradientColor[3] <= 0.01){
+    gradientColor = color;
+  }
+
+
+  float colorPM[4];
+  premultiply(colorPM, color);
+
+  float gradientColorPM[4];
+  premultiply(gradientColorPM, gradientColor);
+
+  if (strokeColor && strokeColor[3] > 0) {
+
+    float strokeColorPM[4];
+    premultiply(strokeColorPM, strokeColor);
+    // rtLogInfo("render info outline %u %u [%f,%f,%f,%f], [%f,%f,%f,%f] \n", gResW, gResH, colorPM[0],colorPM[1],colorPM[2],colorPM[3],gradientColorPM[0],gradientColorPM[1],gradientColorPM[2],gradientColorPM[3]);
+    if (gTextOutlineShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv,
+                                 texture, colorPM, gradientColorPM, strokeColorPM) != PX_OK) {
+    }
+  } else {
+    // rtLogInfo("render info normal %u %u [%f,%f,%f,%f]\n", gResW, gResH, colorPM[0],colorPM[1],colorPM[2],colorPM[3]);
+    if (gATextureShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv, texture, colorPM, gradientColorPM) !=
+        PX_OK) {
+    }
+  }
+}
+
+static void drawTextureImageShadow(float x, float y, float w, float h, pxTextureRef texture,
+                                  bool useTextureDimsAlways, float blur, float *shadowColor)
+{
+  // args are tested at call site...
+
+  float iw = texture->width();
+  float ih = texture->height();
+
+  if( useTextureDimsAlways)
+  {
+      w = iw;
+      h = ih;
+  }
+  else
+  {
+    if (w == -1)
+      w = iw;
+    if (h == -1)
+      h = ih;
+  }
+
+   const float verts[4][2] =
+   {
+     { x,     y },
+     { x+w,   y },
+     { x,   y+h },
+     { x+w, y+h }
+   };
+
+  float tw = w/iw;
+  float th = h/ih;
+
+  float firstTextureY  = 1.0;
+  float secondTextureY = 1.0-th;
+
+  const float uv[4][2] =
+  {
+    { 0,  firstTextureY  },
+    { tw, firstTextureY  },
+    { 0,  secondTextureY },
+    { tw, secondTextureY }
+  };
+
+  static float blackColor[4] = {0.0, 0.0, 0.0, 1.0};
+
+  float shadowColorPM[4];
+  premultiply(shadowColorPM, shadowColor);
+
+  if (texture->getType() == PX_TEXTURE_ALPHA_88) {
+    if (gTextureBlurForOutlineShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv, texture, blur, shadowColorPM) != PX_OK) {
+      drawRect2(0, 0, iw, ih, blackColor);
+    }
+  } else {
+    if (gTextureBlurShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv, texture, blur, shadowColorPM) !=
+        PX_OK) {
+      drawRect2(0, 0, iw, ih, blackColor);
+    }
+  }
+}
+
 
 static void drawImage92(GLfloat x, GLfloat y, GLfloat w, GLfloat h, GLfloat x1, GLfloat y1, GLfloat x2,
                         GLfloat y2, pxTextureRef texture)
@@ -1660,6 +2238,12 @@ void pxContext::init()
     gTextureMaskedShader = NULL;
   }
 
+  if (gTextOutlineShader)
+  {
+    delete gTextOutlineShader;
+    gTextOutlineShader = NULL;
+  }
+
   gSolidShader = new solidShaderProgram();
   gSolidShader->init(vShaderText,fSolidShaderText);
 
@@ -1671,6 +2255,17 @@ void pxContext::init()
 
   gTextureMaskedShader = new textureMaskedShaderProgram();
   gTextureMaskedShader->init(vShaderText,fTextureMaskedShaderText);
+
+
+  gTextOutlineShader = new textOutlineShaderProgram();
+  gTextOutlineShader->init(vShaderText, fTextOutlineShaderText);
+
+  gTextureBlurShader = new textureBlurShaderProgram();
+  gTextureBlurShader->init(vShaderText, fTextureBlurShaderText);
+
+  gTextureBlurForOutlineShader = new textureBlurShaderProgram();
+  gTextureBlurForOutlineShader->init(vShaderText, fTextureBlurForOutlineShaderText);
+
 
   glEnable(GL_BLEND);
 
@@ -1880,17 +2475,16 @@ void pxContext::enableDirtyRectangles(bool enable)
   }
 }
 
-void pxContext::drawRect(float w, float h, float lineWidth, float* fillColor, float* lineColor)
+void pxContext::drawRect(float w, float h, float lineWidth, float* fillColor, float* lineColor , float radius)
 {
 #ifdef DEBUG_SKIP_RECT
-#warning "DEBUG_SKIP_RECT enabled ... Skipping "
+  #warning "DEBUG_SKIP_RECT enabled ... Skipping "
   return;
 #endif
 
-  // TRANSPARENT / DIMENSIONLESS 
+  // TRANSPARENT / DIMENSIONLESS
   if(gAlpha == 0.0 || w <= 0.0 || h <= 0.0)
   {
-   // rtLogDebug("\n drawRect() - TRANSPARENT");
     return;
   }
 
@@ -1904,16 +2498,24 @@ void pxContext::drawRect(float w, float h, float lineWidth, float* fillColor, fl
   // Fill ...
   if(fillColor != NULL && fillColor[3] > 0.0) // with non-transparent color
   {
-    float half = lineWidth/2;
-    drawRect2(half, half, w-lineWidth, h-lineWidth, fillColor);
+
+    float half = lineWidth / 2;
+    if (radius > 0) {
+      drawRectWithRounded(half, half, w - lineWidth, h - lineWidth, fillColor, radius);
+    } else {
+      drawRect2(half, half, w - lineWidth, h - lineWidth, fillColor);
+    }
   }
 
   // Frame ...
   if(lineColor != NULL && lineColor[3] > 0.0 && lineWidth > 0) // with non-transparent color and non-zero stroke
   {
-    drawRectOutline(0, 0, w, h, lineWidth, lineColor);
+    drawRectOutline(0, 0, w, h, lineWidth, lineColor, radius, false);
   }
 }
+
+
+
 
 void pxContext::drawImage9(float w, float h, float x1, float y1,
                            float x2, float y2, pxTextureRef texture)
@@ -1966,6 +2568,144 @@ void pxContext::drawImage(float x, float y, float w, float h,
                   color? color : black, stretchX, stretchY);
 }
 
+void pxContext::drawLabelImage(float x, float y, float w, float h, pxTextureRef t,
+                               bool useTextureDimsAlways, float *color, float *gradientColor, float *strokeColor) {
+  // TRANSPARENT / DIMENSIONLESS 
+  if (gAlpha == 0.0 || w <= 0.0 || h <= 0.0) {
+    return;
+  }
+
+  // TEXTURELESS
+  if (t.getPtr() == NULL) {
+    return;
+  }
+
+  float black[4] = {0, 0, 0, 1};
+  drawLabelImageTexture(x, y, w, h, t, useTextureDimsAlways,
+                        color ? color : black, gradientColor, strokeColor);
+}
+
+void pxContext::drawTextureShadow(float x, float y, float w, float h, pxTextureRef t, bool useTextureDimsAlways,
+                      float blur, float *shadowColor)
+{
+  // TRANSPARENT / DIMENSIONLESS 
+  if (gAlpha == 0.0 || w <= 0.0 || h <= 0.0) {
+    return;
+  }
+
+  // TEXTURELESS
+  if (t.getPtr() == NULL) {
+    return;
+  }
+
+  float black[4] = {0, 0, 0, 1};
+  drawTextureImageShadow(x, y, w, h, t, useTextureDimsAlways, blur, shadowColor ? shadowColor : black);
+}
+
+void pxContext::drawLines(GLfloat *verts, int count, float *lineColor, float lineWidth) {
+  float colorPM[4];
+  premultiply(colorPM, lineColor);
+  GLfloat *newVerts = (GLfloat *) malloc(count * 4 * sizeof(GLfloat));
+  int vertIndex = 0;
+  for (int i = 0; i < count - 1; i++) {
+    Vec2 v0 = v2f(verts[i * 2], verts[i * 2 + 1]);
+    Vec2 v1 = v2f(verts[(i + 1) * 2], verts[(i + 1) * 2 + 1]);
+
+    Vec2 perpVec = v2fnormalize(v2fperp(v2fsub(v1, v0))); //right normalize vector
+
+    if (i == 0) {
+      Vec2 inner0 = v2fsub(v0, v2fmult(perpVec, lineWidth * 0.5));
+      Vec2 outer0 = v2fadd(v0, v2fmult(perpVec, lineWidth * 0.5));
+      newVerts[vertIndex++] = inner0.x;
+      newVerts[vertIndex++] = inner0.y;
+      newVerts[vertIndex++] = outer0.x;
+      newVerts[vertIndex++] = outer0.y;
+    }
+    Vec2 inner1 = v2fsub(v1, v2fmult(perpVec, lineWidth * 0.5));
+    Vec2 outer1 = v2fadd(v1, v2fmult(perpVec, lineWidth * 0.5));
+    newVerts[vertIndex++] = inner1.x;
+    newVerts[vertIndex++] = inner1.y;
+    newVerts[vertIndex++] = outer1.x;
+    newVerts[vertIndex++] = outer1.y;
+  }
+  gSolidShader->draw(gResW, gResH, gMatrix.data(), gAlpha, GL_TRIANGLE_STRIP, newVerts, vertIndex / 2, colorPM);
+  free(newVerts);
+}
+
+void pxContext::drawPolygon(GLfloat *verts, int count, float lineWidth, float *fillColor, float *lineColor) {
+  float colorPM[4];
+
+  if (lineWidth > 0 && lineColor[4] > 0) {  // need draw outline
+    struct ExtrudeVerts {
+      Vec2 offset, n;
+    };
+    struct ExtrudeVerts *extrude = (struct ExtrudeVerts *) malloc(sizeof(struct ExtrudeVerts) * count);
+    memset(extrude, 0, sizeof(struct ExtrudeVerts) * count);
+    GLfloat *outLineVerts = (GLfloat *) malloc(sizeof(GLfloat) * count * 12);
+
+    for (int i = 0; i < count; i++) {
+      int v0Index = (i - 1 + count) % count;
+      Vec2 v0 = v2f(verts[2 * v0Index], verts[2 * v0Index + 1]);
+      Vec2 v1 = v2f(verts[2 * i], verts[2 * i + 1]);
+
+      int v2Index = (i + 1) % count;
+      Vec2 v2 = v2f(verts[2 * v2Index], verts[2 * v2Index + 1]);
+
+      Vec2 n1 = v2fnormalize(v2fperp(v2fsub(v1, v0)));
+      Vec2 n2 = v2fnormalize(v2fperp(v2fsub(v2, v1)));
+
+      Vec2 offset = v2fmult(v2fadd(n1, n2), 1.0 / (v2fdot(n1, n2) + 1.0));
+      struct ExtrudeVerts tmp = {offset, n2};
+      extrude[i] = tmp;
+    }
+    int outlineIndex = 0;
+
+    for (int i = 0; i < count; i++) {
+      int j = (i + 1) % count;
+      Vec2 v0 = v2f(verts[i * 2], verts[i * 2 + 1]);
+      Vec2 v1 = v2f(verts[j * 2], verts[j * 2 + 1]);
+
+      Vec2 offset0 = extrude[i].offset;
+      Vec2 offset1 = extrude[j].offset;
+
+      Vec2 inner0 = v2fsub(v0, v2fmult(offset0, lineWidth * 0.5));
+      Vec2 inner1 = v2fsub(v1, v2fmult(offset1, lineWidth * 0.5));
+      Vec2 outer0 = v2fadd(v0, v2fmult(offset0, lineWidth * 0.5));
+      Vec2 outer1 = v2fadd(v1, v2fmult(offset1, lineWidth * 0.5));
+
+      outLineVerts[outlineIndex++] = inner0.x;
+      outLineVerts[outlineIndex++] = inner0.y;
+
+      outLineVerts[outlineIndex++] = inner1.x;
+      outLineVerts[outlineIndex++] = inner1.y;
+
+      outLineVerts[outlineIndex++] = outer1.x;
+      outLineVerts[outlineIndex++] = outer1.y;
+
+
+      outLineVerts[outlineIndex++] = inner0.x;
+      outLineVerts[outlineIndex++] = inner0.y;
+
+      outLineVerts[outlineIndex++] = outer0.x;
+      outLineVerts[outlineIndex++] = outer0.y;
+
+      outLineVerts[outlineIndex++] = outer1.x;
+      outLineVerts[outlineIndex++] = outer1.y;
+    }
+    premultiply(colorPM, lineColor);
+    gSolidShader->draw(gResW, gResH, gMatrix.data(), gAlpha, GL_TRIANGLE_STRIP, outLineVerts, outlineIndex / 2,
+                       colorPM);
+    free(outLineVerts);
+    free(extrude);
+  }
+
+  if(fillColor[4] > 0){  // draw solid polygon
+    premultiply(colorPM,fillColor);
+    gSolidShader->draw(gResW,gResH,gMatrix.data(),gAlpha,GL_TRIANGLES,verts,count,colorPM);
+  }
+
+}
+
 void pxContext::drawDiagRect(float x, float y, float w, float h, float* color)
 {
 #ifdef DEBUG_SKIP_DIAG_RECT
@@ -1985,7 +2725,7 @@ void pxContext::drawDiagRect(float x, float y, float w, float h, float* color)
   // COLORLESS
   if(color == NULL || color[3] == 0.0)
   {
-    return; 
+    return;
   }
 
 
@@ -2047,9 +2787,9 @@ pxTextureRef pxContext::createTexture(pxOffscreen& o)
   return offscreenTexture;
 }
 
-pxTextureRef pxContext::createTexture(float w, float h, float iw, float ih, void* buffer)
+pxTextureRef pxContext::createTexture(float w, float h, float iw, float ih, void* buffer, pxTextureType type)
 {
-  pxTextureAlpha* alphaTexture = new pxTextureAlpha(w,h,iw,ih,buffer);
+  pxTextureAlpha* alphaTexture = new pxTextureAlpha(w,h,iw,ih,buffer,type);
   return alphaTexture;
 }
 

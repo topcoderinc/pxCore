@@ -18,6 +18,7 @@ cp $externalDir/zlib/libz.a $bundleLib
 cp macstuff/Info.plist $bundle/Contents
 cp -a images $bundleBin/images
 cp FreeSans.ttf $bundleBin
+cp -r fonts $bundleBin/fonts
 cp browser.js $bundleBin
 cp init.js $bundleBin
 cp shell.js $bundleBin

@@ -27,6 +27,8 @@
 // TODO it would be nice to push this back into implemention
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include FT_STROKER_H
+#include FT_OUTLINE_H
 
 #include "pxScene2d.h"
 #include <map>
@@ -35,7 +37,7 @@ class pxText;
 class pxFont;
 
 #define defaultPixelSize 16
-#define defaultFont "FreeSans.ttf"
+#define defaultFont "DejaVuSans"
 
 
 class rtFileDownloadRequest;
@@ -154,6 +156,7 @@ public:
     
   // FT Face related functions
   void setPixelSize(uint32_t s);  
+  unsigned char * getGlyphBitmapWithOutline(unsigned short theChar, FT_BBox &bbox);
   const GlyphCacheEntry* getGlyph(uint32_t codePoint);  
   void getMetrics(uint32_t size, float& height, float& ascender, float& descender, float& naturalLeading);
   void getHeight(uint32_t size, float& height);
@@ -161,29 +164,74 @@ public:
   void measureTextInternal(const char* text, uint32_t size,  float sx, float sy, 
                    float& w, float& h);
   void measureTextChar(u_int32_t codePoint, uint32_t size,  float sx, float sy, 
-                         float& w, float& h);                   
-  void renderText(const char *text, uint32_t size, float x, float y, 
-                  float sx, float sy, 
-                  float* color, float mw);
+                         float& w, float& h);
+
+  /**
+   * render text with bold italic,storke, and shadow.
+   * @param text
+   * @param size
+   * @param x
+   * @param y
+   * @param sx
+   * @param sy
+   * @param color
+   * @param mw
+   * @param gradientColor
+   * @param strokeColor
+   * @param dropShadowColor
+   * @param strokeWidth  the storke width
+   * @param italic is italic
+   * @param bold is bold ?
+   * @param dropShadow  is enable dropshadow
+   * @param dropShadowOffsetX  the dropshadow offset x
+   * @param dropShadowOffsetY  the dropshadow offset y
+   * @param dropShadowBlur  the dropshadow blur
+   */
+  void renderText(const char *text, uint32_t size, float x, float y,
+                  float sx, float sy,
+                  float *color, float mw,
+
+                  float *gradientColor = NULL, float *strokeColor = NULL, float *dropShadowColor = NULL,
+                  float strokeWidth = 0, bool italic = false, bool bold = false,
+                  bool dropShadow = false, float dropShadowOffsetX = 0, float dropShadowOffsetY = 0,
+                  float dropShadowBlur = 0
+  );
 
   virtual void init() {}
   bool isFontLoaded() { return mInitialized;}
+
+  void setOutlineSize(uint32_t size);
+  void setItalic(bool var);
+  void setBold(bool var);
+  void setShadow(bool var, float shadowColor[], uint32_t blurRadio, float offset[]);
    
 protected:
   // Implementation for pxResource virtuals
   virtual bool loadResourceData(rtFileDownloadRequest* fileDownloadRequest);
-  
+  rtError dealBold(uint32_t &offsetX, uint32_t &offsetY);
+  rtError dealItalic(FT_GlyphSlot& g);
+  unsigned char* dealShadow(GlyphCacheEntry* entry, unsigned char* data, uint32_t &outW, uint32_t &outH);
+
+
 private:
   void loadResourceFromFile();
   rtError init(const char* n);
-  rtError init(const FT_Byte*  fontData, FT_Long size, const char* n); 
+  rtError init(const FT_Byte*  fontData, FT_Long size, const char* n , FT_Long outlineSize = 0); 
 
   // FreeType font info
   uint32_t mFontId;
   FT_Face mFace;
   uint32_t mPixelSize;
+  FT_Stroker mStroker;
   char* mFontData; // for remote fonts loaded into memory
-
+  uint32_t mOutlineSize;
+  bool mItalic;
+  bool mBold;
+  bool mShadow;
+  uint32_t mShadowBlurRadio;
+  float mShadowOffsetX;
+  float mShadowOffsetY;
+  float mShadowColor[4];
 };
 
 // Weak Map

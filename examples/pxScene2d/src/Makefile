@@ -40,7 +40,8 @@ PX_PLATFORM=PX_PLATFORM_MAC
 PXLIBS=$(PXCOREDIR)/build/mac
 TARGETINCLUDE=
 ADDITIONAL_OBJS=$(OBJDIR)/pxContextUtils.o
-else
+else 
+li
 ifeq ($(PX_PLATFORM),DirectFB)
 PX_PLATFORM=PX_PLATFORM_GENERIC_DFB
 PXLIBS=$(PXCOREDIR)/build/dfb
@@ -102,7 +103,8 @@ PX_SRCS_FULL=\
   pxImage.cpp \
   pxImage9.cpp \
   pxImageA.cpp \
-  pxArchive.cpp 
+  pxArchive.cpp \
+  pxGraphic.cpp
 
 EXTDIR=../external
 PXCOREDIR=../../..
@@ -235,7 +237,8 @@ PXSCENE_LIB_SRCS=\
   pxImage9.cpp \
   pxImageA.cpp \
   pxArchive.cpp \
-  pxFont.cpp 
+  pxFont.cpp \
+  pxGraphic.cpp
 
 ifneq ($(PX_PLATFORM),PX_PLATFORM_GENERIC_DFB)
 PXSCENE_LIB_SRCS += pxContextGL.cpp 

@@ -1326,7 +1326,7 @@ public:
   rtError createScene(rtObjectRef p,rtObjectRef& o);
   rtError createExternal(rtObjectRef p, rtObjectRef& o);
   rtError createWayland(rtObjectRef p, rtObjectRef& o);
-
+  rtError createGraphic(rtObjectRef p, rtObjectRef &o);
   rtError clock(uint64_t & time);
   rtError logDebugMetrics();
 

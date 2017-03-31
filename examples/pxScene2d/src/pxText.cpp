@@ -27,10 +27,26 @@
 extern pxContext context;
 
 
-pxText::pxText(pxScene2d* scene):pxObject(scene), mListenerAdded(false)
+pxText::pxText(pxScene2d* scene):pxObject(scene),
+                                 isItalic(false),
+                                 isBold(false),
+                                 mStrokeWidth(0.0),
+                                 isDropShadow(false),
+                                 mDropShadowOffsetX(0.0),
+                                 mDropShadowOffsetY(0.0),
+                                 mDropShadowBlur(0.0),
+                                 mListenerAdded(false)
+
+
+
 {
   float c[4] = {1, 1, 1, 1};
   memcpy(mTextColor, c, sizeof(mTextColor));
+  memcpy(mDropShadowColor,c, sizeof(mDropShadowColor));
+
+  float z[4] = {0, 0, 0, 0};
+  memcpy(mStrokeColor, z, sizeof(mStrokeColor));
+  memcpy(mGradientColor, z, sizeof(mGradientColor));
   // Default to use default font
   mFont = pxFontManager::getFont(defaultFont);
   mPixelSize = defaultPixelSize;
@@ -69,8 +85,8 @@ void pxText::sendPromise()
 }
 
 rtError pxText::setText(const char* s) 
-{ 
-  //rtLogInfo("pxText::setText\n");
+{
+  rtLogInfo("set text = %s",s);
   if( !mText.compare(s)){
     rtLogDebug("pxText.setText setting to same value %s and %s\n", mText.cString(), s);
     return RT_OK;
@@ -84,10 +100,69 @@ rtError pxText::setText(const char* s)
   return RT_OK; 
 }
 
+rtError pxText::setItalic(bool var) {
+  isItalic = var;
+  if (getFontResource()->isFontLoaded()) {
+    createNewPromise();
+    getFontResource()->setItalic(isItalic);
+  }
+  return RT_OK;
+}
+
+rtError pxText::setBold(bool var) {
+  isBold = var;
+  if (getFontResource()->isFontLoaded()) {
+    createNewPromise();
+    getFontResource()->setBold(isItalic);
+  }
+  return RT_OK;
+}
+
+
+void pxText::updateShadowParams() {
+  if (getFontResource()->isFontLoaded()) {
+    createNewPromise();
+    float offset[2] = {mDropShadowOffsetX, mDropShadowOffsetY};
+    getFontResource()->setShadow(isDropShadow, mDropShadowColor, mDropShadowBlur, offset);
+  }
+}
+
+rtError pxText::setDropShadow(bool b) {
+  isDropShadow = b;
+  updateShadowParams();
+  return RT_OK;
+}
+rtError pxText::setDropShadowOffsetX(float x) {
+  mDropShadowOffsetX = x;
+  updateShadowParams();
+  return RT_OK;
+}
+
+rtError pxText::setDropShadowOffsetY(float y) {
+  mDropShadowOffsetY = y;
+  updateShadowParams();
+  return RT_OK;
+}
+
+rtError pxText::setDropShadowBlur(float b) {
+  mDropShadowBlur = b;
+  updateShadowParams();
+  return RT_OK;
+}
+
+rtError pxText::setStrokeWidth(float w) {
+  mStrokeWidth = w;
+  if (getFontResource()->isFontLoaded()) {
+    createNewPromise();
+    getFontResource()->setOutlineSize(mStrokeWidth);
+  }
+  return RT_OK;
+}
+
 rtError pxText::setPixelSize(uint32_t v) 
 {   
   //rtLogInfo("pxText::setPixelSize\n");
-  mPixelSize = v; 
+  mPixelSize = v;
   if( getFontResource()->isFontLoaded())
   {
     createNewPromise();
@@ -115,7 +190,7 @@ void pxText::resourceReady(rtString readyResolution)
   {
       pxObject::onTextureReady();
       mReady.send("reject",this);
-  }     
+  }
 }
        
 void pxText::update(double t)
@@ -177,7 +252,10 @@ void pxText::draw() {
     }
     else
     {
-      getFontResource()->renderText(mText, mPixelSize, 0, 0, msx, msy, mTextColor, mw);
+      getFontResource()->renderText(mText, mPixelSize, 0, 0, msx, msy, mTextColor, mw, mGradientColor, mStrokeColor,
+                                    mDropShadowColor, mStrokeWidth,
+                                    isItalic, isBold, isDropShadow, mDropShadowOffsetX, mDropShadowOffsetY,
+                                    mDropShadowBlur);
     }
   }  
   //else {
@@ -228,6 +306,16 @@ float pxText::getOnscreenHeight()
 rtDefineObject(pxText, pxObject);
 rtDefineProperty(pxText, text);
 rtDefineProperty(pxText, textColor);
+rtDefineProperty(pxText, gradientColor);
 rtDefineProperty(pxText, pixelSize);
 rtDefineProperty(pxText, fontUrl);
 rtDefineProperty(pxText, font);
+rtDefineProperty(pxText, italic);
+rtDefineProperty(pxText, bold);
+rtDefineProperty(pxText, strokeWidth);
+rtDefineProperty(pxText, strokeColor);
+rtDefineProperty(pxText, dropShadow);
+rtDefineProperty(pxText, dropShadowColor);
+rtDefineProperty(pxText, dropShadowOffsetX);
+rtDefineProperty(pxText, dropShadowOffsetY);
+rtDefineProperty(pxText, dropShadowBlur);

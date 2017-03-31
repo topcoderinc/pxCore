@@ -350,7 +350,7 @@ void pxWayland::onDraw()
   }
   else if ( mFillColor[3] != 0.0 )
   {
-     context.drawRect(mWidth, mHeight, 0, mFillColor, NULL );
+     context.drawRect(mWidth, mHeight, 0, mFillColor, NULL ,0 );
   }
   WstCompositorComposeEmbedded( mWCtx, 
                                 mX,

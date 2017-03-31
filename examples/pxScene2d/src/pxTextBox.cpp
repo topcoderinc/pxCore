@@ -72,7 +72,6 @@ void pxTextBox::resourceReady(rtString readyResolution)
   if( !readyResolution.compare("resolve"))
   {
     mFontLoaded = true;
-
     if( mInitialized) {
       setNeedsRecalc(true);
       pxObject::onTextureReady();
@@ -167,7 +166,7 @@ void pxTextBox::sendPromise()
 rtError pxTextBox::setText(const char* s) {
   //rtLogDebug("pxTextBox::setText %s\n",s);
   if( !mText.compare(s)){
-    rtLogDebug("pxTextBox.setText setting to same value %s and %s\n", mText.cString(), s);
+    rtLogInfo("pxTextBox.setText setting to same value %s and %s\n", mText.cString(), s);
     return RT_OK;
   }
   mText = s;
@@ -177,14 +176,14 @@ rtError pxTextBox::setText(const char* s) {
 
 rtError pxTextBox::setPixelSize(uint32_t v)
 {
-  //rtLogDebug("pxTextBox::setPixelSize %s\n",mText.cString());
+  rtLogInfo("pxTextBox::setPixelSize %s\n",mText.cString());
   mPixelSize = v;
   setNeedsRecalc(true);
   return RT_OK;
 }
 rtError pxTextBox::setFontUrl(const char* s)
 {
-  //rtLogDebug("pxTextBox::setFontUrl \"%s\" mInitialized=%d\n",s,mInitialized);
+  rtLogInfo("pxTextBox::setFontUrl \"%s\" mInitialized=%d\n",s,mInitialized);
   mFontLoaded = false;
   setNeedsRecalc(true);
   return pxText::setFontUrl(s);
@@ -262,8 +261,6 @@ void pxTextBox::clearMeasurements()
 
 void pxTextBox::renderText(bool render)
 {
-  //rtLogDebug("pxTextBox::renderText render=%d initialized=%d fontLoaded=%d\n",render,mInitialized,mFontLoaded);
-
   if( !mInitialized || !mFontLoaded) {
     return;
   }
@@ -852,7 +849,9 @@ void pxTextBox::renderOneLine(const char * tempStr, float tempX, float tempY, fl
   // Now, render the text
   if( render)
   {
-    getFontResource()->renderText(tempStr, size, xPos, tempY, sx, sy, color,lineWidth);
+    getFontResource()->renderText(tempStr, size, xPos, tempY, sx, sy, color, lineWidth, mGradientColor, mStrokeColor,
+                                  mDropShadowColor,mStrokeWidth, isItalic, isBold,
+                                  isDropShadow, mDropShadowOffsetX, mDropShadowOffsetY, mDropShadowBlur);
   }
 }
 
@@ -1084,13 +1083,17 @@ void pxTextBox::renderTextRowWithTruncation(rtString & accString, float lineWidt
         if( lineNumber==0) {setLineMeasurements(true, xPos, tempY);}
 
         if( render) {
-          getFontResource()->renderText(tempStr, pixelSize, xPos, tempY, 1.0, 1.0, color,lineWidth);
+          getFontResource()->renderText(tempStr, pixelSize, xPos, tempY, 1.0, 1.0, color, lineWidth, mGradientColor,
+                                        mStrokeColor,mDropShadowColor,mStrokeWidth, isItalic, isBold,
+                                        isDropShadow, mDropShadowOffsetX, mDropShadowOffsetY, mDropShadowBlur);
         }
         if( mEllipsis)
         {
           //rtLogDebug("rendering truncated text with ellipsis\n");
           if( render) {
-            getFontResource()->renderText(ELLIPSIS_STR, pixelSize, xPos+charW, tempY, 1.0, 1.0, color,lineWidth);
+            getFontResource()->renderText(ELLIPSIS_STR, pixelSize, xPos + charW, tempY, 1.0, 1.0, color, lineWidth,
+                                          mGradientColor, mStrokeColor,mDropShadowColor,mStrokeWidth, isItalic, isBold,
+                                          isDropShadow, mDropShadowOffsetX, mDropShadowOffsetY, mDropShadowBlur);
           }
           if(!mWordWrap) { setMeasurementBounds(xPos, charW+ellipsisW, tempY, charH); }
           setLineMeasurements(false, xPos+charW+ellipsisW, tempY);
@@ -1135,14 +1138,19 @@ void pxTextBox::renderTextRowWithTruncation(rtString & accString, float lineWidt
           if( lineNumber==0) {setLineMeasurements(true, xPos, tempY);  }
           if( render)
           {
-            getFontResource()->renderText(tempStr, pixelSize, xPos, tempY, 1.0, 1.0, color,lineWidth);
+            getFontResource()->renderText(tempStr, pixelSize, xPos, tempY, 1.0, 1.0, color, lineWidth, mGradientColor,
+                                          mStrokeColor,mDropShadowColor,mStrokeWidth, isItalic, isBold,
+                                          isDropShadow, mDropShadowOffsetX, mDropShadowOffsetY, mDropShadowBlur);
           }
         }
         if( mEllipsis)
         {
           //rtLogDebug("rendering  text on word boundary with ellipsis\n");
           if( render) {
-            getFontResource()->renderText(ELLIPSIS_STR, pixelSize, xPos+charW, tempY, 1.0, 1.0, color,lineWidth);
+            getFontResource()->renderText(ELLIPSIS_STR, pixelSize, xPos + charW, tempY, 1.0, 1.0, color, lineWidth,
+                                          mGradientColor, mStrokeColor,mDropShadowColor, mStrokeWidth, isItalic, isBold,
+                                          isDropShadow, mDropShadowOffsetX, mDropShadowOffsetY, mDropShadowBlur);
+
           }
           if(!mWordWrap) { setMeasurementBounds(xPos, charW+ellipsisW, tempY, charH); }
           setLineMeasurements(false, xPos+charW+ellipsisW, tempY);
