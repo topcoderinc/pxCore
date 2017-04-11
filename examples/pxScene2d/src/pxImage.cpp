@@ -176,7 +176,7 @@ void pxImage::draw() {
                     getOnscreenWidth(),
                     getOnscreenHeight(), 
                     getImageResource()->getTexture(), nullMaskRef, 
-                    false, NULL, mStretchX, mStretchY);
+                    false, NULL, mStretchX, mStretchY, mUvs);
   // Raise the priority if we're still waiting on the image download    
 #if 0
   if (!imageLoaded && getImageResource()->isDownloadInProgress())
@@ -270,5 +270,6 @@ rtDefineProperty(pxImage,url);
 rtDefineProperty(pxImage, resource);
 rtDefineProperty(pxImage,stretchX);
 rtDefineProperty(pxImage,stretchY);
+rtDefineProperty(pxImage, uvs);
 
 

@@ -359,6 +359,7 @@ void pxTextBox::measureTextWithWrapOrNewLine(const char *text, float sx, float s
       }
       lasti = i;
 
+      getFontResource()->setOutlineSize(mStrokeWidth);
       getFontResource()->measureTextChar(charToMeasure, size,  sx, sy, charW, charH);
       if( isNewline(charToMeasure))
       {
@@ -850,7 +851,7 @@ void pxTextBox::renderOneLine(const char * tempStr, float tempX, float tempY, fl
   if( render)
   {
     getFontResource()->renderText(tempStr, size, xPos, tempY, sx, sy, color, lineWidth, mGradientColor, mStrokeColor,
-                                  mDropShadowColor,mStrokeWidth, isItalic, isBold,
+                                  mDropShadowColor, mStrokeWidth, isItalic, isBold,
                                   isDropShadow, mDropShadowOffsetX, mDropShadowOffsetY, mDropShadowBlur);
   }
 }
@@ -1084,7 +1085,7 @@ void pxTextBox::renderTextRowWithTruncation(rtString & accString, float lineWidt
 
         if( render) {
           getFontResource()->renderText(tempStr, pixelSize, xPos, tempY, 1.0, 1.0, color, lineWidth, mGradientColor,
-                                        mStrokeColor,mDropShadowColor,mStrokeWidth, isItalic, isBold,
+                                        mStrokeColor, mDropShadowColor, mStrokeWidth, isItalic, isBold,
                                         isDropShadow, mDropShadowOffsetX, mDropShadowOffsetY, mDropShadowBlur);
         }
         if( mEllipsis)
@@ -1092,7 +1093,7 @@ void pxTextBox::renderTextRowWithTruncation(rtString & accString, float lineWidt
           //rtLogDebug("rendering truncated text with ellipsis\n");
           if( render) {
             getFontResource()->renderText(ELLIPSIS_STR, pixelSize, xPos + charW, tempY, 1.0, 1.0, color, lineWidth,
-                                          mGradientColor, mStrokeColor,mDropShadowColor,mStrokeWidth, isItalic, isBold,
+                                          mGradientColor, mStrokeColor, mDropShadowColor, mStrokeWidth, isItalic, isBold,
                                           isDropShadow, mDropShadowOffsetX, mDropShadowOffsetY, mDropShadowBlur);
           }
           if(!mWordWrap) { setMeasurementBounds(xPos, charW+ellipsisW, tempY, charH); }
@@ -1139,7 +1140,7 @@ void pxTextBox::renderTextRowWithTruncation(rtString & accString, float lineWidt
           if( render)
           {
             getFontResource()->renderText(tempStr, pixelSize, xPos, tempY, 1.0, 1.0, color, lineWidth, mGradientColor,
-                                          mStrokeColor,mDropShadowColor,mStrokeWidth, isItalic, isBold,
+                                          mStrokeColor, mDropShadowColor, mStrokeWidth, isItalic, isBold,
                                           isDropShadow, mDropShadowOffsetX, mDropShadowOffsetY, mDropShadowBlur);
           }
         }
@@ -1148,7 +1149,7 @@ void pxTextBox::renderTextRowWithTruncation(rtString & accString, float lineWidt
           //rtLogDebug("rendering  text on word boundary with ellipsis\n");
           if( render) {
             getFontResource()->renderText(ELLIPSIS_STR, pixelSize, xPos + charW, tempY, 1.0, 1.0, color, lineWidth,
-                                          mGradientColor, mStrokeColor,mDropShadowColor, mStrokeWidth, isItalic, isBold,
+                                          mGradientColor, mStrokeColor, mDropShadowColor, mStrokeWidth, isItalic, isBold,
                                           isDropShadow, mDropShadowOffsetX, mDropShadowOffsetY, mDropShadowBlur);
 
           }

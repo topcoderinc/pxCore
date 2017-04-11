@@ -100,59 +100,71 @@ rtError pxText::setText(const char* s)
   return RT_OK; 
 }
 
-rtError pxText::setItalic(bool var) {
+rtError pxText::setItalic(bool var) 
+{
   isItalic = var;
-  if (getFontResource()->isFontLoaded()) {
+  if (getFontResource()->isFontLoaded()) 
+  {
     createNewPromise();
     getFontResource()->setItalic(isItalic);
   }
   return RT_OK;
 }
 
-rtError pxText::setBold(bool var) {
+rtError pxText::setBold(bool var) 
+{
   isBold = var;
-  if (getFontResource()->isFontLoaded()) {
+  if (getFontResource()->isFontLoaded()) 
+  {
     createNewPromise();
-    getFontResource()->setBold(isItalic);
+    getFontResource()->setBold(isBold);
   }
   return RT_OK;
 }
 
 
-void pxText::updateShadowParams() {
-  if (getFontResource()->isFontLoaded()) {
+void pxText::updateShadowParams() 
+{
+  if (getFontResource()->isFontLoaded()) 
+  {
     createNewPromise();
     float offset[2] = {mDropShadowOffsetX, mDropShadowOffsetY};
     getFontResource()->setShadow(isDropShadow, mDropShadowColor, mDropShadowBlur, offset);
   }
 }
 
-rtError pxText::setDropShadow(bool b) {
+rtError pxText::setDropShadow(bool b) 
+{
   isDropShadow = b;
   updateShadowParams();
   return RT_OK;
 }
-rtError pxText::setDropShadowOffsetX(float x) {
+rtError pxText::setDropShadowOffsetX(float x) 
+{
   mDropShadowOffsetX = x;
   updateShadowParams();
   return RT_OK;
 }
 
-rtError pxText::setDropShadowOffsetY(float y) {
+rtError pxText::setDropShadowOffsetY(float y) 
+{
   mDropShadowOffsetY = y;
   updateShadowParams();
   return RT_OK;
 }
 
-rtError pxText::setDropShadowBlur(float b) {
+rtError pxText::setDropShadowBlur(float b) 
+{
   mDropShadowBlur = b;
   updateShadowParams();
   return RT_OK;
 }
 
-rtError pxText::setStrokeWidth(float w) {
+rtError pxText::setStrokeWidth(float w) 
+{
   mStrokeWidth = w;
-  if (getFontResource()->isFontLoaded()) {
+  if (getFontResource()->isFontLoaded()) 
+  {
     createNewPromise();
     getFontResource()->setOutlineSize(mStrokeWidth);
   }
@@ -241,7 +253,8 @@ void pxText::update(double t)
   
 }
 
-void pxText::draw() {
+void pxText::draw() 
+{
   static pxTextureRef nullMaskRef;
   if( getFontResource()->isFontLoaded())
   {

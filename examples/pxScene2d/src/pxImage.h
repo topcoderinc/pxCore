@@ -35,9 +35,10 @@ public:
   rtProperty(stretchX, stretchX, setStretchX, int32_t);
   rtProperty(stretchY, stretchY, setStretchY, int32_t);
   rtProperty(resource, resource, setResource, rtObjectRef);
-  
+  rtProperty(uvs, uvs, setUvs , rtObjectRef);
+
   pxImage(pxScene2d* scene) : pxObject(scene),mStretchX(pxConstantsStretch::NONE),mStretchY(pxConstantsStretch::NONE), 
-    imageLoaded(false), mListenerAdded(false)
+    imageLoaded(false), mListenerAdded(false) , mUvs(NULL)
   { 
     mw = -1;
     mh = -1;
@@ -63,6 +64,24 @@ public:
   rtError resource(rtObjectRef& o) const { /*rtLogDebug("!!!!!!!!!!!!!!!!!!!!!!!pxImage getResource\n");*/o = mResource; return RT_OK; }
   rtError setResource(rtObjectRef o);
 
+  rtError uvs(rtObjectRef & /*uvs*/) const { return RT_OK; }
+
+  rtError setUvs(rtObjectRef uvs) {
+    if (mUvs != NULL ){
+      free(mUvs);
+    }
+    uint32_t len = uvs.get<uint32_t>("length"); 
+    if(len != 8 ){
+      rtLogError("uvs length must be 8");
+      return RT_ERROR;
+    }
+    mUvs = (float*) malloc( sizeof(float) * 8);
+    for (uint32_t i = 0; i < len; i++) {
+      mUvs[i] = uvs.get<float>(i);
+    }
+    return RT_OK;
+  }
+
   virtual void resourceReady(rtString readyResolution);
   //virtual bool onTextureReady(pxTextureCacheObject* textureCacheObject) {return true;}
   // !CLF: To Do: These names are terrible... find better ones!
@@ -81,6 +100,7 @@ protected:
   pxConstantsStretch::constants mStretchY;
   rtObjectRef mResource;
   
+  float * mUvs;
   bool imageLoaded;
   bool mListenerAdded;
 };

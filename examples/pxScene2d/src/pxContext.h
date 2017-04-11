@@ -136,7 +136,8 @@ class pxContext {
   void drawImage(float x, float y, float w, float h, pxTextureRef t,
                  pxTextureRef mask, bool useTextureDimsAlways = true, float* color = NULL,
                  pxConstantsStretch::constants xStretch = pxConstantsStretch::STRETCH,
-                 pxConstantsStretch::constants yStretch = pxConstantsStretch::STRETCH );
+                 pxConstantsStretch::constants yStretch = pxConstantsStretch::STRETCH,
+                 float * uvs = NULL);
 
   /**
    * draw text image

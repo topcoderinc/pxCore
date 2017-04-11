@@ -163,9 +163,15 @@ static const char *fTextureMaskedShaderText =
   "varying vec2 v_uv;"
   "void main()"
   "{"
-  "  float a = u_alpha * texture2D(s_mask, v_uv).a;"
-  "  gl_FragColor = texture2D(s_texture, v_uv) * a;"
+     "  vec2 text = abs( v_uv - 0.5 );"
+     "  text = step(0.5, text);"
+     "  float clip = 1.0 - max(text.y, text.x);"
+     "  vec4 original = texture2D(s_texture, v_uv);"
+     "  vec4 masky = texture2D(s_mask, v_uv);"
+     "  original *= (masky.r * masky.a * u_alpha * clip);"
+     "  gl_FragColor = original;"
   "}";
+
 
 // assume premultiplied
 static const char *fATextureShaderText =
@@ -178,13 +184,12 @@ static const char *fATextureShaderText =
   "varying vec2 v_uv;"
   "uniform vec2 u_resolution;"
   "uniform vec4 u_dirColor;"
-  "uniform float blurRadius;"
   "void main()"
   "{"
-    "  vec4 col;"
-    "  float lp = v_uv.y;"
-    "  col = u_dirColor * (1.0-lp) + a_color*lp;"
-    "  float a = u_alpha *  texture2D(s_texture, v_uv).a;"
+  "  vec4 col;"
+  "  float lp = v_uv.y;"
+  "  col = u_dirColor * (1.0-lp) + a_color*lp;"
+  "  float a = u_alpha *  texture2D(s_texture, v_uv).a;"
   "  gl_FragColor = col*a;"
   "}";
 
@@ -209,14 +214,13 @@ static const char *fTextOutlineShaderText =
   "  vec4 sample = texture2D(s_texture, uv);"
   "  float fontAlpha = sample.a;"
   "  float outlineAlpha = sample.r; "
-  "  if ((fontAlpha + outlineAlpha) > 0.0){"
-  "      vec4 color =  col * fontAlpha + u_effectColor * (1.0 - fontAlpha);"
-  "      return vec4( color.rgb,color.a*u_alpha);"
-   // "      return vec4( color.rgb,max(fontAlpha,outlineAlpha)*color.a*u_alpha);"
-  // "      return vec4( color.rgb,max(fontAlpha,outlineAlpha)*u_alpha);"
+  "  if ((fontAlpha + outlineAlpha) > 0.0)"
+  "  {"
+  "    vec4 color =  col * fontAlpha + u_effectColor * (1.0 - fontAlpha);"
+  "    return vec4( color.rgb, u_alpha);"
   "  }"
   "  else {"
-  "      return vec4(0.0,0.0,0.0,0.0);"
+  "    return vec4(0.0,0.0,0.0,0.0);"
   "  }"
   "}"
   "void main()"
@@ -237,26 +241,25 @@ static const char *fTextureBlurShaderText =
   "uniform float u_blurRadius;"
   "vec4 blur(vec2 p)"
   "{"
-    "vec4 col = vec4(0);"
-    "vec2 unit = 1.0 / u_resolution.xy;"
-    "float count = 0.0;"
-    "float r = u_blurRadius;"
-    "for(float x = -r; x <= r; x += 1.0)"
-    "{"
-      "for(float y = -r; y <= r; y += 1.0)"
-      "{"
-          "float weight = (r- abs(x)) * (r- abs(y));"
-          "col += texture2D(s_texture, p + vec2(x * unit.x, y * unit.y)) * weight;"
-          "count += weight;"
-      "}"
-    "}"
-    "return col / count;"
+  "  vec4 col = vec4(0);"
+  "  vec2 unit = 1.0 / u_resolution.xy;"
+  "  float count = 0.0;"
+  "  float r = u_blurRadius;"
+  "  for (float x = -r; x <= r; x += 1.0)"
+  "  {"
+  "    for (float y = -r; y <= r; y += 1.0)"
+  "    {"
+  "      float weight = (r- abs(x)) * (r- abs(y));"
+  "      col += texture2D(s_texture, p + vec2(x * unit.x, y * unit.y)) * weight;"
+  "      count += weight;"
+  "    }"
+  "  }"
+  "  return col / count;"
   "}"
   "void main()"
   "{"
-    "  float a = u_alpha *  blur(v_uv).a;"
-    // "  gl_FragColor = vec4(a_color.rgb, a_color.a*a);"
-    "  gl_FragColor = vec4(a_color.rgb, a);"
+  "  float a = u_alpha *  blur(v_uv).a;"
+  "  gl_FragColor = vec4(a_color.rgb, a);"
   "}";
 
 
@@ -277,37 +280,37 @@ static const char *fTextureBlurForOutlineShaderText =
   "  vec4 sample = texture2D(s_texture, uv);"
   "  float fontAlpha = sample.a;"
   "  float outlineAlpha = sample.r; "
-  "  if ((fontAlpha + outlineAlpha) > 0.0){"
-  "      float a = max(fontAlpha,outlineAlpha);"
-  "      return vec4( a_color.rgb, a);"
-  // "      return vec4( a_color.rgb, a_color.a*a);"
+  "  if ((fontAlpha + outlineAlpha) > 0.0)"
+  "  {"
+  "    float a = max(fontAlpha,outlineAlpha);"
+  "    return vec4( a_color.rgb, a);"
   "  }"
-  "  else {"
-  "      return vec4(0.0,0.0,0.0,0.0);"
+  "  else"
+  "  {"
+  "    return vec4(0.0,0.0,0.0,0.0);"
   "  }"
   "}"
   "vec4 blur(vec2 p)"
   "{"
-    "vec4 col = vec4(0);"
-    "vec2 unit = 1.0 / u_resolution.xy;"
-    "float count = 0.0;"
-    "float r = u_blurRadius;"
-    "for(float x = -r; x <= r; x += 1.0)"
-    "{"
-      "for(float y = -r; y <= r; y += 1.0)"
-      "{"
-          "float weight = (r- abs(x)) * (r- abs(y));"
-          "col += posColor(p + vec2(x * unit.x, y * unit.y)) * weight;"
-          "count += weight;"
-      "}"
-    "}"
-    "return col / count;"
+  "  vec4 col = vec4(0);"
+  "  vec2 unit = 1.0 / u_resolution.xy;"
+  "  float count = 0.0;"
+  "  float r = u_blurRadius;"
+  "  for (float x = -r; x <= r; x += 1.0)"
+  "  {"
+  "    for (float y = -r; y <= r; y += 1.0)"
+  "    {"
+  "      float weight = (r- abs(x)) * (r- abs(y));"
+  "      col += posColor(p + vec2(x * unit.x, y * unit.y)) * weight;"
+  "      count += weight;"
+  "    }"
+  "  }"
+  "  return col / count;"
   "}"
   "void main()"
   "{"
-    "  float a = u_alpha *  blur(v_uv).a;"
-    "  gl_FragColor = vec4(a_color.rgb, a);"
-    // "  gl_FragColor = vec4(a_color.rgb, a_color.a*a);"
+  "  float a = u_alpha *  blur(v_uv).a;"
+  "  gl_FragColor = vec4(a_color.rgb, a);"
   "}";
 
 
@@ -1018,7 +1021,7 @@ public:
 
   ~pxTextureAlpha()
   {
-    if(mBuffer)
+    if (mBuffer)
     {
       free(mBuffer);
     }
@@ -1032,7 +1035,7 @@ public:
       deleteTexture();
     }
 
-    if(iw == 0 || ih == 0)
+    if (iw == 0 || ih == 0)
     {
       rtLogError("pxTextureAlpha::createAlphaTexture() - DIMENSIONLESS ");
       return; // DIMENSIONLESS
@@ -1043,51 +1046,36 @@ public:
     mDrawHeight  = h;
     mImageWidth  = iw;
     mImageHeight = ih;
-//    glActiveTexture(GL_TEXTURE1);
+    
 
+    glBindTexture(GL_TEXTURE_2D, mTextureId);   TRACK_TEX_CALLS();
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, PX_TEXTURE_MIN_FILTER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, PX_TEXTURE_MAG_FILTER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    uint32_t channelNum = 1;
+    GLenum format = GL_ALPHA;
     if (mTextureType == PX_TEXTURE_ALPHA_88)
     {
-      glBindTexture(GL_TEXTURE_2D, mTextureId);   TRACK_TEX_CALLS();
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, PX_TEXTURE_MIN_FILTER);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, PX_TEXTURE_MAG_FILTER);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-      glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_ALPHA,
-        iw,
-        ih,
-        0,
-        GL_ALPHA,
-        GL_UNSIGNED_SHORT,
-        mBuffer
-      );
-      context.adjustCurrentTextureMemorySize(iw*ih*2);
-    }
-    else
-    {
-      glBindTexture(GL_TEXTURE_2D, mTextureId);   TRACK_TEX_CALLS();
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, PX_TEXTURE_MIN_FILTER);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, PX_TEXTURE_MAG_FILTER);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-      glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_ALPHA,
-        iw,
-        ih,
-        0,
-        GL_ALPHA,
-        GL_UNSIGNED_BYTE,
-        mBuffer
-      );
-      context.adjustCurrentTextureMemorySize(iw*ih);
+      channelNum = 2;
+      format = GL_LUMINANCE_ALPHA;
     }
 
+    glPixelStorei(GL_UNPACK_ALIGNMENT, channelNum);
+    glTexImage2D(
+      GL_TEXTURE_2D,
+      0,
+      format,
+      iw,
+      ih,
+      0,
+      format,
+      GL_UNSIGNED_BYTE,
+      mBuffer
+    );
+
+    context.adjustCurrentTextureMemorySize(iw*ih*channelNum);
 
     mInitialized = true;
   }
@@ -1342,7 +1330,6 @@ protected:
     mMatrixLoc = getUniformLocation("amymatrix");
     mColorLoc = getUniformLocation("a_color");
     mAlphaLoc = getUniformLocation("u_alpha");
-    mBlurRadiusLoc = getUniformLocation("blurRadius");
     mTextureLoc = getUniformLocation("s_texture");
     mDirColorLoc = getUniformLocation("u_dirColor");
   }
@@ -1362,7 +1349,6 @@ public:
     }
 
     glUniform2f(mResolutionLoc, resW, resH);
-    glUniform1f(mBlurRadiusLoc, 10);
 
     glUniformMatrix4fv(mMatrixLoc, 1, GL_FALSE, matrix);
     glUniform1f(mAlphaLoc, alpha);
@@ -1395,8 +1381,6 @@ private:
   GLint mColorLoc;
   GLint mAlphaLoc;
   GLint mDirColorLoc;
-
-  GLint mBlurRadiusLoc;
 
   GLint mTextureLoc;
 
@@ -1550,7 +1534,7 @@ private:
   GLint mDirColorLoc;
   GLint mTextureLoc;
 
-}; //CLASS - textureShaderProgram
+}; //CLASS - textOutlineShaderProgram
 
 textOutlineShaderProgram *gTextOutlineShader = NULL;
 //====================================================================================================================================================================================
@@ -1624,7 +1608,7 @@ private:
 
   GLint mTextureLoc;
 
-}; //CLASS - textureShaderProgram
+}; //CLASS - textureBlurShaderProgram
 
 textureBlurShaderProgram *gTextureBlurShader = NULL;
 textureBlurShaderProgram *gTextureBlurForOutlineShader = NULL;
@@ -1743,7 +1727,7 @@ static void drawRectOutline(GLfloat x, GLfloat y, GLfloat w, GLfloat h, GLfloat 
   int count = 0;
 
   auto makeRadiusPoints = [&](float cx, float cy, int start, int end, int step) {
-    for(int i = start ; i <= end ; i += step){
+    for (int i = start ; i <= end ; i += step){
       GLfloat innerRadius = radius - lw;
       if (innerRadius < 0) {
         innerRadius = 0;
@@ -1829,14 +1813,15 @@ static void drawRectWithRounded(GLfloat x, GLfloat y, GLfloat w, GLfloat h, cons
 static void drawImageTexture(float x, float y, float w, float h, pxTextureRef texture,
                              pxTextureRef mask, bool useTextureDimsAlways, float* color, // default: "color = BLACK"
                              pxConstantsStretch::constants xStretch,
-                             pxConstantsStretch::constants yStretch)
+                             pxConstantsStretch::constants yStretch,
+                             float * uvs)
 {
   // args are tested at call site...
 
   float iw = texture->width();
   float ih = texture->height();
 
-  if( useTextureDimsAlways)
+  if (useTextureDimsAlways)
   {
       w = iw;
       h = ih;
@@ -1893,13 +1878,14 @@ static void drawImageTexture(float x, float y, float w, float h, pxTextureRef te
   float firstTextureY  = 1.0;
   float secondTextureY = 1.0-th;
 
-  const float uv[4][2] =
+  const float normalUv[4][2] =
   {
     { 0,  firstTextureY  },
     { tw, firstTextureY  },
     { 0,  secondTextureY },
     { tw, secondTextureY }
   };
+  float * uv = uvs == NULL ? (float *)normalUv : uvs;
 
   float colorPM[4];
   premultiply(colorPM,color);
@@ -1948,7 +1934,7 @@ static void drawLabelImageTexture(float x, float y, float w, float h, pxTextureR
   float iw = texture->width();
   float ih = texture->height();
 
-  if( useTextureDimsAlways)
+  if (useTextureDimsAlways)
   {
       w = iw;
       h = ih;
@@ -1983,7 +1969,8 @@ static void drawLabelImageTexture(float x, float y, float w, float h, pxTextureR
     { tw, secondTextureY }
   };
 
-  if(gradientColor == nullptr || gradientColor[3] <= 0.01){
+  if (gradientColor == nullptr || gradientColor[3] <= 0.01)
+  {
     gradientColor = color;
   }
 
@@ -1994,19 +1981,17 @@ static void drawLabelImageTexture(float x, float y, float w, float h, pxTextureR
   float gradientColorPM[4];
   premultiply(gradientColorPM, gradientColor);
 
-  if (strokeColor && strokeColor[3] > 0) {
-
+  if (strokeColor && strokeColor[3] > 0) 
+  {
     float strokeColorPM[4];
     premultiply(strokeColorPM, strokeColor);
     // rtLogInfo("render info outline %u %u [%f,%f,%f,%f], [%f,%f,%f,%f] \n", gResW, gResH, colorPM[0],colorPM[1],colorPM[2],colorPM[3],gradientColorPM[0],gradientColorPM[1],gradientColorPM[2],gradientColorPM[3]);
-    if (gTextOutlineShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv,
-                                 texture, colorPM, gradientColorPM, strokeColorPM) != PX_OK) {
-    }
-  } else {
+    gTextOutlineShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv, texture, colorPM, gradientColorPM, strokeColorPM);
+  }
+  else 
+  {
     // rtLogInfo("render info normal %u %u [%f,%f,%f,%f]\n", gResW, gResH, colorPM[0],colorPM[1],colorPM[2],colorPM[3]);
-    if (gATextureShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv, texture, colorPM, gradientColorPM) !=
-        PX_OK) {
-    }
+    gATextureShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv, texture, colorPM, gradientColorPM);
   }
 }
 
@@ -2018,7 +2003,7 @@ static void drawTextureImageShadow(float x, float y, float w, float h, pxTexture
   float iw = texture->width();
   float ih = texture->height();
 
-  if( useTextureDimsAlways)
+  if (useTextureDimsAlways)
   {
       w = iw;
       h = ih;
@@ -2058,11 +2043,13 @@ static void drawTextureImageShadow(float x, float y, float w, float h, pxTexture
   float shadowColorPM[4];
   premultiply(shadowColorPM, shadowColor);
 
-  if (texture->getType() == PX_TEXTURE_ALPHA_88) {
+  if (texture->getType() == PX_TEXTURE_ALPHA_88) 
+  {
     if (gTextureBlurForOutlineShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv, texture, blur, shadowColorPM) != PX_OK) {
       drawRect2(0, 0, iw, ih, blackColor);
     }
-  } else {
+  } else 
+  {
     if (gTextureBlurShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv, texture, blur, shadowColorPM) !=
         PX_OK) {
       drawRect2(0, 0, iw, ih, blackColor);
@@ -2270,7 +2257,7 @@ void pxContext::init()
   glEnable(GL_BLEND);
 
   // assume non-premultiplied for now...
-//  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 // non-premultiplied
 //  glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 //  glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -2483,20 +2470,20 @@ void pxContext::drawRect(float w, float h, float lineWidth, float* fillColor, fl
 #endif
 
   // TRANSPARENT / DIMENSIONLESS
-  if(gAlpha == 0.0 || w <= 0.0 || h <= 0.0)
+  if (gAlpha == 0.0 || w <= 0.0 || h <= 0.0)
   {
     return;
   }
 
   // COLORLESS
-  if(fillColor == NULL && lineColor == NULL)
+  if (fillColor == NULL && lineColor == NULL)
   {
     //rtLogError("cannot drawRect() on context surface because colors are NULL");
     return;
   }
 
   // Fill ...
-  if(fillColor != NULL && fillColor[3] > 0.0) // with non-transparent color
+  if (fillColor != NULL && fillColor[3] > 0.0) // with non-transparent color
   {
 
     float half = lineWidth / 2;
@@ -2508,7 +2495,7 @@ void pxContext::drawRect(float w, float h, float lineWidth, float* fillColor, fl
   }
 
   // Frame ...
-  if(lineColor != NULL && lineColor[3] > 0.0 && lineWidth > 0) // with non-transparent color and non-zero stroke
+  if (lineColor != NULL && lineColor[3] > 0.0 && lineWidth > 0) // with non-transparent color and non-zero stroke
   {
     drawRectOutline(0, 0, w, h, lineWidth, lineColor, radius, false);
   }
@@ -2526,7 +2513,7 @@ void pxContext::drawImage9(float w, float h, float x1, float y1,
 #endif
 
   // TRANSPARENT / DIMENSIONLESS 
-  if(gAlpha == 0.0 || w <= 0.0 || h <= 0.0)
+  if (gAlpha == 0.0 || w <= 0.0 || h <= 0.0)
   {
     return;
   }
@@ -2544,7 +2531,8 @@ void pxContext::drawImage(float x, float y, float w, float h,
                           pxTextureRef t, pxTextureRef mask,
                           bool useTextureDimsAlways, float* color,
                           pxConstantsStretch::constants stretchX,
-                          pxConstantsStretch::constants stretchY)
+                          pxConstantsStretch::constants stretchY,
+                          float * uvs)
 {
 #ifdef DEBUG_SKIP_IMAGE
 #warning "DEBUG_SKIP_IMAGE enabled ... Skipping "
@@ -2552,7 +2540,7 @@ void pxContext::drawImage(float x, float y, float w, float h,
 #endif
 
   // TRANSPARENT / DIMENSIONLESS 
-  if(gAlpha == 0.0 || w <= 0.0 || h <= 0.0)
+  if (gAlpha == 0.0 || w <= 0.0 || h <= 0.0)
   {
     return;
   }
@@ -2565,7 +2553,7 @@ void pxContext::drawImage(float x, float y, float w, float h,
 
   float black[4] = {0,0,0,1};
   drawImageTexture(x, y, w, h, t, mask, useTextureDimsAlways,
-                  color? color : black, stretchX, stretchY);
+                  color? color : black, stretchX, stretchY, uvs);
 }
 
 void pxContext::drawLabelImage(float x, float y, float w, float h, pxTextureRef t,
@@ -2699,7 +2687,7 @@ void pxContext::drawPolygon(GLfloat *verts, int count, float lineWidth, float *f
     free(extrude);
   }
 
-  if(fillColor[4] > 0){  // draw solid polygon
+  if (fillColor[4] > 0){  // draw solid polygon
     premultiply(colorPM,fillColor);
     gSolidShader->draw(gResW,gResH,gMatrix.data(),gAlpha,GL_TRIANGLES,verts,count,colorPM);
   }
@@ -2716,14 +2704,14 @@ void pxContext::drawDiagRect(float x, float y, float w, float h, float* color)
   if (!mShowOutlines) return;
 
   // TRANSPARENT / DIMENSIONLESS 
-  if(gAlpha == 0.0 || w <= 0.0 || h <= 0.0)
+  if (gAlpha == 0.0 || w <= 0.0 || h <= 0.0)
   {
     rtLogError("cannot drawDiagRect() - width/height/gAlpha cannot be Zero.");
     return;
   }
 
   // COLORLESS
-  if(color == NULL || color[3] == 0.0)
+  if (color == NULL || color[3] == 0.0)
   {
     return;
   }
@@ -2753,12 +2741,12 @@ void pxContext::drawDiagLine(float x1, float y1, float x2, float y2, float* colo
 
   if (!mShowOutlines) return;
 
-  if(gAlpha == 0.0)
+  if (gAlpha == 0.0)
   {
     return; // TRANSPARENT
   }
 
-  if(color == NULL || color[3] == 0.0)
+  if (color == NULL || color[3] == 0.0)
   {
     return; // COLORLESS
   }

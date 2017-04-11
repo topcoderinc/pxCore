@@ -208,9 +208,9 @@ public:
 protected:
   // Implementation for pxResource virtuals
   virtual bool loadResourceData(rtFileDownloadRequest* fileDownloadRequest);
-  rtError dealBold(uint32_t &offsetX, uint32_t &offsetY);
-  rtError dealItalic(FT_GlyphSlot& g);
-  unsigned char* dealShadow(GlyphCacheEntry* entry, unsigned char* data, uint32_t &outW, uint32_t &outH);
+  rtError applyBold(uint32_t &offsetX, uint32_t &offsetY);
+  rtError applyItalic(FT_GlyphSlot& g);
+  unsigned char* applyShadow(GlyphCacheEntry* entry, unsigned char* data, uint32_t &outW, uint32_t &outH);
 
 
 private:
