@@ -7,8 +7,10 @@
 #include "pxScene2d.h"
 
 using std::vector;
+#define MAX_VERT_NUMBER 4096 // max support 2048 points
 
-class pxGraphic: public pxObject {
+class pxGraphic: public pxObject 
+{
 public:
   rtDeclareObject(pxGraphic, pxObject);
   rtProperty(fillColor, fillColor, setFillColor, uint32_t);
@@ -24,10 +26,17 @@ public:
 
   rtError points(rtObjectRef & /*pts*/) const { return RT_OK; }
 
-  rtError setPoints(rtObjectRef pts) {
+  rtError setPoints(rtObjectRef pts) 
+  {
     this->mVertNumber = 0;
     uint32_t len = pts.get<uint32_t>("length");
-    for (uint32_t i = 0; i < len; i++) {
+    if (len > MAX_VERT_NUMBER)
+    {
+      len = MAX_VERT_NUMBER;
+      rtLogError("max support %ud points!!!", MAX_VERT_NUMBER/2 );
+    }
+    for (uint32_t i = 0; i < len; i++) 
+    {
       float v = pts.get<float>(i);
       this->mVerts[i] = v;
     }
@@ -37,7 +46,8 @@ public:
 
   rtError type(rtString & /*type*/) const { return RT_OK; }
 
-  rtError setType(rtString t) {
+  rtError setType(rtString t) 
+  {
     strcpy(mType, t.cString());
     return RT_OK;
   }
@@ -116,7 +126,7 @@ private:
   float mLineColor[4];
   float mLineWidth;
   char  mType[32];
-  float mVerts[4096];  // max support 2048 points
+  float mVerts[MAX_VERT_NUMBER];  
   uint32_t mVertNumber;
 };
 

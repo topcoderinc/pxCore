@@ -156,7 +156,7 @@ public:
     
   // FT Face related functions
   void setPixelSize(uint32_t s);  
-  unsigned char * getGlyphBitmapWithOutline(unsigned short theChar, FT_BBox &bbox);
+  unsigned char* getGlyphBitmapWithOutline(unsigned short theChar, FT_BBox &bbox);
   const GlyphCacheEntry* getGlyph(uint32_t codePoint);  
   void getMetrics(uint32_t size, float& height, float& ascender, float& descender, float& naturalLeading);
   void getHeight(uint32_t size, float& height);
@@ -216,7 +216,7 @@ protected:
 private:
   void loadResourceFromFile();
   rtError init(const char* n);
-  rtError init(const FT_Byte*  fontData, FT_Long size, const char* n , FT_Long outlineSize = 0); 
+  rtError init(const FT_Byte* fontData, FT_Long size, const char* n , FT_Long outlineSize = 0); 
 
   // FreeType font info
   uint32_t mFontId;

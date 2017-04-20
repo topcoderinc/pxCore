@@ -94,7 +94,7 @@ class pxContext {
   void setSize(int w, int h);
   void getSize(int& w, int& h);
   void clear(int w, int h);
-  void clear(int w, int h, float *fillColor );
+  void clear(int w, int h, float* fillColor );
   void clear(int left, int top, int width, int height);
   void enableClipping(bool enable);
 
@@ -137,7 +137,7 @@ class pxContext {
                  pxTextureRef mask, bool useTextureDimsAlways = true, float* color = NULL,
                  pxConstantsStretch::constants xStretch = pxConstantsStretch::STRETCH,
                  pxConstantsStretch::constants yStretch = pxConstantsStretch::STRETCH,
-                 float * uvs = NULL);
+                 float* uvs = NULL);
 
   /**
    * draw text image
@@ -147,12 +147,13 @@ class pxContext {
    * @param h
    * @param t
    * @param useTextureDimsAlways
+   * @param lineHeight
    * @param color
    * @param gradientColor
    * @param strokeColor
    */
-  void drawLabelImage(float x, float y, float w, float h, pxTextureRef t, bool useTextureDimsAlways = true,
-                      float *gradientColor = NULL, float *dirColor = NULL, float *strokeColor = NULL);
+  void drawLabelImage(float x, float y, float w, float h, pxTextureRef t, float bitmapBottom, float lineHeight, bool useTextureDimsAlways = true,
+                      float* gradientColor = NULL, float* dirColor = NULL, float* strokeColor = NULL);
 
   /**
    * draw texture shadow
@@ -166,7 +167,7 @@ class pxContext {
    * @param showColor
    */
   void drawTextureShadow(float x, float y, float w, float h, pxTextureRef t, bool useTextureDimsAlways = true,
-                      float blur = 4, float *shadowColor = NULL);
+                      float blur = 4, float* shadowColor = NULL);
 
 
   void drawImage9(float w, float h, float x1, float y1,
@@ -181,7 +182,7 @@ class pxContext {
    * @param fillColor the fill color
    * @param lineColor  the line color
    */
-  void drawPolygon(GLfloat *verts, int count, float lineWidth, float *fillColor, float *lineColor);
+  void drawPolygon(GLfloat* verts, int count, float lineWidth, float* fillColor, float* lineColor);
 
   /**
    * draw lines
@@ -190,7 +191,7 @@ class pxContext {
    * @param lineColor the lines color
    * @param lineWidth  the lines width
    */
-  void drawLines(GLfloat * verts ,int count, float * lineColor , float lineWidth);
+  void drawLines(GLfloat* verts ,int count, float* lineColor , float lineWidth);
 
 // Only use for debug/diag purposes not for normal rendering
   void drawDiagRect(float x, float y, float w, float h, float* color);

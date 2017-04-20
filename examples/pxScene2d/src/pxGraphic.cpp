@@ -4,7 +4,8 @@
 
 extern pxContext context;
 
-pxGraphic::pxGraphic(pxScene2d *scene) : pxObject(scene), mLineWidth(0) {
+pxGraphic::pxGraphic(pxScene2d *scene) : pxObject(scene), mLineWidth(0) 
+{
   float f[4] = {0, 0, 0, 1};
   float l[4] = {1, 1, 1, 1};
 
@@ -12,27 +13,36 @@ pxGraphic::pxGraphic(pxScene2d *scene) : pxObject(scene), mLineWidth(0) {
   setLineColor(l);
 }
 
-void pxGraphic::draw() {
+void pxGraphic::draw() 
+{
 
-  if (!strcmp(mType, "lines")) {
-    if (mLineWidth <= 0) {
+  if (!strcmp(mType, "lines")) 
+  {
+    if (mLineWidth <= 0) 
+    {
       return;
     }
     drawLines();
-  } else if (!strcmp(mType, "polygon")) {
+  } 
+  else if (!strcmp(mType, "polygon"))
+  {
     drawPolygon();
   }
 }
 
-void pxGraphic::drawLines() {
-  if (mVertNumber < 2) {
+void pxGraphic::drawLines() 
+{
+  if (mVertNumber < 2) 
+  {
     return;
   }
   context.drawLines(mVerts,mVertNumber,mLineColor,mLineWidth);
 }
 
-void pxGraphic::drawPolygon() {
-  if (mVertNumber < 3) {
+void pxGraphic::drawPolygon() 
+{
+  if (mVertNumber < 3) 
+  {
     return;
   }
   context.drawPolygon(mVerts, mVertNumber, mLineWidth, mFillColor, mLineColor);

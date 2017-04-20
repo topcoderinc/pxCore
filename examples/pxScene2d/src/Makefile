@@ -104,7 +104,8 @@ PX_SRCS_FULL=\
   pxImage9.cpp \
   pxImageA.cpp \
   pxArchive.cpp \
-  pxGraphic.cpp
+  pxGraphic.cpp \
+  pxRenderTexture.cpp 
 
 EXTDIR=../external
 PXCOREDIR=../../..
@@ -238,7 +239,8 @@ PXSCENE_LIB_SRCS=\
   pxImageA.cpp \
   pxArchive.cpp \
   pxFont.cpp \
-  pxGraphic.cpp
+  pxGraphic.cpp \
+  pxRenderTexture.cpp 
 
 ifneq ($(PX_PLATFORM),PX_PLATFORM_GENERIC_DFB)
 PXSCENE_LIB_SRCS += pxContextGL.cpp 

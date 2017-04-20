@@ -94,6 +94,7 @@ FT_Library ft;
 uint32_t gFontId = 0;
 
 const float BOLD_ADD_RATE = 0.04f;
+const float BOLD_ADD_RATE_YX = 0.6f;
 const float ITALIC_ADD_RATE = 0.21f;
 
 pxFont::pxFont(rtString fontUrl)
@@ -224,7 +225,7 @@ void pxFont::setOutlineSize(uint32_t size )
     {
       FT_Stroker_New(ft, &mStroker);
       FT_Stroker_Set(mStroker,
-          (int)(mOutlineSize * 24),
+          (int)(mOutlineSize * 32),
           FT_STROKER_LINECAP_ROUND,
           FT_STROKER_LINEJOIN_ROUND,
           0);
@@ -260,13 +261,9 @@ void pxFont::setPixelSize(uint32_t s)
 {
   if (mPixelSize != s && mInitialized)
   {
-    //rtLogDebug("pxFont::setPixelSize size=%d mPixelSize=%d mInitialized=%d and mFace=%d\n", s,mPixelSize,mInitialized, mFace);
-    // FT_Set_Pixel_Sizes(mFace, 0, s);
     int dpi = 72;
     int fontSizePoints = (int)(64.f * s);
     FT_Set_Char_Size(mFace, fontSizePoints, fontSizePoints, dpi, dpi);
-    // return RT_FAIL;
-
 
     mPixelSize = s;
   }
@@ -295,7 +292,8 @@ void pxFont::getMetrics(uint32_t size, float& height, float& ascender, float& de
     rtLogWarn("Font getMetrics called on font before it is initialized\n");
     return;
   }
-  if (!size) {
+  if (!size) 
+  {
     rtLogWarn("Font getMetrics called with pixelSize=0\n");
   }
   
@@ -323,14 +321,14 @@ unsigned char * pxFont::getGlyphBitmapWithOutline(unsigned short theChar, FT_BBo
         FT_Glyph_StrokeBorder(&glyph, mStroker, 0, 1);
         if (glyph->format == FT_GLYPH_FORMAT_OUTLINE)
         {
-          FT_Outline *outline = &reinterpret_cast<FT_OutlineGlyph>(glyph)->outline;
+          FT_Outline* outline = &reinterpret_cast<FT_OutlineGlyph>(glyph)->outline;
           if (mBold) {
             uint32_t k = (uint32_t)(mPixelSize*BOLD_ADD_RATE+1);
             k = (k%2)?(k+1):(k); // will add px
             FT_Pos xBold = k << 6; 
             FT_BBox oldBox;
-            FT_Outline_Get_CBox(outline , &oldBox);
-            FT_Outline_Embolden(outline, xBold);
+            FT_Outline_Get_CBox(outline, &oldBox);
+            FT_Outline_EmboldenXY(outline, xBold, xBold*BOLD_ADD_RATE_YX);
           }
 
           FT_Glyph_Get_CBox(glyph,FT_GLYPH_BBOX_GRIDFIT,&bbox);
@@ -374,7 +372,7 @@ rtError pxFont::applyBold(uint32_t &offsetX, uint32_t &offsetY)
     uint32_t k = (uint32_t)(mPixelSize*BOLD_ADD_RATE+1);
     k = (k%2)?(k+1):(k); // will add px
     xBold = k * 64; 
-    yBold = xBold;
+    yBold = xBold * BOLD_ADD_RATE_YX;
   }
   else
   {
@@ -386,10 +384,10 @@ rtError pxFont::applyBold(uint32_t &offsetX, uint32_t &offsetY)
   if (g->format == FT_GLYPH_FORMAT_OUTLINE)
   {
     FT_BBox oldBox;
-    FT_Outline_Get_CBox(&(g->outline) , &oldBox);
-    FT_Outline_Embolden(&(g->outline), xBold);
+    FT_Outline_Get_CBox(&(g->outline), &oldBox);
+    FT_Outline_EmboldenXY(&(g->outline), xBold, yBold);
     FT_BBox newBox;
-    FT_Outline_Get_CBox(&(g->outline) , &newBox);
+    FT_Outline_Get_CBox(&(g->outline), &newBox);
     xBold = (newBox.xMax - newBox.xMin) - (oldBox.xMax - oldBox.xMin);
     yBold = (newBox.yMax - newBox.yMin) - (oldBox.yMax - oldBox.yMin);
     offsetX = xBold;
@@ -397,11 +395,10 @@ rtError pxFont::applyBold(uint32_t &offsetX, uint32_t &offsetY)
   }
   else if (g->format == FT_GLYPH_FORMAT_BITMAP)
   {
-    FT_Bitmap_Embolden( ft, &(g->bitmap), xBold, yBold );
+    FT_Bitmap_Embolden(ft, &(g->bitmap), xBold, yBold);
     offsetX = xBold;
     offsetY = yBold;
   }
-  
   return RT_OK;
 }
 
@@ -420,7 +417,9 @@ rtError pxFont::applyItalic(FT_GlyphSlot& g)
   if (g->format == FT_GLYPH_FORMAT_OUTLINE)
   {
     FT_Outline_Transform(&g->outline, &matrix);
-  }else{
+  }
+  else
+  {
     FT_Set_Transform( mFace, &matrix, 0 );  
   }
   return RT_OK;
@@ -429,24 +428,34 @@ rtError pxFont::applyItalic(FT_GlyphSlot& g)
 
 unsigned char* pxFont::applyShadow(GlyphCacheEntry* entry, unsigned char* data, uint32_t &outW, uint32_t &outH)
 {  
-  if (mShadow && outW > 0 && outH > 0 ) 
+  if ((mShadow or mOutlineSize > 0 ) && outW > 0 && outH > 0 ) 
   {
-    uint32_t realOutW = outW + mShadowBlurRadio * 2;
-    uint32_t realOutH = outH + mShadowBlurRadio * 2;
+    uint32_t externPixels = 0;
+    if (mShadow)
+    {
+      externPixels = mShadowBlurRadio;
+    }
+    else
+    {
+      externPixels = 4;
+    }
+
+    uint32_t realOutW = outW + externPixels * 2;
+    uint32_t realOutH = outH + externPixels * 2;
     long index, index2;
     uint32_t bitSize = 1;
-    if (mOutlineSize > 0 ) 
+    if (mOutlineSize > 0)
     {
       bitSize = 2;
     }
-    unsigned char * blendImage = (unsigned char *) malloc( sizeof(unsigned char ) * realOutW * realOutH * bitSize);
+    unsigned char* blendImage = (unsigned char *) malloc(sizeof(unsigned char ) * realOutW * realOutH * bitSize);
 
     if (!blendImage) {
       return data;
     }
     memset(blendImage, 0, realOutW * realOutH * bitSize);
-    uint32_t px = mShadowBlurRadio;
-    uint32_t py = mShadowBlurRadio;
+    uint32_t px = externPixels;
+    uint32_t py = externPixels;
     for (long x = 0; x < outW; ++x)
     {
       for (long y = 0; y < outH; ++y)
@@ -455,8 +464,8 @@ unsigned char* pxFont::applyShadow(GlyphCacheEntry* entry, unsigned char* data, 
         index2 = x + (y * outW);
         if (bitSize == 2 ) 
         {
-          blendImage[2 * index] = data[2*index2];
-          blendImage[2 * index+1] = data[2*index2+1];
+          blendImage[2*index] = data[2*index2];
+          blendImage[2*index+1] = data[2*index2+1];
         }
         else{
           blendImage[index] = data[index2]; 
@@ -466,7 +475,7 @@ unsigned char* pxFont::applyShadow(GlyphCacheEntry* entry, unsigned char* data, 
 
     outW = realOutW;
     outH = realOutH;
-    entry->bitmap_top += mShadowBlurRadio;
+    entry->bitmap_top += externPixels;
     return blendImage;
   }
   return data;
@@ -489,23 +498,20 @@ const GlyphCacheEntry *pxFont::getGlyph(uint32_t codePoint)
   if (it != gGlyphCache.end()) 
   {
     return it->second;
-  } else {
-    uint32_t bitmapLeft = 0;
-    if (mItalic)
-    {
-      //load bitmap left
-      if (!FT_Load_Char(mFace, codePoint, FT_LOAD_RENDER))
-      {
-        bitmapLeft = mFace->glyph->bitmap_left;
-      }
-
-    }
-    if (FT_Load_Char(mFace, codePoint, FT_LOAD_NO_BITMAP))
+  } 
+  else 
+  {
+    //load bitmap left
+    if (FT_Load_Char(mFace, codePoint, FT_LOAD_RENDER))
     {
       return NULL;
     }
-    else 
+    else
     {
+      GlyphCacheEntry *entry = new GlyphCacheEntry;
+      uint32_t nBitmapLeft = mFace->glyph->bitmap_left;
+
+      FT_Load_Char(mFace, codePoint, FT_LOAD_NO_BITMAP);
       FT_GlyphSlot g = mFace->glyph;
 
       uint32_t offsetX = 0, offsetY = 0;
@@ -525,13 +531,21 @@ const GlyphCacheEntry *pxFont::getGlyph(uint32_t codePoint)
       outWidth = g->bitmap.width;
       outHeight = g->bitmap.rows;
 
-      GlyphCacheEntry *entry = new GlyphCacheEntry;
-
-      entry->bitmap_left = bitmapLeft ? bitmapLeft : g->bitmap_left;
+      entry->bitmap_left = g->bitmap_left;
       entry->bitmap_top = g->bitmap_top;
       entry->advancedotx = g->advance.x + offsetX;
       entry->advancedoty = g->advance.y + offsetY;
       entry->vertAdvance = g->metrics.vertAdvance + offsetX; // !CLF: Why vertAdvance? SHould only be valid for vert layout of text.
+
+      if (mItalic && (codePoint == 'U'))
+      {
+        entry->bitmap_left = nBitmapLeft;
+      }
+
+      if (codePoint == 58 or codePoint == 59)
+      {
+        entry->bitmap_left *= 0.5;
+      }
 
       if (mOutlineSize > 0)
       {
@@ -554,7 +568,6 @@ const GlyphCacheEntry *pxFont::getGlyph(uint32_t codePoint)
         long width = (g->metrics.width >> 6);
         long height = (g->metrics.height >> 6);
 
-
         long glyphMinX = x;
         long glyphMaxX = x + outWidth;
         long glyphMinY = -outHeight - y;
@@ -574,16 +587,13 @@ const GlyphCacheEntry *pxFont::getGlyph(uint32_t codePoint)
         long blendHeight = blendImageMaxY - MIN(outlineMinY, glyphMinY);
 
         float outlineScale = 0.5;
-        long outLineOffset = floor(mOutlineSize * outlineScale - 1 );
+        long outLineOffset = floor(mOutlineSize * outlineScale);
         x = blendImageMinX;
         y = -blendImageMaxY + outLineOffset;
 
         long index, index2;
-        unsigned char * blendImage = (unsigned char *) malloc( sizeof(unsigned char ) * blendWidth * blendHeight * 2);
+        unsigned char* blendImage = (unsigned char*) malloc(sizeof(unsigned char) * blendWidth * blendHeight * 2);
         memset(blendImage, 0, blendWidth * blendHeight * 2);
-
-        // long px = blendImageMinX > 0 ? blendImageMinX : 0;
-        // px = px + outlineWidth > blendWidth ? blendWidth - outlineWidth : px;
 
         long px = outlineMinX - blendImageMinX;
         long py = blendImageMaxY - outlineMaxY;
@@ -687,7 +697,8 @@ void pxFont::measureTextInternal(const char *text, uint32_t size, float sx, floa
     if (!entry)
       continue;
 
-    if (codePoint != '\n') {
+    if (codePoint != '\n') 
+    {
       lastCodeWidth = (entry->advancedotx >> 6) * sx;
       lw += lastCodeWidth;
     }
@@ -700,7 +711,7 @@ void pxFont::measureTextInternal(const char *text, uint32_t size, float sx, floa
   }
   if (mItalic)
   {
-    w += lastCodeWidth * ITALIC_ADD_RATE;
+    w += lastCodeWidth;
   }
   h *= sy;
 }
@@ -735,21 +746,23 @@ void pxFont::renderText(const char *text, uint32_t size, float x, float y, float
   }
 
   FT_Size_Metrics *metrics = &mFace->size->metrics;
+  float lineHeight = ((metrics->height >> 6) + strokeWidth) * sy;
 
   while ((codePoint = u8_nextchar((char *) text, &i)) != 0) 
   {
     const GlyphCacheEntry *entry = getGlyph(codePoint);
     if (!entry)
       continue;
-
+    float bitmapTop = entry->bitmap_top * sy;
     float x2 = x + entry->bitmap_left * sx;
-    float y2 = (y - entry->bitmap_top * sy - strokeWidth *sy) + (metrics->ascender >> 6);
+    float y2 = (y - bitmapTop - strokeWidth *sy) + (metrics->ascender >> 6);
     float w = entry->bitmapdotwidth * sx;
     float h = entry->bitmapdotrows * sy;
 
     if (codePoint != '\n') 
     {
-      if (x == 0) {
+      if (x == 0) 
+      {
         float c[4] = {0, 1, 0, 1};
         context.drawDiagLine(0, y + (metrics->ascender >> 6), mw,
                              y + (metrics->ascender >> 6), c);
@@ -757,14 +770,14 @@ void pxFont::renderText(const char *text, uint32_t size, float x, float y, float
       pxTextureRef texture = entry->mTexture;
       pxTextureRef nullImage;
 
-      if ( mShadow ) 
+      if (mShadow) 
       {  //render shadow first
         float shadowX = x2 + mShadowOffsetX;
         float shadowY = y2 + mShadowOffsetY;
         context.drawTextureShadow(shadowX, shadowY, w, h, texture, false, mShadowBlurRadio, mShadowColor);
       }
-      context.drawLabelImage(x2, y2, w, h, texture, false, color, gradientColor, strokeColor);
-
+      
+      context.drawLabelImage(x2, y2, w, h, texture, bitmapTop, lineHeight, false, color, gradientColor, strokeColor);
       x += (entry->advancedotx >> 6) * sx;
       // no change to y because we are not moving to next line yet
     } 
@@ -772,7 +785,7 @@ void pxFont::renderText(const char *text, uint32_t size, float x, float y, float
     {
       x = 0;
       // Use height to advance to next line
-      y += ((metrics->height >> 6 )+ strokeWidth ) * sy;
+      y += lineHeight;
     }
   }
 }
@@ -856,7 +869,8 @@ rtError pxFont::measureText(uint32_t pixelSize, rtString stringToMeasure, rtObje
     return RT_OK; // !CLF: TO DO - COULD RETURN RT_ERROR HERE TO CATCH NOT WAITING ON PROMISE
   } 
   
-  if (!pixelSize) {
+  if (!pixelSize) 
+  {
     rtLogWarn("Font measureText called with pixelSize=0\n");
   }    
   
@@ -904,12 +918,11 @@ rtRef <pxFont> pxFontManager::getFont(const char *url)
   } 
   else 
   {
-    FILE *fp = nullptr;
+    FILE* fp = nullptr;
     string urlString = string(url);
-    string newLocalTTF = string("fonts/") + urlString ;
-    int searchIndex = urlString.find_last_of(".ttf");
-    char * ttf = strchr(url,'.');
-    if(ttf == NULL)
+    string newLocalTTF = string("fonts/") + urlString;
+    char* ttf = strchr(url, '.ttf');
+    if (ttf == NULL)
     {
       newLocalTTF.append(".ttf");
     }

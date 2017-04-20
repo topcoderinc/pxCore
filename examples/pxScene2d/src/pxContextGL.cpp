@@ -163,13 +163,13 @@ static const char *fTextureMaskedShaderText =
   "varying vec2 v_uv;"
   "void main()"
   "{"
-     "  vec2 text = abs( v_uv - 0.5 );"
-     "  text = step(0.5, text);"
-     "  float clip = 1.0 - max(text.y, text.x);"
-     "  vec4 original = texture2D(s_texture, v_uv);"
-     "  vec4 masky = texture2D(s_mask, v_uv);"
-     "  original *= (masky.r * masky.a * u_alpha * clip);"
-     "  gl_FragColor = original;"
+  "  vec2 text = abs(v_uv - 0.5);"
+  "  text = step(0.5, text);"
+  "  float clip = 1.0 - max(text.y, text.x);"
+  "  vec4 original = texture2D(s_texture, v_uv);"
+  "  vec4 masky = texture2D(s_mask, v_uv);"
+  "  original *= (masky.r * masky.a * u_alpha * clip);"
+  "  gl_FragColor = original;"
   "}";
 
 
@@ -184,13 +184,15 @@ static const char *fATextureShaderText =
   "varying vec2 v_uv;"
   "uniform vec2 u_resolution;"
   "uniform vec4 u_dirColor;"
+  "uniform float u_gradientY;"
+  "uniform float u_gradientHeight;"
   "void main()"
   "{"
   "  vec4 col;"
-  "  float lp = v_uv.y;"
+  "  float lp = u_gradientY + v_uv.y * u_gradientHeight;"
   "  col = u_dirColor * (1.0-lp) + a_color*lp;"
   "  float a = u_alpha *  texture2D(s_texture, v_uv).a;"
-  "  gl_FragColor = col*a;"
+  "  gl_FragColor = col * a;"
   "}";
 
 
@@ -204,28 +206,33 @@ static const char *fTextOutlineShaderText =
   "varying vec2 v_uv;"
   "uniform float u_alpha;"
   "uniform vec4 u_effectColor;"
+  "uniform vec2 u_resolution;"
   "uniform vec4 a_color;"
   "uniform vec4 u_dirColor;"
+  "uniform float u_gradientY;"
+  "uniform float u_gradientHeight;"
   "vec4 posColor(vec2 uv)"
   "{"
   "  vec4 col;"
-  "  float lp = uv.y;"
-  "  col = u_dirColor * (1.0-lp) + a_color*lp;"
+  "  float lp = u_gradientY + uv.y * u_gradientHeight;"
+  "  col = u_dirColor * (1.0 - lp) + a_color * lp;"
   "  vec4 sample = texture2D(s_texture, uv);"
   "  float fontAlpha = sample.a;"
   "  float outlineAlpha = sample.r; "
   "  if ((fontAlpha + outlineAlpha) > 0.0)"
   "  {"
-  "    vec4 color =  col * fontAlpha + u_effectColor * (1.0 - fontAlpha);"
-  "    return vec4( color.rgb, u_alpha);"
+  "    vec4 color = col * fontAlpha + u_effectColor * (1.0 - fontAlpha);"
+  "    float a = max(fontAlpha, outlineAlpha);"
+  "    return color * a * u_alpha;"
   "  }"
-  "  else {"
-  "    return vec4(0.0,0.0,0.0,0.0);"
+  "  else"
+  "  {"
+  "    return vec4(0.0, 0.0, 0.0, 0.0);"
   "  }"
   "}"
   "void main()"
   "{"
-  "  gl_FragColor =  posColor(v_uv);"
+  "  gl_FragColor = posColor(v_uv);"
   "}";
 
 // assume premultiplied
@@ -282,12 +289,12 @@ static const char *fTextureBlurForOutlineShaderText =
   "  float outlineAlpha = sample.r; "
   "  if ((fontAlpha + outlineAlpha) > 0.0)"
   "  {"
-  "    float a = max(fontAlpha,outlineAlpha);"
-  "    return vec4( a_color.rgb, a);"
+  "    float a = max(fontAlpha, outlineAlpha);"
+  "    return a_color * a;"
   "  }"
   "  else"
   "  {"
-  "    return vec4(0.0,0.0,0.0,0.0);"
+  "    return vec4(0.0, 0.0, 0.0, 0.0);"
   "  }"
   "}"
   "vec4 blur(vec2 p)"
@@ -309,7 +316,7 @@ static const char *fTextureBlurForOutlineShaderText =
   "}"
   "void main()"
   "{"
-  "  float a = u_alpha *  blur(v_uv).a;"
+  "  float a = u_alpha * blur(v_uv).a;"
   "  gl_FragColor = vec4(a_color.rgb, a);"
   "}";
 
@@ -1332,6 +1339,8 @@ protected:
     mAlphaLoc = getUniformLocation("u_alpha");
     mTextureLoc = getUniformLocation("s_texture");
     mDirColorLoc = getUniformLocation("u_dirColor");
+    mGradientHeight = getUniformLocation("u_gradientHeight");
+    mGradientY = getUniformLocation("u_gradientY");
   }
 
 public:
@@ -1340,7 +1349,7 @@ public:
             const void* pos,
             const void* uv,
             pxTextureRef texture,
-            const float* color, const float* dirColor)
+            const float* color, const float* dirColor, float gradientY, float gradientHeight)
   {
     if (currentGLProgram != PROGRAM_A_TEXTURE_SHADER)
     {
@@ -1352,6 +1361,8 @@ public:
 
     glUniformMatrix4fv(mMatrixLoc, 1, GL_FALSE, matrix);
     glUniform1f(mAlphaLoc, alpha);
+    glUniform1f(mGradientY, gradientY);
+    glUniform1f(mGradientHeight, gradientHeight);
     glUniform4fv(mColorLoc, 1, color);
     glUniform4fv(mDirColorLoc, 1, dirColor);
 
@@ -1383,6 +1394,8 @@ private:
   GLint mDirColorLoc;
 
   GLint mTextureLoc;
+  GLint mGradientHeight;
+  GLint mGradientY;
 
 }; //CLASS - aTextureShaderProgram
 
@@ -1482,6 +1495,8 @@ protected:
     mDirColorLoc = getUniformLocation("u_dirColor");
     mEffectColor = getUniformLocation("u_effectColor");
     mTextureLoc = getUniformLocation("s_texture");
+    mGradientHeight = getUniformLocation("u_gradientHeight");
+    mGradientY = getUniformLocation("u_gradientY");
   }
 
 public:
@@ -1490,7 +1505,7 @@ public:
             const void* pos,
             const void* uv,
             pxTextureRef texture,
-            const float* color, const float* dirColor,
+            const float* color, const float* dirColor, float gradientY, float gradientHeight,
             const float* outlineColor)
   {
     if (currentGLProgram != PROGRAM_A_LABEL_OUTLINE_SHADER)
@@ -1498,9 +1513,13 @@ public:
       use();
       currentGLProgram = PROGRAM_A_LABEL_OUTLINE_SHADER;
     }
+
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glUniform2f(mResolutionLoc, resW, resH);
     glUniformMatrix4fv(mMatrixLoc, 1, GL_FALSE, matrix);
     glUniform1f(mAlphaLoc, alpha);
+    glUniform1f(mGradientY, gradientY);
+    glUniform1f(mGradientHeight, gradientHeight);
     glUniform4fv(mColorLoc, 1, color);
     glUniform4fv(mEffectColor, 1, outlineColor);
     glUniform4fv(mDirColorLoc, 1, dirColor);
@@ -1516,6 +1535,7 @@ public:
     glDrawArrays(GL_TRIANGLE_STRIP, 0, count);  TRACK_DRAW_CALLS();
     glDisableVertexAttribArray(mPosLoc);
     glDisableVertexAttribArray(mUVLoc);
+    // glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     return PX_OK;
   }
@@ -1533,6 +1553,9 @@ private:
   GLint mEffectColor;
   GLint mDirColorLoc;
   GLint mTextureLoc;
+  GLint mGradientHeight; 
+  GLint mGradientY;
+
 
 }; //CLASS - textOutlineShaderProgram
 
@@ -1814,7 +1837,7 @@ static void drawImageTexture(float x, float y, float w, float h, pxTextureRef te
                              pxTextureRef mask, bool useTextureDimsAlways, float* color, // default: "color = BLACK"
                              pxConstantsStretch::constants xStretch,
                              pxConstantsStretch::constants yStretch,
-                             float * uvs)
+                             float* uvs)
 {
   // args are tested at call site...
 
@@ -1885,7 +1908,7 @@ static void drawImageTexture(float x, float y, float w, float h, pxTextureRef te
     { 0,  secondTextureY },
     { tw, secondTextureY }
   };
-  float * uv = uvs == NULL ? (float *)normalUv : uvs;
+  float* uv = uvs == NULL ? (float*)normalUv : uvs;
 
   float colorPM[4];
   premultiply(colorPM,color);
@@ -1908,7 +1931,7 @@ static void drawImageTexture(float x, float y, float w, float h, pxTextureRef te
     dirColorPM[2] = colorPM[2];
     dirColorPM[3] = colorPM[3];
 
-    if (gATextureShader->draw(gResW,gResH,gMatrix.data(),gAlpha,4,verts,uv,texture,colorPM,dirColorPM) != PX_OK)
+    if (gATextureShader->draw(gResW,gResH,gMatrix.data(),gAlpha,4,verts,uv,texture,colorPM,dirColorPM, 0, 1) != PX_OK)
     {
       drawRect2(0, 0, iw, ih, blackColor);
     }
@@ -1926,7 +1949,7 @@ static void drawImageTexture(float x, float y, float w, float h, pxTextureRef te
   }
 }
 
-static void drawLabelImageTexture(float x, float y, float w, float h, pxTextureRef texture,
+static void drawLabelImageTexture(float x, float y, float w, float h, pxTextureRef texture, float bitmapTop, float lineHeight,
                                   bool useTextureDimsAlways, float *color, float *gradientColor, float *strokeColor)
 {
   // args are tested at call site...
@@ -1974,6 +1997,9 @@ static void drawLabelImageTexture(float x, float y, float w, float h, pxTextureR
     gradientColor = color;
   }
 
+  lineHeight *= 0.7;
+  float gradientHeight = h / lineHeight;
+  float gradientY = (bitmapTop - h) / lineHeight * 0.8 + 0.3; // adjust gradient y , make it more close to expect effect
 
   float colorPM[4];
   premultiply(colorPM, color);
@@ -1983,15 +2009,11 @@ static void drawLabelImageTexture(float x, float y, float w, float h, pxTextureR
 
   if (strokeColor && strokeColor[3] > 0) 
   {
-    float strokeColorPM[4];
-    premultiply(strokeColorPM, strokeColor);
-    // rtLogInfo("render info outline %u %u [%f,%f,%f,%f], [%f,%f,%f,%f] \n", gResW, gResH, colorPM[0],colorPM[1],colorPM[2],colorPM[3],gradientColorPM[0],gradientColorPM[1],gradientColorPM[2],gradientColorPM[3]);
-    gTextOutlineShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv, texture, colorPM, gradientColorPM, strokeColorPM);
+    gTextOutlineShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv, texture, color, gradientColor, gradientY, gradientHeight, strokeColor);
   }
   else 
   {
-    // rtLogInfo("render info normal %u %u [%f,%f,%f,%f]\n", gResW, gResH, colorPM[0],colorPM[1],colorPM[2],colorPM[3]);
-    gATextureShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv, texture, colorPM, gradientColorPM);
+    gATextureShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv, texture, colorPM, gradientColorPM, gradientY, gradientHeight);
   }
 }
 
@@ -2045,13 +2067,16 @@ static void drawTextureImageShadow(float x, float y, float w, float h, pxTexture
 
   if (texture->getType() == PX_TEXTURE_ALPHA_88) 
   {
-    if (gTextureBlurForOutlineShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv, texture, blur, shadowColorPM) != PX_OK) {
+    if (gTextureBlurForOutlineShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv, texture, blur, shadowColorPM) != PX_OK) 
+    {
       drawRect2(0, 0, iw, ih, blackColor);
     }
-  } else 
+  } 
+  else 
   {
     if (gTextureBlurShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv, texture, blur, shadowColorPM) !=
-        PX_OK) {
+        PX_OK) 
+    {
       drawRect2(0, 0, iw, ih, blackColor);
     }
   }
@@ -2487,9 +2512,12 @@ void pxContext::drawRect(float w, float h, float lineWidth, float* fillColor, fl
   {
 
     float half = lineWidth / 2;
-    if (radius > 0) {
+    if (radius > 0) 
+    {
       drawRectWithRounded(half, half, w - lineWidth, h - lineWidth, fillColor, radius);
-    } else {
+    } 
+    else 
+    {
       drawRect2(half, half, w - lineWidth, h - lineWidth, fillColor);
     }
   }
@@ -2532,7 +2560,7 @@ void pxContext::drawImage(float x, float y, float w, float h,
                           bool useTextureDimsAlways, float* color,
                           pxConstantsStretch::constants stretchX,
                           pxConstantsStretch::constants stretchY,
-                          float * uvs)
+                          float* uvs)
 {
 #ifdef DEBUG_SKIP_IMAGE
 #warning "DEBUG_SKIP_IMAGE enabled ... Skipping "
@@ -2556,20 +2584,24 @@ void pxContext::drawImage(float x, float y, float w, float h,
                   color? color : black, stretchX, stretchY, uvs);
 }
 
-void pxContext::drawLabelImage(float x, float y, float w, float h, pxTextureRef t,
-                               bool useTextureDimsAlways, float *color, float *gradientColor, float *strokeColor) {
+void pxContext::drawLabelImage(float x, float y, float w, float h, pxTextureRef t, float bitmapTop, float lineHeight,
+                               bool useTextureDimsAlways, float *color, float *gradientColor, float *strokeColor) 
+{
   // TRANSPARENT / DIMENSIONLESS 
-  if (gAlpha == 0.0 || w <= 0.0 || h <= 0.0) {
+  if (gAlpha == 0.0 || w <= 0.0 || h <= 0.0) 
+  {
     return;
   }
 
   // TEXTURELESS
-  if (t.getPtr() == NULL) {
+  if (t.getPtr() == NULL) 
+  {
     return;
   }
 
+
   float black[4] = {0, 0, 0, 1};
-  drawLabelImageTexture(x, y, w, h, t, useTextureDimsAlways,
+  drawLabelImageTexture(x, y, w, h, t, bitmapTop, lineHeight, useTextureDimsAlways,
                         color ? color : black, gradientColor, strokeColor);
 }
 
@@ -2577,12 +2609,14 @@ void pxContext::drawTextureShadow(float x, float y, float w, float h, pxTextureR
                       float blur, float *shadowColor)
 {
   // TRANSPARENT / DIMENSIONLESS 
-  if (gAlpha == 0.0 || w <= 0.0 || h <= 0.0) {
+  if (gAlpha == 0.0 || w <= 0.0 || h <= 0.0) 
+  {
     return;
   }
 
   // TEXTURELESS
-  if (t.getPtr() == NULL) {
+  if (t.getPtr() == NULL) 
+  {
     return;
   }
 
@@ -2590,18 +2624,21 @@ void pxContext::drawTextureShadow(float x, float y, float w, float h, pxTextureR
   drawTextureImageShadow(x, y, w, h, t, useTextureDimsAlways, blur, shadowColor ? shadowColor : black);
 }
 
-void pxContext::drawLines(GLfloat *verts, int count, float *lineColor, float lineWidth) {
+void pxContext::drawLines(GLfloat* verts, int count, float* lineColor, float lineWidth) 
+{
   float colorPM[4];
   premultiply(colorPM, lineColor);
-  GLfloat *newVerts = (GLfloat *) malloc(count * 4 * sizeof(GLfloat));
+  GLfloat* newVerts = (GLfloat*) malloc(count * 4 * sizeof(GLfloat));
   int vertIndex = 0;
-  for (int i = 0; i < count - 1; i++) {
+  for (int i = 0; i < count - 1; i++) 
+  {
     Vec2 v0 = v2f(verts[i * 2], verts[i * 2 + 1]);
     Vec2 v1 = v2f(verts[(i + 1) * 2], verts[(i + 1) * 2 + 1]);
 
     Vec2 perpVec = v2fnormalize(v2fperp(v2fsub(v1, v0))); //right normalize vector
 
-    if (i == 0) {
+    if (i == 0) 
+    {
       Vec2 inner0 = v2fsub(v0, v2fmult(perpVec, lineWidth * 0.5));
       Vec2 outer0 = v2fadd(v0, v2fmult(perpVec, lineWidth * 0.5));
       newVerts[vertIndex++] = inner0.x;
@@ -2620,18 +2657,23 @@ void pxContext::drawLines(GLfloat *verts, int count, float *lineColor, float lin
   free(newVerts);
 }
 
-void pxContext::drawPolygon(GLfloat *verts, int count, float lineWidth, float *fillColor, float *lineColor) {
+void pxContext::drawPolygon(GLfloat *verts, int count, float lineWidth, float *fillColor, float *lineColor) 
+{
   float colorPM[4];
 
-  if (lineWidth > 0 && lineColor[4] > 0) {  // need draw outline
-    struct ExtrudeVerts {
+  if (lineWidth > 0 && lineColor[4] > 0)  // need draw outline
+  {  
+    struct ExtrudeVerts 
+    {
       Vec2 offset, n;
     };
-    struct ExtrudeVerts *extrude = (struct ExtrudeVerts *) malloc(sizeof(struct ExtrudeVerts) * count);
-    memset(extrude, 0, sizeof(struct ExtrudeVerts) * count);
-    GLfloat *outLineVerts = (GLfloat *) malloc(sizeof(GLfloat) * count * 12);
 
-    for (int i = 0; i < count; i++) {
+    struct ExtrudeVerts* extrude = (struct ExtrudeVerts *) malloc(sizeof(struct ExtrudeVerts) * count);
+    memset(extrude, 0, sizeof(struct ExtrudeVerts) * count);
+    GLfloat* outLineVerts = (GLfloat*) malloc(sizeof(GLfloat) * count * 12);
+
+    for (int i = 0; i < count; i++) 
+    {
       int v0Index = (i - 1 + count) % count;
       Vec2 v0 = v2f(verts[2 * v0Index], verts[2 * v0Index + 1]);
       Vec2 v1 = v2f(verts[2 * i], verts[2 * i + 1]);
@@ -2646,9 +2688,11 @@ void pxContext::drawPolygon(GLfloat *verts, int count, float lineWidth, float *f
       struct ExtrudeVerts tmp = {offset, n2};
       extrude[i] = tmp;
     }
+
     int outlineIndex = 0;
 
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++) 
+    {
       int j = (i + 1) % count;
       Vec2 v0 = v2f(verts[i * 2], verts[i * 2 + 1]);
       Vec2 v1 = v2f(verts[j * 2], verts[j * 2 + 1]);
@@ -2687,7 +2731,8 @@ void pxContext::drawPolygon(GLfloat *verts, int count, float lineWidth, float *f
     free(extrude);
   }
 
-  if (fillColor[4] > 0){  // draw solid polygon
+  if (fillColor[4] > 0) // draw solid polygon
+  {  
     premultiply(colorPM,fillColor);
     gSolidShader->draw(gResW,gResH,gMatrix.data(),gAlpha,GL_TRIANGLES,verts,count,colorPM);
   }

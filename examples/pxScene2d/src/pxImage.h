@@ -26,6 +26,7 @@
 #include "pxTexture.h"
 //#include "pxTextureCacheObject.h"
 #include "pxResource.h"
+#include "pxRenderTexture.h"
 
 class pxImage: public pxObject, pxResourceListener 
 {
@@ -35,10 +36,11 @@ public:
   rtProperty(stretchX, stretchX, setStretchX, int32_t);
   rtProperty(stretchY, stretchY, setStretchY, int32_t);
   rtProperty(resource, resource, setResource, rtObjectRef);
+  rtProperty(texture, texture, setTexture, rtObjectRef);
   rtProperty(uvs, uvs, setUvs , rtObjectRef);
 
-  pxImage(pxScene2d* scene) : pxObject(scene),mStretchX(pxConstantsStretch::NONE),mStretchY(pxConstantsStretch::NONE), 
-    imageLoaded(false), mListenerAdded(false) , mUvs(NULL)
+  pxImage(pxScene2d* scene) : pxObject(scene), mStretchX(pxConstantsStretch::NONE), mStretchY(pxConstantsStretch::NONE), mUvs(NULL), 
+    imageLoaded(false), mListenerAdded(false)
   { 
     mw = -1;
     mh = -1;
@@ -64,19 +66,35 @@ public:
   rtError resource(rtObjectRef& o) const { /*rtLogDebug("!!!!!!!!!!!!!!!!!!!!!!!pxImage getResource\n");*/o = mResource; return RT_OK; }
   rtError setResource(rtObjectRef o);
 
-  rtError uvs(rtObjectRef & /*uvs*/) const { return RT_OK; }
+  rtError texture(rtObjectRef& t) const 
+  {
+    t = mTexture;
+    return RT_OK;
+  }
 
-  rtError setUvs(rtObjectRef uvs) {
-    if (mUvs != NULL ){
+  rtError setTexture(rtObjectRef texture)
+  {
+    mTexture = texture;
+    return RT_OK;
+  }
+
+  rtError uvs(rtObjectRef& /*uvs*/) const { return RT_OK; }
+
+  rtError setUvs(rtObjectRef uvs) 
+  {
+    if (mUvs != NULL)
+    {
       free(mUvs);
     }
     uint32_t len = uvs.get<uint32_t>("length"); 
-    if(len != 8 ){
+    if(len != 8)
+    {
       rtLogError("uvs length must be 8");
       return RT_ERROR;
     }
-    mUvs = (float*) malloc( sizeof(float) * 8);
-    for (uint32_t i = 0; i < len; i++) {
+    mUvs = (float*)malloc(sizeof(float) * 8);
+    for (uint32_t i = 0; i < len; i++) 
+    {
       mUvs[i] = uvs.get<float>(i);
     }
     return RT_OK;
@@ -90,17 +108,34 @@ public:
   virtual void dispose();
   void checkStretchX();
   void checkStretchY();
-  
+
+  pxRenderTexture * getRenderTexture()
+  {
+    if (mTexture.getPtr() != NULL)
+    {
+      pxObject* t = (pxObject*) mTexture.getPtr();
+      pxRenderTexture* renderTexture = dynamic_cast<pxRenderTexture*>(t);
+      return renderTexture;
+    }
+    return NULL;
+  }
+
 protected:
   virtual void draw();
+  
+  virtual void drawWithImage();
+  virtual void drawWithTexture(pxTextureRef texture);
+
   void loadImage(rtString Url);
   inline rtImageResource* getImageResource() const { return (rtImageResource*)mResource.getPtr(); }
 
   pxConstantsStretch::constants mStretchX;
   pxConstantsStretch::constants mStretchY;
   rtObjectRef mResource;
+  rtObjectRef mTexture;
   
-  float * mUvs;
+  float* mUvs;
+  
   bool imageLoaded;
   bool mListenerAdded;
 };

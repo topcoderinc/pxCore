@@ -43,6 +43,7 @@
 #include "pxImage.h"
 #include "pxImage9.h"
 #include "pxImageA.h"
+#include "pxRenderTexture.h"
 
 #if !defined(ENABLE_DFB) && !defined(DISABLE_WAYLAND)
 #include "pxWaylandContainer.h"
@@ -136,7 +137,7 @@ void base64_cleanup() {
     free(decoding_table);
 }
 
-char *base64_encode(const unsigned char *data,
+char *base64_encode(const unsigned char* data,
                     size_t input_length,
                     size_t *output_length) {
 
@@ -167,7 +168,7 @@ char *base64_encode(const unsigned char *data,
 }
 
 
-unsigned char *base64_decode(const unsigned char *data,
+unsigned char*base64_decode(const unsigned char* data,
                              size_t input_length,
                              size_t *output_length) {
 
@@ -179,7 +180,7 @@ unsigned char *base64_decode(const unsigned char *data,
     if (data[input_length - 1] == '=') (*output_length)--;
     if (data[input_length - 2] == '=') (*output_length)--;
 
-    unsigned char *decoded_data = (unsigned char*)malloc(*output_length);
+    unsigned char* decoded_data = (unsigned char*)malloc(*output_length);
     if (decoded_data == NULL) return NULL;
 
     for (uint32_t i = 0, j = 0; i < input_length;) {
@@ -273,7 +274,7 @@ private:
 
 
 // pxObject methods
-pxObject::pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my(0), ma(1.0), mr(0),
+pxObject::pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mRenderTexture(NULL), mcx(0), mcy(0), mx(0), my(0), ma(1.0), mr(0),
 #ifdef ANIMATION_ROTATE_XYZ
     mrx(0), mry(0), mrz(1.0),
 #endif //ANIMATION_ROTATE_XYZ
@@ -291,6 +292,16 @@ pxObject::pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0),
     mReady = new rtPromise;
     mEmit = new rtEmit;
   }
+
+rtError pxObject::setRenderTexture(rtObjectRef renderTexture)
+{
+  if (renderTexture)
+  {
+    pxObject* t = (pxObject*)renderTexture.get<voidPtr>("_pxObject");
+    mRenderTexture = dynamic_cast<pxRenderTexture*>(t);
+  }
+  return RT_OK;
+}
 
 pxObject::~pxObject()
 {
@@ -932,6 +943,43 @@ void pxObject::drawInternal(bool maskPass)
       }
     }
 
+    if (mRenderTexture != NULL)
+    {
+      pxContextFramebufferRef renderContext = mRenderTexture->getCfbRef();
+      bool isNullContext = !renderContext;
+      if (isNullContext)
+      {
+        renderContext = mRenderTexture->createCfbRef();
+      }
+      context.enableInternalContext(true);
+      pxMatrix4f emptyMatrix;
+      float parentAlpha = 1.0;
+      context.setMatrix(emptyMatrix);
+      context.setAlpha(parentAlpha);
+
+      pxContextFramebufferRef previousRenderSurface = context.getCurrentFramebuffer();
+      if (mRepaint && context.setFramebuffer(renderContext) == PX_OK)
+      {
+        if (isNullContext)
+        {
+          context.clear(w, h);  
+        }
+        draw();
+
+        for(vector<rtRef<pxObject> >::iterator it = mChildren.begin(); it != mChildren.end(); ++it)
+        {
+          context.pushState();
+          (*it)->drawInternal();
+          context.popState();
+        }
+      }
+      context.setFramebuffer(previousRenderSurface);
+      context.enableInternalContext(false);
+      
+      context.setMatrix(m);
+      context.setAlpha(ma);
+      mRenderTexture = NULL; // clear it, so that is can normal render
+    }
     // MASKING ? ---------------------------------------------------------------------------------------------------
     if (maskFound)
     {
@@ -1232,6 +1280,7 @@ rtDefineMethod(rtPromise, reject);
 rtDefineObject(pxObject, rtObject);
 rtDefineProperty(pxObject, _pxObject);
 rtDefineProperty(pxObject, parent);
+rtDefineProperty(pxObject, renderTexture);
 rtDefineProperty(pxObject, children);
 rtDefineProperty(pxObject, x);
 rtDefineProperty(pxObject, y);
@@ -1374,6 +1423,8 @@ rtError pxScene2d::create(rtObjectRef p, rtObjectRef& o)
     e = createTextBox(p,o);
   else if (!strcmp("graphic",t.cString()))
     e = createGraphic(p,o);
+  else if (!strcmp("renderTexture",t.cString()))
+    e = createRenderTexture(p,o);
   else if (!strcmp("image",t.cString()))
     e = createImage(p,o);
   else if (!strcmp("image9",t.cString()))
@@ -1446,8 +1497,16 @@ rtError pxScene2d::createTextBox(rtObjectRef p, rtObjectRef& o)
   o.send("init");
   return RT_OK;
 }
-rtError pxScene2d::createGraphic(rtObjectRef p, rtObjectRef &o) {
+rtError pxScene2d::createGraphic(rtObjectRef p, rtObjectRef &o) 
+{
   o = new pxGraphic(this);
+  o.set(p);
+  o.send("init");
+  return RT_OK;
+}
+rtError pxScene2d::createRenderTexture(rtObjectRef p, rtObjectRef &o)
+{
+  o = new pxRenderTexture(this);
   o.set(p);
   o.send("init");
   return RT_OK;
@@ -1660,6 +1719,10 @@ void pxScene2d::onUpdate(double t)
   {
     start = pxSeconds();
   }
+
+  // send onUpdate event to pixi.js
+  rtObjectRef e = new rtMapObject;
+  mEmit.send("onUpdate", e);
 
   double start_frame = pxSeconds(); //##
 

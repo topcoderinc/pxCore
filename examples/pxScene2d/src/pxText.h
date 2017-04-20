@@ -37,27 +37,28 @@ public:
   rtDeclareObject(pxText, pxObject);
   rtProperty(text, text, setText, rtString);
   rtProperty(textColor, textColor, setTextColor, uint32_t);
-  rtProperty(gradientColor,gradientColor, setGradientColor, uint32_t);
+  rtProperty(gradientColor, gradientColor, setGradientColor, uint32_t);
   rtProperty(pixelSize, pixelSize, setPixelSize, uint32_t);
   rtProperty(fontUrl, fontUrl, setFontUrl, rtString);  
   rtProperty(font, font, setFont, rtObjectRef);
 
   rtProperty(italic, italic, setItalic, bool);
   rtProperty(bold, bold, setBold, bool);
-  rtProperty(strokeWidth, strokeWidth,setStrokeWidth, float);
+  rtProperty(strokeWidth, strokeWidth, setStrokeWidth, float);
   rtProperty(strokeColor, strokeColor,setStrokeColor, uint32_t);
-  rtProperty(dropShadow, dropShadow, setDropShadow,bool);
-  rtProperty(dropShadowColor, dropShadowColor,setDropShadowColor, uint32_t);
-  rtProperty(dropShadowOffsetX, dropShadowOffsetX, setDropShadowOffsetX,float);
+  rtProperty(dropShadow, dropShadow, setDropShadow, bool);
+  rtProperty(dropShadowColor, dropShadowColor, setDropShadowColor, uint32_t);
+  rtProperty(dropShadowOffsetX, dropShadowOffsetX, setDropShadowOffsetX, float);
   rtProperty(dropShadowOffsetY, dropShadowOffsetY, setDropShadowOffsetY, float);
-  rtProperty(dropShadowBlur, dropShadowBlur,setDropShadowBlur,float);
+  rtProperty(dropShadowBlur, dropShadowBlur, setDropShadowBlur, float);
 
   pxText(pxScene2d* scene);
   virtual ~pxText();
   rtError text(rtString& s) const;
   virtual rtError setText(const char* text);
 
-  rtError uintToFloatArray(uint32_t c , float * arr){
+  rtError uintToFloatArray(uint32_t c , float * arr)
+  {
     arr[0] = (float)((c>>24)&0xff)/255.0f;
     arr[1] = (float)((c>>16)&0xff)/255.0f;
     arr[2] = (float)((c>>8)&0xff)/255.0f;

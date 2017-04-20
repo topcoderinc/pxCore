@@ -137,6 +137,7 @@ class rtFileDownloadRequest;
 
 class pxScene2d;
 class pxScriptView;
+class pxRenderTexture;
 class pxFontManager;
 class pxObject: public rtObject
 {
@@ -144,6 +145,7 @@ public:
   rtDeclareObject(pxObject, rtObject);
   rtReadOnlyProperty(_pxObject, _pxObject, voidPtr);
   rtProperty(parent, parent, setParent, rtObjectRef);
+  rtProperty(renderTexture, renderTexture, setRenderTexture, rtObjectRef);
   rtProperty(x, x, setX, float); 
   rtProperty(y, y, setY, float);
   rtProperty(w, w, setW, float);
@@ -265,9 +267,12 @@ public:
       p = (pxObject*)parent.get<voidPtr>("_pxObject");
     
     setParent(p);
-
+    
     return RT_OK;
   }
+
+  rtError renderTexture(rtObjectRef& /*v*/) const { return RT_OK; }
+  rtError setRenderTexture(rtObjectRef renderTexture);
 
   rtError remove();
   rtError removeAll();
@@ -690,6 +695,7 @@ protected:
   // TODO getting freaking huge... 
 //  rtRef<pxObject> mParent;
   pxObject* mParent;
+  pxRenderTexture* mRenderTexture;
   std::vector<rtRef<pxObject> > mChildren;
 //  vector<animation> mAnimations;
   float mcx, mcy, mx, my, ma, mr;
@@ -1327,6 +1333,7 @@ public:
   rtError createExternal(rtObjectRef p, rtObjectRef& o);
   rtError createWayland(rtObjectRef p, rtObjectRef& o);
   rtError createGraphic(rtObjectRef p, rtObjectRef &o);
+  rtError createRenderTexture(rtObjectRef p, rtObjectRef &o);
   rtError clock(uint64_t & time);
   rtError logDebugMetrics();
 

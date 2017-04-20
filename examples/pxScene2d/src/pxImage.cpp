@@ -169,20 +169,51 @@ float pxImage::getOnscreenHeight()
     return mh;  
  }
       
-void pxImage::draw() {
+void pxImage::drawWithImage() 
+{
+  drawWithTexture(getImageResource()->getTexture());
+}
+
+void pxImage::draw()
+{
+  pxTextureRef drawTexture;
+  pxRenderTexture *renderTexture = getRenderTexture();
+  if (renderTexture != NULL)
+  {
+      drawTexture = renderTexture->getTexture();
+  }
+
+  if (!drawTexture)
+  {
+    drawWithImage();
+  }
+  else
+  {
+    drawWithTexture(drawTexture);
+  }
+  
+}
+
+void pxImage::drawWithTexture(pxTextureRef texture)
+{
+  if (!texture)
+  {
+    return;
+  }
   //rtLogDebug("pxImage::draw() mw=%f mh=%f\n", mw, mh);
   static pxTextureRef nullMaskRef;
   context.drawImage(0, 0, 
                     getOnscreenWidth(),
                     getOnscreenHeight(), 
-                    getImageResource()->getTexture(), nullMaskRef, 
+                    texture, nullMaskRef, 
                     false, NULL, mStretchX, mStretchY, mUvs);
   // Raise the priority if we're still waiting on the image download    
 #if 0
   if (!imageLoaded && getImageResource()->isDownloadInProgress())
     getImageResource()->raiseDownloadPriority();
-#endif
+#endif  
 }
+
 void pxImage::resourceReady(rtString readyResolution)
 {
   checkStretchX();
@@ -265,11 +296,12 @@ rtError pxImage::setStretchY(int32_t v)
   return RT_OK;
 }
 
-rtDefineObject(pxImage,pxObject);
-rtDefineProperty(pxImage,url);
+rtDefineObject(pxImage, pxObject);
+rtDefineProperty(pxImage, url);
 rtDefineProperty(pxImage, resource);
-rtDefineProperty(pxImage,stretchX);
-rtDefineProperty(pxImage,stretchY);
+rtDefineProperty(pxImage, stretchX);
+rtDefineProperty(pxImage, stretchY);
 rtDefineProperty(pxImage, uvs);
+rtDefineProperty(pxImage, texture);
 
 

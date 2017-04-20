@@ -42,7 +42,7 @@ pxText::pxText(pxScene2d* scene):pxObject(scene),
 {
   float c[4] = {1, 1, 1, 1};
   memcpy(mTextColor, c, sizeof(mTextColor));
-  memcpy(mDropShadowColor,c, sizeof(mDropShadowColor));
+  memcpy(mDropShadowColor, c, sizeof(mDropShadowColor));
 
   float z[4] = {0, 0, 0, 0};
   memcpy(mStrokeColor, z, sizeof(mStrokeColor));
