@@ -852,7 +852,7 @@ void pxTextBox::renderOneLine(const char * tempStr, float tempX, float tempY, fl
   // Now, render the text
   if( render)
   {
-    getFontResource()->renderText(tempStr, size, xPos, tempY, sx, sy, color,lineWidth);
+    getFontResource()->renderText(tempStr, size, xPos, tempY, sx, sy, color, lineWidth, isItalic, isBold);
   }
 }
 
@@ -1084,13 +1084,13 @@ void pxTextBox::renderTextRowWithTruncation(rtString & accString, float lineWidt
         if( lineNumber==0) {setLineMeasurements(true, xPos, tempY);}
 
         if( render) {
-          getFontResource()->renderText(tempStr, pixelSize, xPos, tempY, 1.0, 1.0, color,lineWidth);
+          getFontResource()->renderText(tempStr, pixelSize, xPos, tempY, 1.0, 1.0, color, lineWidth, isItalic, isBold);
         }
         if( mEllipsis)
         {
           //rtLogDebug("rendering truncated text with ellipsis\n");
           if( render) {
-            getFontResource()->renderText(ELLIPSIS_STR, pixelSize, xPos+charW, tempY, 1.0, 1.0, color,lineWidth);
+            getFontResource()->renderText(ELLIPSIS_STR, pixelSize, xPos + charW, tempY, 1.0, 1.0, color, lineWidth, isItalic, isBold);
           }
           if(!mWordWrap) { setMeasurementBounds(xPos, charW+ellipsisW, tempY, charH); }
           setLineMeasurements(false, xPos+charW+ellipsisW, tempY);
@@ -1135,14 +1135,14 @@ void pxTextBox::renderTextRowWithTruncation(rtString & accString, float lineWidt
           if( lineNumber==0) {setLineMeasurements(true, xPos, tempY);  }
           if( render)
           {
-            getFontResource()->renderText(tempStr, pixelSize, xPos, tempY, 1.0, 1.0, color,lineWidth);
+            getFontResource()->renderText(tempStr, pixelSize, xPos, tempY, 1.0, 1.0, color, lineWidth, isItalic, isBold);
           }
         }
         if( mEllipsis)
         {
           //rtLogDebug("rendering  text on word boundary with ellipsis\n");
           if( render) {
-            getFontResource()->renderText(ELLIPSIS_STR, pixelSize, xPos+charW, tempY, 1.0, 1.0, color,lineWidth);
+            getFontResource()->renderText(ELLIPSIS_STR, pixelSize, xPos + charW, tempY, 1.0, 1.0, color, lineWidth, isItalic, isBold);
           }
           if(!mWordWrap) { setMeasurementBounds(xPos, charW+ellipsisW, tempY, charH); }
           setLineMeasurements(false, xPos+charW+ellipsisW, tempY);

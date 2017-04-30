@@ -27,6 +27,7 @@
 // TODO it would be nice to push this back into implemention
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include FT_STROKER_H
 
 #include "pxScene2d.h"
 #include <map>
@@ -35,7 +36,7 @@ class pxText;
 class pxFont;
 
 #define defaultPixelSize 16
-#define defaultFont "FreeSans.ttf"
+#define defaultFont "DejaVuSans"
 
 
 class rtFileDownloadRequest;
@@ -161,17 +162,34 @@ public:
   void measureTextInternal(const char* text, uint32_t size,  float sx, float sy, 
                    float& w, float& h);
   void measureTextChar(u_int32_t codePoint, uint32_t size,  float sx, float sy, 
-                         float& w, float& h);                   
-  void renderText(const char *text, uint32_t size, float x, float y, 
-                  float sx, float sy, 
-                  float* color, float mw);
+                         float& w, float& h);
+
+  /**
+   * render text with bold italic,storke, and shadow.
+   * @param text
+   * @param size
+   * @param x
+   * @param y
+   * @param sx
+   * @param sy
+   * @param color
+   * @param mw
+   * @param italic is italic
+   * @param bold is bold ?
+   */
+  void renderText(const char *text, uint32_t size, float x, float y, float sx, float sy, float *color, float mw,
+                  bool italic = false, bool bold = false);
 
   virtual void init() {}
   bool isFontLoaded() { return mInitialized;}
+  void setItalic(bool var);
+  void setBold(bool var);
    
 protected:
   // Implementation for pxResource virtuals
   virtual bool loadResourceData(rtFileDownloadRequest* fileDownloadRequest);
+  rtError applyBold(uint32_t &offsetX, uint32_t &offsetY);
+  rtError applyItalic(FT_GlyphSlot& g);
   
 private:
   void loadResourceFromFile();
@@ -184,6 +202,8 @@ private:
   uint32_t mPixelSize;
   char* mFontData; // for remote fonts loaded into memory
 
+  bool mItalic;
+  bool mBold;
 };
 
 // Weak Map

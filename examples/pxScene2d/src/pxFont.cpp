@@ -22,6 +22,7 @@
 #include "pxFont.h"
 #include "pxTimer.h"
 #include "pxText.h"
+#include FT_BITMAP_H
 
 #include <math.h>
 #include <map>
@@ -33,6 +34,8 @@ struct GlyphKey
   uint32_t mFontId;
   uint32_t mPixelSize;
   uint32_t mCodePoint;
+  bool mBold;
+  bool mItalic;
 
   // Provide a "<" operator that orders keys.
   // The way it orders them doesn't matter, all that matters is that
@@ -42,7 +45,12 @@ struct GlyphKey
       if (mFontId == other.mFontId) {
         if (mPixelSize < other.mPixelSize) return true; else
           if (mPixelSize == other.mPixelSize) {
-            if (mCodePoint < other.mCodePoint) return true;
+            if (mCodePoint < other.mCodePoint) return true; else
+              if (mCodePoint == other.mCodePoint) {
+                if (mBold != other.mBold) return mBold; else
+                  if (mItalic != other.mItalic) return mItalic; else
+                    return true;
+              }
           }
       }
     return false;
@@ -67,7 +75,16 @@ extern "C" {
 FT_Library ft;
 uint32_t gFontId = 0;
 
-pxFont::pxFont(rtString fontUrl):pxResource(),mPixelSize(0), mFontData(0)
+const float BOLD_ADD_RATE = 0.04f;
+const float BOLD_ADD_RATE_YX = 0.6f;
+const float ITALIC_ADD_RATE = 0.21f;
+
+pxFont::pxFont(rtString fontUrl)
+:pxResource()
+,mPixelSize(0) 
+,mFontData(0)
+,mItalic(false)
+,mBold(false)
 {  
   mFontId = gFontId++; 
   mUrl = fontUrl;
@@ -164,12 +181,23 @@ rtError pxFont::init(const FT_Byte*  fontData, FT_Long size, const char* n)
 }
 
 
+void pxFont::setItalic(bool var)
+{
+  mItalic = var;
+}
+
+void pxFont::setBold(bool var)
+{
+  mBold = var;
+}
 void pxFont::setPixelSize(uint32_t s)
 {
   if (mPixelSize != s && mInitialized)
   {
-    //rtLogDebug("pxFont::setPixelSize size=%d mPixelSize=%d mInitialized=%d and mFace=%d\n", s,mPixelSize,mInitialized, mFace);
-    FT_Set_Pixel_Sizes(mFace, 0, s);
+    int dpi = 72;
+    int fontSizePoints = (int)(64.f * s);
+    FT_Set_Char_Size(mFace, fontSizePoints, fontSizePoints, dpi, dpi);
+
     mPixelSize = s;
   }
 }
@@ -197,7 +225,8 @@ void pxFont::getMetrics(uint32_t size, float& height, float& ascender, float& de
     rtLogWarn("Font getMetrics called on font before it is initialized\n");
     return;
   }
-  if(!size) {
+  if (!size) 
+  {
     rtLogWarn("Font getMetrics called with pixelSize=0\n");
   }
   
@@ -209,39 +238,130 @@ void pxFont::getMetrics(uint32_t size, float& height, float& ascender, float& de
 	ascender = metrics->ascender>>6; 
 	descender = -metrics->descender>>6; 
   naturalLeading = height - (ascender + descender);
-
 }
-  
+
+rtError pxFont::applyBold(uint32_t &offsetX, uint32_t &offsetY)
+{
+  FT_Pos xBold, yBold;
+
+  if (mBold)
+  {
+    uint32_t k = (uint32_t)(mPixelSize*BOLD_ADD_RATE+1);
+    k = (k%2)?(k+1):(k); // will add px
+    xBold = k * 64; 
+    yBold = xBold * BOLD_ADD_RATE_YX;
+  }
+  else
+  {
+    xBold = 0; 
+    yBold = 0;
+  }
+
+  FT_GlyphSlot g = mFace->glyph;
+  if (g->format == FT_GLYPH_FORMAT_OUTLINE)
+  {
+    FT_BBox oldBox;
+    FT_Outline_Get_CBox(&(g->outline), &oldBox);
+    FT_Outline_EmboldenXY(&(g->outline), xBold, yBold);
+    FT_BBox newBox;
+    FT_Outline_Get_CBox(&(g->outline), &newBox);
+    xBold = (newBox.xMax - newBox.xMin) - (oldBox.xMax - oldBox.xMin);
+    yBold = (newBox.yMax - newBox.yMin) - (oldBox.yMax - oldBox.yMin);
+    offsetX = xBold;
+    offsetY = yBold;
+  }
+  else if (g->format == FT_GLYPH_FORMAT_BITMAP)
+  {
+    FT_Bitmap_Embolden(ft, &(g->bitmap), xBold, yBold);
+    offsetX = xBold;
+    offsetY = yBold;
+  }
+  return RT_OK;
+}
+
+rtError pxFont::applyItalic(FT_GlyphSlot& g)
+{
+  FT_Matrix matrix;
+  matrix.xx = 0x10000L;
+  matrix.xy = 0;
+  matrix.yx = 0;
+  matrix.yy = 0x10000L;
+  if (mItalic)
+  {
+    matrix.xy = ITALIC_ADD_RATE * 0x10000L;
+  }
+
+  if (g->format == FT_GLYPH_FORMAT_OUTLINE)
+  {
+    FT_Outline_Transform(&g->outline, &matrix);
+  }
+  else
+  {
+    FT_Set_Transform( mFace, &matrix, 0 );  
+  }
+  return RT_OK;
+}
 const GlyphCacheEntry* pxFont::getGlyph(uint32_t codePoint)
 {
   GlyphKey key; 
   key.mFontId = mFontId; 
+  key.mBold = mBold;
+  key.mItalic = mItalic;
   key.mPixelSize = mPixelSize; 
   key.mCodePoint = codePoint;
   GlyphCache::iterator it = gGlyphCache.find(key);
   if (it != gGlyphCache.end())
+  {
     return it->second;
+  } 
   else
   {
     if(FT_Load_Char(mFace, codePoint, FT_LOAD_RENDER))
+    {
       return NULL;
+    }
     else
     {
       rtLogDebug("glyph cache miss");
       GlyphCacheEntry *entry = new GlyphCacheEntry;
+      uint32_t nBitmapLeft = mFace->glyph->bitmap_left;
+      FT_Load_Char(mFace, codePoint, FT_LOAD_NO_BITMAP);
       FT_GlyphSlot g = mFace->glyph;
       
+      uint32_t offsetX = 0, offsetY = 0;
+      applyBold(offsetX, offsetY);
+      rtLogDebug("glyph cache miss");
+      uint32_t outWidth, outHeight;
+      applyItalic(g);
+      if (FT_Render_Glyph(g, FT_RENDER_MODE_NORMAL)) 
+      {
+        return NULL;
+      }
+
+      outWidth = g->bitmap.width;
+      outHeight = g->bitmap.rows;
       entry->bitmap_left = g->bitmap_left;
       entry->bitmap_top = g->bitmap_top;
-      entry->bitmapdotwidth = g->bitmap.width;
-      entry->bitmapdotrows = g->bitmap.rows;
-      entry->advancedotx = g->advance.x;
-      entry->advancedoty = g->advance.y;
-      entry->vertAdvance = g->metrics.vertAdvance; // !CLF: Why vertAdvance? SHould only be valid for vert layout of text.
+      entry->advancedotx = g->advance.x + offsetX;
+      entry->advancedoty = g->advance.y + offsetY;
+      entry->vertAdvance = g->metrics.vertAdvance + offsetX; // !CLF: Why vertAdvance? SHould only be valid for vert layout of text.
+
+      if (mItalic && (codePoint == 'U'))
+      {
+        entry->bitmap_left = nBitmapLeft;
+      }
+
+      if (codePoint == 58 or codePoint == 59)
+      {
+        entry->bitmap_left *= 0.5;
+      }
       
-      entry->mTexture = context.createTexture(g->bitmap.width, g->bitmap.rows, 
-                                              g->bitmap.width, g->bitmap.rows, 
+      entry->mTexture = context.createTexture(outWidth, outHeight,
+                                              outWidth, outHeight,
                                               g->bitmap.buffer);
+
+      entry->bitmapdotwidth = outWidth;
+      entry->bitmapdotrows = outHeight;
       
       gGlyphCache.insert(make_pair(key,entry));
       return entry;
@@ -260,8 +380,9 @@ void pxFont::measureTextInternal(const char* text, uint32_t size,  float sx, flo
   }
 
   setPixelSize(size);
-  
-  w = 0; h = 0;
+
+  w = 0;
+  h = 0;
   if (!text) 
     return;
     
@@ -272,6 +393,7 @@ void pxFont::measureTextInternal(const char* text, uint32_t size,  float sx, flo
   
   h = metrics->height>>6;
   float lw = 0;
+  float lastCodeWidth = 0;
   while((codePoint = u8_nextchar((char*)text, &i)) != 0) 
   {
     const GlyphCacheEntry* entry = getGlyph(codePoint);
@@ -280,7 +402,8 @@ void pxFont::measureTextInternal(const char* text, uint32_t size,  float sx, flo
       
     if (codePoint != '\n')
     {
-      lw += (entry->advancedotx >> 6) * sx;
+      lastCodeWidth = (entry->advancedotx >> 6) * sx;
+      lw += lastCodeWidth;
     }
     else
     {
@@ -288,15 +411,16 @@ void pxFont::measureTextInternal(const char* text, uint32_t size,  float sx, flo
       lw = 0;
     }
     w = pxMax<float>(w, lw);
-//    h = pxMax<float>((g->advance.y >> 6) * sy, h);
-//    h = pxMax<float>((metrics->height >> 6) * sy, h);
+  }
+  if (mItalic)
+  {
+    w += lastCodeWidth;
   }
   h *= sy;
 }
 
-void pxFont::renderText(const char *text, uint32_t size, float x, float y, 
-                        float sx, float sy, 
-                        float* color, float mw) 
+void pxFont::renderText(const char *text, uint32_t size, float x, float y, float sx, float sy, float *color, float mw,
+                        bool italic, bool bold) 
 {
   if (!text || !mInitialized)
   { 
@@ -308,17 +432,19 @@ void pxFont::renderText(const char *text, uint32_t size, float x, float y,
   u_int32_t codePoint;
 
   setPixelSize(size);
+  setBold(bold);
+  setItalic(italic);
   FT_Size_Metrics* metrics = &mFace->size->metrics;
+  float lineHeight = (metrics->height >> 6) * sy;
 
   while((codePoint = u8_nextchar((char*)text, &i)) != 0) 
   {
     const GlyphCacheEntry* entry = getGlyph(codePoint);
     if (!entry) 
       continue;
-
+    float bitmapTop = entry->bitmap_top * sy;
     float x2 = x + entry->bitmap_left * sx;
-//    float y2 = y - g->bitmap_top * sy;
-    float y2 = (y - entry->bitmap_top * sy) + (metrics->ascender>>6);
+    float y2 = (y - bitmapTop) + (metrics->ascender>>6);
     float w = entry->bitmapdotwidth * sx;
     float h = entry->bitmapdotrows * sy;
     
@@ -333,7 +459,7 @@ void pxFont::renderText(const char *text, uint32_t size, float x, float y,
       
       pxTextureRef texture = entry->mTexture;
       pxTextureRef nullImage;
-      context.drawImage(x2,y2, w, h, texture, nullImage, false, color);
+      context.drawLabelImage(x2, y2, w, h, texture, bitmapTop, lineHeight, false, color);
       x += (entry->advancedotx >> 6) * sx;
       // no change to y because we are not moving to next line yet
     }
@@ -341,7 +467,7 @@ void pxFont::renderText(const char *text, uint32_t size, float x, float y,
     {
       x = 0;
       // Use height to advance to next line
-      y += (metrics->height>>6) * sy;
+      y += lineHeight;
     }
   }
 }
@@ -349,7 +475,8 @@ void pxFont::renderText(const char *text, uint32_t size, float x, float y,
 void pxFont::measureTextChar(u_int32_t codePoint, uint32_t size,  float sx, float sy, 
                          float& w, float& h) 
 {
-  if( !mInitialized) {
+  if (!mInitialized) 
+  {
     rtLogWarn("measureTextChar called TOO EARLY -- not initialized or font not loaded!\n");
     return;
   }
@@ -389,7 +516,7 @@ rtError pxFont::getFontMetrics(uint32_t pixelSize, rtObjectRef& o)
 	float height, ascent, descent, naturalLeading;
 	pxTextMetrics* metrics = new pxTextMetrics();
 
-  if(!mInitialized ) 
+  if (!mInitialized ) 
   {
     rtLogWarn("getFontMetrics called TOO EARLY -- not initialized or font not loaded!\n");
     o = metrics;
@@ -412,14 +539,15 @@ rtError pxFont::measureText(uint32_t pixelSize, rtString stringToMeasure, rtObje
 {
   pxTextSimpleMeasurements* measure = new pxTextSimpleMeasurements();
   
-  if(!mInitialized ) 
+  if (!mInitialized ) 
   {
     rtLogWarn("measureText called TOO EARLY -- not initialized or font not loaded!\n");
     o = measure;
     return RT_OK; // !CLF: TO DO - COULD RETURN RT_ERROR HERE TO CATCH NOT WAITING ON PROMISE
   } 
   
-  if(!pixelSize) {
+  if (!pixelSize) 
+  {
     rtLogWarn("Font measureText called with pixelSize=0\n");
   }    
   
@@ -448,7 +576,7 @@ void pxFontManager::initFT()
   }
   init = true;
   
-  if(FT_Init_FreeType(&ft)) 
+  if (FT_Init_FreeType(&ft)) 
   {
     rtLogError("Could not init freetype library\n");
     return;
@@ -461,27 +589,62 @@ rtRef<pxFont> pxFontManager::getFont(const char* url)
 
   rtRef<pxFont> pFont;
 
-  if (!url || !url[0])
-    url = defaultFont;
-  
-  FontMap::iterator it = mFontMap.find(url);
-  if (it != mFontMap.end())
+  if (!url || !url[0]) 
   {
-    rtLogDebug("Found pxFont in map for %s\n",url);
-    pFont = it->second;
-    return pFont;  
-    
-  }
+    url = defaultFont;
+  } 
   else 
   {
-    rtLogDebug("Create pxFont in map for %s\n",url);
+    FILE* fp = nullptr;
+    string urlString = string(url);
+    string newLocalTTF = string("fonts/") + urlString;
+    char* ttf = strchr(url, '.ttf');
+    if (ttf == NULL)
+    {
+      newLocalTTF.append(".ttf");
+    }
+
+    FontMap::iterator it = mFontMap.find(newLocalTTF.c_str());
+    if (it != mFontMap.end())  // local key search in map
+    {   
+      rtLogDebug("Found pxFont in map for %s\n", url);
+      pFont = it->second;
+      return pFont;
+    } 
+    else 
+    {
+      fp = fopen(newLocalTTF.c_str(), "rb");
+      rtLogInfo("start find local font = %s.", newLocalTTF.c_str());
+      if (fp != nullptr) {
+        rtLogInfo("found font %s success.", newLocalTTF.c_str());
+        url = newLocalTTF.c_str();
+        fclose(fp);
+      } 
+      else 
+      {
+        rtLogInfo("Can not find the font = %s.", newLocalTTF.c_str());
+      }
+    }
+  }
+
+  FontMap::iterator it = mFontMap.find(url);
+  if (it != mFontMap.end()) 
+  {
+    rtLogDebug("Found pxFont in map for %s\n", url);
+    pFont = it->second;
+    return pFont;
+  } 
+  else 
+  {
+    rtLogDebug("Create pxFont in map for %s\n", url);
     pFont = new pxFont(url);
     mFontMap.insert(make_pair(url, pFont));
     pFont->loadResource();
   }
-  
+
   return pFont;
 }
+
 
 void pxFontManager::removeFont(rtString fontName)
 {

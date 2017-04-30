@@ -100,6 +100,19 @@ class pxContext {
                  pxConstantsStretch::constants xStretch = pxConstantsStretch::STRETCH,
                  pxConstantsStretch::constants yStretch = pxConstantsStretch::STRETCH );
 
+  /**
+   * draw text image
+   * @param x
+   * @param y
+   * @param w
+   * @param h
+   * @param t
+   * @param useTextureDimsAlways
+   * @param lineHeight
+   * @param color
+   */
+  void drawLabelImage(float x, float y, float w, float h, pxTextureRef t, float bitmapBottom, float lineHeight, bool useTextureDimsAlways = true,
+                      float* gradientColor = NULL);
   void drawImage9(float w, float h, float x1, float y1,
                   float x2, float y2, pxTextureRef texture);
 

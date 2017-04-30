@@ -106,8 +106,14 @@ extern uv_async_t gcTrigger;
 extern pxContext context;
 rtThreadQueue gUIThreadQueue;
 
-enum pxCurrentGLProgram { PROGRAM_UNKNOWN = 0, PROGRAM_SOLID_SHADER,  PROGRAM_A_TEXTURE_SHADER, PROGRAM_TEXTURE_SHADER,
-    PROGRAM_TEXTURE_MASKED_SHADER};
+enum pxCurrentGLProgram { 
+  PROGRAM_UNKNOWN = 0,
+  PROGRAM_SOLID_SHADER,
+  PROGRAM_A_TEXTURE_SHADER,
+  PROGRAM_A_LABEL_OUTLINE_SHADER,
+  PROGRAM_TEXTURE_BLUR_SHADER,
+  PROGRAM_TEXTURE_SHADER,
+  PROGRAM_TEXTURE_MASKED_SHADER};
 
 pxCurrentGLProgram currentGLProgram = PROGRAM_UNKNOWN;
 
@@ -1492,6 +1498,56 @@ static void drawImageTexture(float x, float y, float w, float h, pxTextureRef te
     rtLogError("Unhandled case");
   }
 }
+static void drawLabelImageTexture(float x, float y, float w, float h, pxTextureRef texture, float bitmapTop, float lineHeight,
+                                  bool useTextureDimsAlways, float *color)
+{
+  // args are tested at call site...
+
+  float iw = texture->width();
+  float ih = texture->height();
+
+  if (useTextureDimsAlways)
+  {
+      w = iw;
+      h = ih;
+  }
+  else
+  {
+    if (w == -1)
+      w = iw;
+    if (h == -1)
+      h = ih;
+  }
+
+   const float verts[4][2] =
+   {
+     { x,     y },
+     { x+w,   y },
+     { x,   y+h },
+     { x+w, y+h }
+   };
+
+  float tw = w/iw;
+  float th = h/ih;
+
+  float firstTextureY  = 1.0;
+  float secondTextureY = 1.0-th;
+
+  const float uv[4][2] =
+  {
+    { 0,  firstTextureY  },
+    { tw, firstTextureY  },
+    { 0,  secondTextureY },
+    { tw, secondTextureY }
+  };
+
+  lineHeight *= 0.7;
+
+  float colorPM[4];
+  premultiply(colorPM, color);
+
+  gATextureShader->draw(gResW, gResH, gMatrix.data(), gAlpha, 4, verts, uv, texture, colorPM);
+}
 
 static void drawImage92(GLfloat x, GLfloat y, GLfloat w, GLfloat h, GLfloat x1, GLfloat y1, GLfloat x2,
                         GLfloat y2, pxTextureRef texture)
@@ -1883,33 +1939,32 @@ void pxContext::enableDirtyRectangles(bool enable)
 void pxContext::drawRect(float w, float h, float lineWidth, float* fillColor, float* lineColor)
 {
 #ifdef DEBUG_SKIP_RECT
-#warning "DEBUG_SKIP_RECT enabled ... Skipping "
+  #warning "DEBUG_SKIP_RECT enabled ... Skipping "
   return;
 #endif
 
-  // TRANSPARENT / DIMENSIONLESS 
-  if(gAlpha == 0.0 || w <= 0.0 || h <= 0.0)
+  // TRANSPARENT / DIMENSIONLESS
+  if (gAlpha == 0.0 || w <= 0.0 || h <= 0.0)
   {
-   // rtLogDebug("\n drawRect() - TRANSPARENT");
     return;
   }
 
   // COLORLESS
-  if(fillColor == NULL && lineColor == NULL)
+  if (fillColor == NULL && lineColor == NULL)
   {
     //rtLogError("cannot drawRect() on context surface because colors are NULL");
     return;
   }
 
   // Fill ...
-  if(fillColor != NULL && fillColor[3] > 0.0) // with non-transparent color
+  if (fillColor != NULL && fillColor[3] > 0.0) // with non-transparent color
   {
     float half = lineWidth/2;
     drawRect2(half, half, w-lineWidth, h-lineWidth, fillColor);
   }
 
   // Frame ...
-  if(lineColor != NULL && lineColor[3] > 0.0 && lineWidth > 0) // with non-transparent color and non-zero stroke
+  if (lineColor != NULL && lineColor[3] > 0.0 && lineWidth > 0) // with non-transparent color and non-zero stroke
   {
     drawRectOutline(0, 0, w, h, lineWidth, lineColor);
   }
@@ -1965,6 +2020,26 @@ void pxContext::drawImage(float x, float y, float w, float h,
   drawImageTexture(x, y, w, h, t, mask, useTextureDimsAlways,
                   color? color : black, stretchX, stretchY);
 }
+void pxContext::drawLabelImage(float x, float y, float w, float h, pxTextureRef t, float bitmapTop, float lineHeight,
+                               bool useTextureDimsAlways, float *color) 
+{
+  // TRANSPARENT / DIMENSIONLESS 
+  if (gAlpha == 0.0 || w <= 0.0 || h <= 0.0) 
+  {
+    return;
+  }
+
+  // TEXTURELESS
+  if (t.getPtr() == NULL) 
+  {
+    return;
+  }
+
+
+  float black[4] = {0, 0, 0, 1};
+  drawLabelImageTexture(x, y, w, h, t, bitmapTop, lineHeight, useTextureDimsAlways,
+                        color ? color : black);
+}
 
 void pxContext::drawDiagRect(float x, float y, float w, float h, float* color)
 {
@@ -1976,16 +2051,16 @@ void pxContext::drawDiagRect(float x, float y, float w, float h, float* color)
   if (!mShowOutlines) return;
 
   // TRANSPARENT / DIMENSIONLESS 
-  if(gAlpha == 0.0 || w <= 0.0 || h <= 0.0)
+  if (gAlpha == 0.0 || w <= 0.0 || h <= 0.0)
   {
     rtLogError("cannot drawDiagRect() - width/height/gAlpha cannot be Zero.");
     return;
   }
 
   // COLORLESS
-  if(color == NULL || color[3] == 0.0)
+  if (color == NULL || color[3] == 0.0)
   {
-    return; 
+    return;
   }
 
 
@@ -2013,12 +2088,12 @@ void pxContext::drawDiagLine(float x1, float y1, float x2, float y2, float* colo
 
   if (!mShowOutlines) return;
 
-  if(gAlpha == 0.0)
+  if (gAlpha == 0.0)
   {
     return; // TRANSPARENT
   }
 
-  if(color == NULL || color[3] == 0.0)
+  if (color == NULL || color[3] == 0.0)
   {
     return; // COLORLESS
   }

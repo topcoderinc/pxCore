@@ -41,24 +41,29 @@ public:
   rtProperty(fontUrl, fontUrl, setFontUrl, rtString);  
   rtProperty(font, font, setFont, rtObjectRef);
 
+  rtProperty(italic, italic, setItalic, bool);
+  rtProperty(bold, bold, setBold, bool);
   pxText(pxScene2d* scene);
   virtual ~pxText();
   rtError text(rtString& s) const;
   virtual rtError setText(const char* text);
 
-  rtError textColor(uint32_t& /*c*/) const {
-    
+  rtError uintToFloatArray(uint32_t c , float * arr)
+  {
+    arr[0] = (float)((c>>24)&0xff)/255.0f;
+    arr[1] = (float)((c>>16)&0xff)/255.0f;
+    arr[2] = (float)((c>>8)&0xff)/255.0f;
+    arr[3] = (float)((c>>0)&0xff)/255.0f;
     return RT_OK;
   }
 
-  rtError setTextColor(uint32_t c) {
-    mTextColor[0] = (float)((c>>24)&0xff)/255.0f;
-    mTextColor[1] = (float)((c>>16)&0xff)/255.0f;
-    mTextColor[2] = (float)((c>>8)&0xff)/255.0f;
-    mTextColor[3] = (float)((c>>0)&0xff)/255.0f;
-    return RT_OK;
-  }
+  rtError textColor(uint32_t& /*c*/) const { return RT_OK; }
+  rtError setTextColor(uint32_t c) { return uintToFloatArray(c,mTextColor); }
+  rtError italic(bool & /*b*/) const { return RT_OK; }
+  virtual rtError setItalic(bool b);
 
+  rtError bold(bool & /*b*/) const { return RT_OK; }
+  virtual rtError setBold(bool b);
   rtError fontUrl(rtString& v) const { getFontResource()->url(v); return RT_OK; }
   virtual rtError setFontUrl(const char* s);
 
@@ -109,6 +114,8 @@ public:
   rtObjectRef mFont;
   
   float mTextColor[4];
+  bool isItalic;
+  bool isBold;
   uint32_t mPixelSize;
   bool mDirty;
   pxContextFramebufferRef mCached;

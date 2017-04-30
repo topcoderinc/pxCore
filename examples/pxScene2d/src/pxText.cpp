@@ -27,7 +27,10 @@
 extern pxContext context;
 
 
-pxText::pxText(pxScene2d* scene):pxObject(scene), mListenerAdded(false)
+pxText::pxText(pxScene2d* scene):pxObject(scene),
+                                 isItalic(false),
+                                 isBold(false),
+                                 mListenerAdded(false)
 {
   float c[4] = {1, 1, 1, 1};
   memcpy(mTextColor, c, sizeof(mTextColor));
@@ -82,6 +85,28 @@ rtError pxText::setText(const char* s)
     getFontResource()->measureTextInternal(s, mPixelSize, 1.0, 1.0, mw, mh);
   }
   return RT_OK; 
+}
+
+rtError pxText::setItalic(bool var) 
+{
+  isItalic = var;
+  if (getFontResource()->isFontLoaded()) 
+  {
+    createNewPromise();
+    getFontResource()->setItalic(isItalic);
+  }
+  return RT_OK;
+}
+
+rtError pxText::setBold(bool var) 
+{
+  isBold = var;
+  if (getFontResource()->isFontLoaded()) 
+  {
+    createNewPromise();
+    getFontResource()->setBold(isBold);
+  }
+  return RT_OK;
 }
 
 rtError pxText::setPixelSize(uint32_t v) 
@@ -166,7 +191,8 @@ void pxText::update(double t)
   
 }
 
-void pxText::draw() {
+void pxText::draw() 
+{
   static pxTextureRef nullMaskRef;
   if( getFontResource()->isFontLoaded())
   {
@@ -177,7 +203,8 @@ void pxText::draw() {
     }
     else
     {
-      getFontResource()->renderText(mText, mPixelSize, 0, 0, msx, msy, mTextColor, mw);
+      getFontResource()->renderText(mText, mPixelSize, 0, 0, msx, msy, mTextColor, mw,
+                                    isItalic, isBold);
     }
   }  
   //else {
@@ -231,3 +258,5 @@ rtDefineProperty(pxText, textColor);
 rtDefineProperty(pxText, pixelSize);
 rtDefineProperty(pxText, fontUrl);
 rtDefineProperty(pxText, font);
+rtDefineProperty(pxText, italic);
+rtDefineProperty(pxText, bold);
