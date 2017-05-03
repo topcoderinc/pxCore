@@ -172,8 +172,8 @@ public:
   pxContextFramebufferRef mCached;
   rtFileDownloadRequest* mFontDownloadRequest;
   
-  virtual float getFBOWidth() { return mw; }
-  virtual float getFBOHeight() { return mh; }
+  virtual float getFBOWidth();
+  virtual float getFBOHeight();
   bool mListenerAdded;
 };
 

@@ -1,0 +1,15 @@
+﻿  appcast.cpp
+  appcontroller.cpp
+  dllmain.cpp
+  dll_api.cpp
+  download.cpp
+  error.cpp
+  settings.cpp
+  threads.cpp
+  ui.cpp
+  updatechecker.cpp
+  updatedownloader.cpp
+appcast.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/SAFESEH' specification
+     Creating library Y:\Documents\Git\tc_pxCore\examples\pxScene2d\external\vc.build\Debug\WinSparkle.lib and object Y:\Documents\Git\tc_pxCore\examples\pxScene2d\external\vc.build\Debug\WinSparkle.exp
+  WinSparkle.vcxproj -> Y:\Documents\Git\tc_pxCore\examples\pxScene2d\external\vc.build\Debug\WinSparkle.dll
+  WinSparkle.vcxproj -> Y:\Documents\Git\tc_pxCore\examples\pxScene2d\external\vc.build\Debug\WinSparkle.pdb (Full PDB)

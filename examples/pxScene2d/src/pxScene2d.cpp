@@ -56,6 +56,9 @@
 #include "pxIView.h"
 
 #include "pxClipboard.h"
+#include <rapidjson/document.h>
+#include <rapidjson/filereadstream.h>
+using namespace rapidjson;
 
 using namespace std;
 
@@ -64,6 +67,8 @@ using namespace std;
 
 extern rtThreadQueue gUIThreadQueue;
 uint32_t rtPromise::promiseID = 200;
+
+static int fpsWarningThreshold = 25;
 
 // Debug Statistics
 #ifdef USE_RENDER_STATS
@@ -113,6 +118,80 @@ void stopProfiling()
 }
 #endif //ENABLE_VALGRIND
 int pxObjectCount = 0;
+
+#include <rapidjson/document.h>
+#include <rapidjson/filereadstream.h>
+#include <rapidjson/error/en.h>
+
+// store the mapping between wayland app names and binary paths
+map<string, string> gWaylandAppsMap;
+static bool gWaylandAppsConfigLoaded = false;
+#define DEFAULT_WAYLAND_APP_CONFIG_FILE "./waylandregistry.conf"
+
+void populateWaylandAppsConfig()
+{
+  FILE* fp = NULL;
+  char const* s = getenv("WAYLAND_APPS_CONFIG");
+  if (s)
+  {
+    fp = fopen(s, "rb");
+  }
+  if (NULL == fp)
+  {
+    fp = fopen(DEFAULT_WAYLAND_APP_CONFIG_FILE, "rb");
+    if (NULL == fp)
+    {
+      rtLogInfo("Wayland config read error : [unable to read waylandregistry.conf]\n");
+      return;
+    }
+  }
+  char readBuffer[65536];
+  memset(readBuffer, 0, sizeof(readBuffer));
+  rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+  rapidjson::Document doc;
+  rapidjson::ParseResult result = doc.ParseStream(is);
+  if (!result)
+  {
+    rapidjson::ParseErrorCode e = doc.GetParseError();
+    rtLogInfo("Wayland config read error : [JSON parse error while reading waylandregistry.conf: %s (%ld)]\n",rapidjson::GetParseError_En(e), result.Offset());
+    fclose(fp);
+    return;
+  }
+  fclose(fp);
+
+  if (! doc.HasMember("waylandapps"))
+  {
+    rtLogInfo("Wayland config read error : [waylandapps element not found]\n");
+    return;
+  }
+
+  const rapidjson::Value& appList = doc["waylandapps"];
+  for (rapidjson::SizeType i = 0; i < appList.Size(); i++)
+  {
+    if (appList[i].IsObject())
+    {
+      if ((appList[i].HasMember("name")) && (appList[i]["name"].IsString()) && (appList[i].HasMember("binary")) && (appList[i]["binary"].IsString()))
+      {
+        string appName = appList[i]["name"].GetString();
+        string binary = appList[i]["binary"].GetString();
+        if ((appName.length() != 0) && (binary.length() != 0))
+        {
+          gWaylandAppsMap[appName] = binary;
+          rtLogInfo("Mapped wayland app [%s] to path [%s] \n",appName.c_str(),binary.c_str());
+        }
+        else
+        {
+          rtLogInfo("Wayland config read error : [one of the entry not added due to name/binary is empty]\n");
+        }
+      }
+      else
+      {
+        rtLogInfo("Wayland config read error : [one of the entry not added due to name/binary not present]\n");
+      }
+    }
+  }
+}
+
 static char encoding_table[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
                                 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
                                 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
@@ -274,34 +353,24 @@ private:
 
 
 // pxObject methods
-pxObject::pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mRenderTexture(NULL), mcx(0), mcy(0), mx(0), my(0), ma(1.0), mr(0),
+pxObject::pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my(0), ma(1.0), mr(0), mBlendMode(pxBlendModes::NORMAL),
 #ifdef ANIMATION_ROTATE_XYZ
     mrx(0), mry(0), mrz(1.0),
 #endif //ANIMATION_ROTATE_XYZ
     msx(1), msy(1), mw(0), mh(0),
     mInteractive(true),
     mSnapshotRef(), mPainting(true), mClip(false), mMask(false), mDraw(true), mHitTest(true), mReady(),
-    mFocus(false),mClipSnapshotRef(),mCancelInSet(true),mUseMatrix(false), mRepaint(true) 
+    mFocus(false),mClipSnapshotRef(),mCancelInSet(true),mUseMatrix(false), mRepaint(true)
 #ifdef PX_DIRTY_RECTANGLES
     , mIsDirty(false), mLastRenderMatrix(), mScreenCoordinates()
 #endif //PX_DIRTY_RECTANGLES
-    ,mDrawableSnapshotForMask(), mMaskSnapshot()
+    ,mDrawableSnapshotForMask(), mMaskSnapshot(), mIsDisposed(false)
   {
     pxObjectCount++;
     mScene = scene;
     mReady = new rtPromise;
     mEmit = new rtEmit;
   }
-
-rtError pxObject::setRenderTexture(rtObjectRef renderTexture)
-{
-  if (renderTexture)
-  {
-    pxObject* t = (pxObject*)renderTexture.get<voidPtr>("_pxObject");
-    mRenderTexture = dynamic_cast<pxRenderTexture*>(t);
-  }
-  return RT_OK;
-}
 
 pxObject::~pxObject()
 {
@@ -344,6 +413,7 @@ void pxObject::createNewPromise()
 void pxObject::dispose()
 {
   //rtLogInfo(__FUNCTION__);
+  mIsDisposed = true;
   vector<animation>::iterator it = mAnimations.begin();
   for(;it != mAnimations.end();it++)
   {
@@ -360,9 +430,9 @@ void pxObject::dispose()
   {
     (*it)->dispose();
     (*it)->mParent = NULL;  // setParent mutates the mChildren collection
-  } 
+  }
   mChildren.clear();
-  deleteSnapshot(mSnapshotRef); 
+  deleteSnapshot(mSnapshotRef);
   deleteSnapshot(mClipSnapshotRef);
   deleteSnapshot(mDrawableSnapshotForMask);
   deleteSnapshot(mMaskSnapshot);
@@ -394,7 +464,7 @@ rtError pxObject::Set(const char* name, const rtValue* value)
   #ifdef PX_DIRTY_RECTANGLES
   mIsDirty = true;
   //mScreenCoordinates = getBoundingRectInScreenCoordinates();
-  
+
   #endif //PX_DIRTY_RECTANGLES
   if (strcmp(name, "x") != 0 && strcmp(name, "y") != 0 &&  strcmp(name, "a") != 0)
   {
@@ -410,15 +480,15 @@ rtError pxObject::Set(const char* name, const rtValue* value)
   return rtObject::Set(name, value);
 }
 
-// TODO Cleanup animateTo methods... animateTo animateToP2 etc... 
+// TODO Cleanup animateTo methods... animateTo animateToP2 etc...
 rtError pxObject::animateToP2(rtObjectRef props, double duration,
                               uint32_t interp, uint32_t animationType,
                               int32_t count, rtObjectRef& promise)
 {
 
   if (!props) return RT_FAIL;
-  // TODO JR... not sure that we should do an early out here... thinking 
-  // we should still return a resolved promise given time... 
+  // TODO JR... not sure that we should do an early out here... thinking
+  // we should still return a resolved promise given time...
   // just going to get exceptions if you try to do a .then on the return result
   //if (!props) return RT_OK;
   // Default to Linear, Loop and count==1
@@ -488,7 +558,7 @@ rtError pxObject::moveToFront()
   pxObject* parent = this->parent();
 
   if(!parent) return RT_OK;
-  
+
   remove();
   setParent(parent);
 
@@ -498,9 +568,9 @@ rtError pxObject::moveToFront()
 rtError pxObject::moveToBack()
 {
   pxObject* parent = this->parent();
-  
+
   if(!parent) return RT_OK;
-  
+
   remove();
   mParent = parent;
   std::vector<rtRef<pxObject> >::iterator it = parent->mChildren.begin();
@@ -514,6 +584,11 @@ rtError pxObject::animateTo(const char* prop, double to, double duration,
                              uint32_t interp, uint32_t animationType,
                             int32_t count, rtObjectRef promise)
 {
+  if (mIsDisposed)
+  {
+    promise.send("reject",this);
+    return RT_OK;
+  }
   animateToInternal(prop, to, duration, ((pxConstantsAnimation*)CONSTANTS.animationConstants.getPtr())->getInterpFunc(interp),
             (pxConstantsAnimation::animationOptions)animationType, count, promise);
   return RT_OK;
@@ -942,44 +1017,6 @@ void pxObject::drawInternal(bool maskPass)
         break;
       }
     }
-
-    if (mRenderTexture != NULL)
-    {
-      pxContextFramebufferRef renderContext = mRenderTexture->getCfbRef();
-      bool isNullContext = !renderContext;
-      if (isNullContext)
-      {
-        renderContext = mRenderTexture->createCfbRef();
-      }
-      context.enableInternalContext(true);
-      pxMatrix4f emptyMatrix;
-      float parentAlpha = 1.0;
-      context.setMatrix(emptyMatrix);
-      context.setAlpha(parentAlpha);
-
-      pxContextFramebufferRef previousRenderSurface = context.getCurrentFramebuffer();
-      if (mRepaint && context.setFramebuffer(renderContext) == PX_OK)
-      {
-        if (isNullContext)
-        {
-          context.clear(w, h);  
-        }
-        draw();
-
-        for(vector<rtRef<pxObject> >::iterator it = mChildren.begin(); it != mChildren.end(); ++it)
-        {
-          context.pushState();
-          (*it)->drawInternal();
-          context.popState();
-        }
-      }
-      context.setFramebuffer(previousRenderSurface);
-      context.enableInternalContext(false);
-      
-      context.setMatrix(m);
-      context.setAlpha(ma);
-      mRenderTexture = NULL; // clear it, so that is can normal render
-    }
     // MASKING ? ---------------------------------------------------------------------------------------------------
     if (maskFound)
     {
@@ -1015,7 +1052,9 @@ void pxObject::drawInternal(bool maskPass)
       if ( !mClip || (w>alphaEpsilon && h>alphaEpsilon && context.isObjectOnScreen(0, 0, w, h)))
       {
         //rtLogInfo("calling draw() mw=%f mh=%f\n", mw, mh);
+        context.updateBlendMode(mBlendMode);
         draw();
+        context.updateBlendMode(pxBlendModes::NORMAL);
       }
 
       // CHILDREN -------------------------------------------------------------------------------------
@@ -1071,6 +1110,37 @@ void pxObject::drawInternal(bool maskPass)
   // ---------------------------------------------------------------------------------------------------
 }
 
+rtError pxObject::drawToFBO(rtObjectRef renderTextureRef)
+{
+  float w = getOnscreenWidth();
+  float h = getOnscreenHeight();
+  pxRenderTexture* rt = dynamic_cast<pxRenderTexture*>(renderTextureRef.getPtr());
+  if (!rt)
+  {
+    return RT_ERROR;
+  }
+
+  pxContextFramebufferRef renderContext = rt->getCfbRef();
+  bool isNullContext = !renderContext;
+  if (isNullContext)
+  {
+    renderContext = rt->createCfbRef();
+  }
+
+  context.enableInternalContext(true);
+  pxContextFramebufferRef previousRenderSurface = context.getCurrentFramebuffer();
+  if (mRepaint && context.setFramebuffer(renderContext) == PX_OK)
+  {
+    if (isNullContext)
+    {
+      context.clear(w, h);
+    }
+    this->drawInternal();
+  }
+  context.setFramebuffer(previousRenderSurface);
+  context.enableInternalContext(false);
+  return RT_OK;
+}
 
 bool pxObject::hitTestInternal(pxMatrix4f m, pxPoint2f& pt, rtRef<pxObject>& hit,
                    pxPoint2f& hitPt)
@@ -1235,7 +1305,7 @@ void pxObject::createSnapshotOfChildren()
 
     for(vector<rtRef<pxObject> >::iterator it = mChildren.begin(); it != mChildren.end(); ++it)
     {
-      if ((*it)->drawEnabled() && !(*it)->mask() )
+      if ((*it)->drawEnabled() && !(*it)->mask())
       {
         context.pushState();
         (*it)->drawInternal();
@@ -1280,7 +1350,6 @@ rtDefineMethod(rtPromise, reject);
 rtDefineObject(pxObject, rtObject);
 rtDefineProperty(pxObject, _pxObject);
 rtDefineProperty(pxObject, parent);
-rtDefineProperty(pxObject, renderTexture);
 rtDefineProperty(pxObject, children);
 rtDefineProperty(pxObject, x);
 rtDefineProperty(pxObject, y);
@@ -1292,6 +1361,7 @@ rtDefineProperty(pxObject, sx);
 rtDefineProperty(pxObject, sy);
 rtDefineProperty(pxObject, a);
 rtDefineProperty(pxObject, r);
+rtDefineProperty(pxObject, blendMode);
 #ifdef ANIMATION_ROTATE_XYZ
 rtDefineProperty(pxObject, rx);
 rtDefineProperty(pxObject, ry);
@@ -1318,6 +1388,7 @@ rtDefineMethod(pxObject, releaseResources);
 //TODO - remove
 rtDefineMethod(pxObject, animateToF2);
 #endif
+rtDefineMethod(pxObject, drawToFBO);
 rtDefineMethod(pxObject, animateToP2);
 rtDefineMethod(pxObject, addListener);
 rtDefineMethod(pxObject, delListener);
@@ -1362,6 +1433,24 @@ pxScene2d::pxScene2d(bool top)
   e.set("target",mFocusObj);
   rtRef<pxObject> t = (pxObject*)mFocusObj.get<voidPtr>("_pxObject");
   t->mEmit.send("onFocus",e);
+
+  if (mTop)
+  {
+    static bool checkForFpsMinOverride = true;
+    if (checkForFpsMinOverride)
+    {
+      char const* s = getenv("PXSCENE_FPS_WARNING");
+      if (s)
+      {
+        int fpsWarnOverride = atoi(s);
+        if (fpsWarnOverride > 0)
+        {
+          fpsWarningThreshold = fpsWarnOverride;
+        }
+      }
+    }
+    checkForFpsMinOverride = false;
+  }
 
   #ifdef USE_SCENE_POINTER
   mPointerX= 0;
@@ -1497,7 +1586,7 @@ rtError pxScene2d::createTextBox(rtObjectRef p, rtObjectRef& o)
   o.send("init");
   return RT_OK;
 }
-rtError pxScene2d::createGraphic(rtObjectRef p, rtObjectRef &o) 
+rtError pxScene2d::createGraphic(rtObjectRef p, rtObjectRef &o)
 {
   o = new pxGraphic(this);
   o.set(p);
@@ -1592,6 +1681,11 @@ rtError pxScene2d::createWayland(rtObjectRef p, rtObjectRef& o)
 
   return RT_FAIL;
 #else
+  if (false == gWaylandAppsConfigLoaded)
+  {
+    populateWaylandAppsConfig();
+    gWaylandAppsConfigLoaded = true;
+  }
   rtRef<pxWaylandContainer> c = new pxWaylandContainer(this);
   c->setView(new pxWayland(true));
   o = c.getPtr();
@@ -1746,7 +1840,7 @@ void pxScene2d::onUpdate(double t)
     {
       end2 = pxSeconds();
 
-    double fps = rint((double)frameCount/(end2-start));
+    int fps = (int)rint((double)frameCount/(end2-start));
 
 #ifdef USE_RENDER_STATS
       double   dpf = rint( (double) gDrawCalls    / (double) frameCount ); // e.g.   glDraw*()           - calls per frame
@@ -1770,7 +1864,25 @@ void pxScene2d::onUpdate(double t)
       sigma_draw   = 0;
       sigma_update = 0;
 #else
-    rtLogDebug("%g fps   pxObjects: %d\n", fps, pxObjectCount);
+    static int previousFps = 60;
+    //only log fps if there is a change to avoid log flooding
+    if (previousFps != fps)
+    {
+      if (fps < fpsWarningThreshold && previousFps >= fpsWarningThreshold )
+      {
+        rtLogWarn("pxScene fps: %d  (below warn threshold of %d)", fps, fpsWarningThreshold);
+      }
+      else if (fps < fpsWarningThreshold)
+      {
+        rtLogDebug("pxScene fps: %d", fps);
+      }
+      else if (previousFps < fpsWarningThreshold)
+      {
+        rtLogWarn("pxScene fps: %d (above warn threshold of %d)", fps, fpsWarningThreshold);
+      }
+    }
+    previousFps = fps;
+    rtLogDebug("%d fps   pxObjects: %d\n", fps, pxObjectCount);
 #endif //USE_RENDER_STATS
 
     // TODO FUTURES... might be nice to have "struct" style object's that get copied
@@ -2350,8 +2462,8 @@ rtError pxScene2d::screenshot(rtString type, rtString& pngData)
     if (pxStorePNGImage(o, pngData2) == RT_OK)
     {
 
-//HACK JUNK HACK JUNK HACK JUNK HACK JUNK HACK JUNK 
-//HACK JUNK HACK JUNK HACK JUNK HACK JUNK HACK JUNK 
+//HACK JUNK HACK JUNK HACK JUNK HACK JUNK HACK JUNK
+//HACK JUNK HACK JUNK HACK JUNK HACK JUNK HACK JUNK
 #if 0
     FILE *myFile = fopen("/mnt/nfs/env/snap.png", "wb");
     if( myFile != NULL)
@@ -2359,10 +2471,10 @@ rtError pxScene2d::screenshot(rtString type, rtString& pngData)
       fwrite( pngData2.data(), sizeof(char), pngData2.length(),myFile);
       fclose(myFile);
     }
-#endif    
-//HACK JUNK HACK JUNK HACK JUNK HACK JUNK HACK JUNK 
-//HACK JUNK HACK JUNK HACK JUNK HACK JUNK HACK JUNK 
-    
+#endif
+//HACK JUNK HACK JUNK HACK JUNK HACK JUNK HACK JUNK
+//HACK JUNK HACK JUNK HACK JUNK HACK JUNK HACK JUNK
+
       size_t l;
       char* d = base64_encode(pngData2.data(), pngData2.length(), &l);
       if (d)
@@ -2466,7 +2578,7 @@ void RT_STDCALL testView::onDraw()
   float black[] = {0,0,0,1};
   float red[]= {1,0,0,1};
   float green[] = {0,1,0,1};
-  context.drawRect(mw, mh, 1, mEntered?green:red, white,0);
+  context.drawRect(mw, mh, 1, mEntered?green:red, white, 0);
   context.drawDiagLine(0,mMouseY,mw,mMouseY,black);
   context.drawDiagLine(mMouseX,0,mMouseX,mh,black);
 }
@@ -2488,7 +2600,7 @@ void pxViewContainer::invalidateRect(pxRect* r)
     mScene->invalidateRect(&screenRect);
 #else
     mScene->invalidateRect(NULL);
-    UNUSED_PARAM(r);    
+    UNUSED_PARAM(r);
 #endif //PX_DIRTY_RECTANGLES
   }
 }
@@ -2502,7 +2614,7 @@ void pxScene2d::invalidateRect(pxRect* r)
     mDirty = true;
   }
 #else
-  UNUSED_PARAM(r); 
+  UNUSED_PARAM(r);
 #endif //PX_DIRTY_RECTANGLES
   if (mContainer && !mTop)
   {
@@ -2576,7 +2688,7 @@ rtError pxSceneContainer::ready(rtObjectRef& o) const
   if (mScriptView) {
     rtLogInfo("mScriptView is set!\n");
     return mScriptView->ready(o);
-  } 
+  }
   rtLogInfo("mScriptView is NOT set!\n");
   return RT_FAIL;
 }
@@ -2602,19 +2714,19 @@ rtError createObject2(const char* t, rtObjectRef& o)
 }
 #endif
 
-pxScriptView::pxScriptView(const char* url, const char* /*lang*/) 
+pxScriptView::pxScriptView(const char* url, const char* /*lang*/)
      : mWidth(-1), mHeight(-1), mViewContainer(NULL), mRefCount(0)
-{ 
+{
   rtLogInfo(__FUNCTION__);
   rtLogDebug("pxScriptView::pxScriptView()entering\n");
-#ifndef RUNINMAIN // NOTE this ifndef ends after runScript decl, below
   mUrl = url;
+#ifndef RUNINMAIN // NOTE this ifndef ends after runScript decl, below
   mReady = new rtPromise();
  // mLang = lang;
   rtLogDebug("pxScriptView::pxScriptView() exiting\n");
 }
 
-void pxScriptView::runScript() 
+void pxScriptView::runScript()
 {
   rtLogInfo(__FUNCTION__);
 #endif // ifndef RUNINMAIN
@@ -2644,6 +2756,25 @@ void pxScriptView::runScript()
 #else
     sprintf(buffer, "loadUrl(\"%s\");", mUrl.cString());
     rtLogWarn("pxScriptView::runScript calling runScript with %s\n",mUrl.cString());
+#endif
+#ifdef WIN32 // process \\ to /
+		unsigned int bufferLen = strlen(buffer);
+		char * newBuffer = (char*)malloc(sizeof(char)*(bufferLen + 1));
+		unsigned int newBufferLen = 0;
+		for (int i = 0; i < bufferLen - 1; i++) {
+			if (buffer[i] == '\\') {
+				newBuffer[newBufferLen++] = '/';
+				if (buffer[i + 1] == '\\') {
+					i = i + 1;
+				}
+			}
+			else {
+				newBuffer[newBufferLen++] = buffer[i];
+			}
+		}
+		newBuffer[newBufferLen++] = '\0';
+		strcpy(buffer, newBuffer);
+		free(newBuffer);
 #endif
     mCtx->runScript(buffer);
     rtLogInfo("pxScriptView::runScript() ending\n");
@@ -2732,7 +2863,7 @@ rtError pxScriptView::makeReady(int numArgs, const rtValue* args, rtValue* /*res
           v->mApi = args[1].toObject();
         }
 
-        v->mReady.send("resolve", v->mApi);
+        v->mReady.send("resolve", v->mScene);
       }
       else
       {
@@ -2744,4 +2875,3 @@ rtError pxScriptView::makeReady(int numArgs, const rtValue* args, rtValue* /*res
   }
   return RT_FAIL;
 }
-

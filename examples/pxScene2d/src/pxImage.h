@@ -37,9 +37,13 @@ public:
   rtProperty(stretchY, stretchY, setStretchY, int32_t);
   rtProperty(resource, resource, setResource, rtObjectRef);
   rtProperty(texture, texture, setTexture, rtObjectRef);
-  rtProperty(uvs, uvs, setUvs , rtObjectRef);
+  rtProperty(uvs, uvs, setUvs, rtObjectRef);
 
-  pxImage(pxScene2d* scene) : pxObject(scene), mStretchX(pxConstantsStretch::NONE), mStretchY(pxConstantsStretch::NONE), mUvs(NULL), 
+  rtProperty(vertices, vertices, setVertices, rtObjectRef);
+  rtProperty(type, type, setType, rtString);
+
+  pxImage(pxScene2d* scene) : pxObject(scene), mStretchX(pxConstantsStretch::NONE), 
+  mStretchY(pxConstantsStretch::NONE), mUvs(NULL), mVertices(NULL), mUvsLength(0),  
     imageLoaded(false), mListenerAdded(false)
   { 
     mw = -1;
@@ -77,27 +81,64 @@ public:
     mTexture = texture;
     return RT_OK;
   }
-
+  
   rtError uvs(rtObjectRef& /*uvs*/) const { return RT_OK; }
-
   rtError setUvs(rtObjectRef uvs) 
   {
-    if (mUvs != NULL)
-    {
-      free(mUvs);
-    }
+    if (!uvs) return RT_ERROR;
     uint32_t len = uvs.get<uint32_t>("length"); 
-    if(len != 8)
+    if (len < 8)
     {
-      rtLogError("uvs length must be 8");
+      rtLogError("uvs length must be greater than 8.");
       return RT_ERROR;
     }
-    mUvs = (float*)malloc(sizeof(float) * 8);
-    for (uint32_t i = 0; i < len; i++) 
+    mUvsLength = len/2;
+    mUvs = copyJSArray(uvs, mUvs);
+    if (!mUvs)
     {
-      mUvs[i] = uvs.get<float>(i);
+      return RT_ERROR;
     }
     return RT_OK;
+  }
+
+  rtError vertices(rtObjectRef& /*vertices*/) const { return RT_OK; }
+  rtError setVertices(rtObjectRef vertices)
+  {
+    mVertices = copyJSArray(vertices, mVertices);
+    if (!mVertices)
+    {
+      return RT_ERROR;
+    }
+    return RT_OK;
+  }
+
+  rtError type(rtString & /*type*/) const { return RT_OK; }
+  rtError setType(rtString t) 
+  {
+    strcpy(mType, t.cString());
+    return RT_OK;
+  }
+
+  
+
+  template<typename T> T* copyJSArray(rtObjectRef source, T* op)
+  {
+    if (!op)
+    {
+      free(op);
+    }
+    if (!source)
+    {
+      return NULL;
+    }
+
+    uint32_t len = source.get<uint32_t>("length");
+    T* dest = (T*)malloc(sizeof(T) * len);
+    for (uint32_t i = 0; i < len; i++) 
+    {
+      dest[i] = source.get<T>(i);
+    }
+    return dest;
   }
 
   virtual void resourceReady(rtString readyResolution);
@@ -123,8 +164,9 @@ public:
 protected:
   virtual void draw();
   
-  virtual void drawWithImage();
-  virtual void drawWithTexture(pxTextureRef texture);
+  void drawMesh();
+  void drawWithImage();
+  void drawWithTexture(pxTextureRef texture);
 
   void loadImage(rtString Url);
   inline rtImageResource* getImageResource() const { return (rtImageResource*)mResource.getPtr(); }
@@ -135,7 +177,10 @@ protected:
   rtObjectRef mTexture;
   
   float* mUvs;
-  
+  float* mVertices;
+  uint32_t mUvsLength;
+  char mType[32]; 
+
   bool imageLoaded;
   bool mListenerAdded;
 };

@@ -29,6 +29,9 @@
 
 #define INVALID_REG UINT32_MAX
 
+#include <vector>
+using std::vector;
+
 class pxTransform;
 
 class pxTransformData
@@ -152,7 +155,7 @@ private:
 
 
 
-  vector<regInfo> mRegInfo;
+  std::vector<regInfo> mRegInfo;
 
   // execution context
   float* mStack;

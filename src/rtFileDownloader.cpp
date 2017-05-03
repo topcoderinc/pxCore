@@ -25,13 +25,10 @@
 #include "rtThreadTask.h"
 #include "rtThreadPool.h"
 #include "pxTimer.h"
-
+#include "rtLog.h"
 #include <sstream>
 #include <iostream>
 #include <thread>
-
-#include "unistd.h"
-
 using namespace std;
 
 #define CA_CERTIFICATE "cacert.pem"
@@ -121,7 +118,7 @@ void onDownloadHandleCheck()
   bool checkHandles = true;
   while (checkHandles)
   {
-    usleep(kDownloadHandleTimerIntervalInMilliSeconds * 1000);
+	pxSleepMS(kDownloadHandleTimerIntervalInMilliSeconds);
     rtFileDownloader::instance()->checkForExpiredHandles();
     downloadHandleMutex.lock();
     checkHandles = continueDownloadHandleCheck;
@@ -509,9 +506,11 @@ bool rtFileDownloader::downloadFromNetwork(rtFileDownloadRequest* downloadReques
     }
     curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, kCurlTimeoutInSeconds);
     curl_easy_setopt(curl_handle, CURLOPT_NOSIGNAL, 1);
+#if !defined(PX_PLATFORM_GENERIC_DFB) && !defined(PX_PLATFORM_DFB_NON_X11)
     curl_easy_setopt(curl_handle, CURLOPT_TCP_KEEPALIVE, 1);
     curl_easy_setopt(curl_handle, CURLOPT_TCP_KEEPIDLE, 60);
     curl_easy_setopt(curl_handle, CURLOPT_TCP_KEEPINTVL, 30);
+#endif //!PX_PLATFORM_GENERIC_DFB && !PX_PLATFORM_DFB_NON_X11
     
     int downloadHandleExpiresTime = downloadRequest->downloadHandleExpiresTime();
     

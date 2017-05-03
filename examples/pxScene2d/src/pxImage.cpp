@@ -60,21 +60,28 @@ void pxImage::onInit()
   mInitialized = true;
   //rtLogDebug("pxImage::onInit for mUrl=\n");
   //rtLogDebug("%s\n",getImageResource()->getUrl().cString());
-  setUrl(getImageResource()->getUrl());
+  if (getImageResource() != NULL)
+  {
+    setUrl(getImageResource()->getUrl());
+  }
+  else
+  {
+    setUrl("");
+  }
 }
 
 /**
  * setResource
  * */
-rtError pxImage::setResource(rtObjectRef o) 
-{ 
+rtError pxImage::setResource(rtObjectRef o)
+{
   //rtLogDebug("!!!!!!!!!!!!!!!!!!!!!pxImage setResource\n");
   if(!o)
-  { 
+  {
     setUrl("");
     return RT_OK;
   }
-  
+
   // Verify the object passed in is an rtImageResource
   rtString desc;
   o.sendReturns("description",desc);
@@ -82,10 +89,10 @@ rtError pxImage::setResource(rtObjectRef o)
   {
     rtString url;
     url = o.get<rtString>("url");
-    // Only create new promise if url is different 
-    if( getImageResource()->getUrl().compare(o.get<rtString>("url")) )
+    // Only create new promise if url is different
+    if( getImageResource() != NULL && getImageResource()->getUrl().compare(o.get<rtString>("url")) )
     {
-      mResource = o; 
+      mResource = o;
       imageLoaded = false;
       pxObject::createNewPromise();
       mListenerAdded = true;
@@ -93,35 +100,46 @@ rtError pxImage::setResource(rtObjectRef o)
       checkStretchX();
       checkStretchY();
     }
-    return RT_OK; 
-  } 
-  else 
+    return RT_OK;
+  }
+  else
   {
     rtLogError("Object passed as resource is not an imageResource!\n");
-    return RT_ERROR; 
+    return RT_ERROR;
   }
 
 }
 
-rtError pxImage::url(rtString& s) const { s = getImageResource()->getUrl(); return RT_OK; }
-rtError pxImage::setUrl(const char* s) 
-{ 
+rtError pxImage::url(rtString& s) const
+{
+  if (getImageResource() != NULL)
+  {
+    s = getImageResource()->getUrl();
+  }
+  else
+  {
+    s = "";
+  }
+  return RT_OK;
+}
+rtError pxImage::setUrl(const char* s)
+{
   //rtLogInfo("pxImage::setUrl init=%d imageLoaded=%d \n", mInitialized, imageLoaded);
   //rtLogDebug("pxImage::setUrl for s=%s mUrl=%s\n", s, mUrl.cString());
-  
-  // we don't want to createNewPromise on the first time through when the 
+
+  // we don't want to createNewPromise on the first time through when the
   // url is initially being set because it's already created on construction
   // If mUrl is already set and loaded and s is different, create a new promise
   rtImageResource* resourceObj = getImageResource();
-  if( resourceObj->getUrl().length() > 0 && resourceObj->getUrl().compare(s) && imageLoaded)
+  if( resourceObj != NULL && resourceObj->getUrl().length() > 0 && resourceObj->getUrl().compare(s) && imageLoaded)
   {
-    if(imageLoaded) 
+    if(imageLoaded)
     {
       imageLoaded = false;
       //rtLogDebug("pxImage calling pxObject::createPromise for %s\n",resourceObj->getUrl().cString());
       pxObject::createNewPromise();
     }
-    //else 
+    //else
     //{
       //// Stop listening for the old resource that this image was using
       //resourceObj->removeListener(this);
@@ -132,52 +150,61 @@ rtError pxImage::setUrl(const char* s)
 
   mResource = pxImageManager::getImage(s);
 
-  if(getImageResource()->getUrl().length() > 0 && mInitialized && !imageLoaded) {
+  if(getImageResource() != NULL && getImageResource()->getUrl().length() > 0 && mInitialized && !imageLoaded) {
     mListenerAdded = true;
     getImageResource()->addListener(this);
   }
-  
+
   return RT_OK;
 }
 
-void pxImage::sendPromise() 
-{ 
-  if(mInitialized && imageLoaded && !((rtPromise*)mReady.getPtr())->status()) 
+void pxImage::sendPromise()
+{
+  if(mInitialized && imageLoaded && !((rtPromise*)mReady.getPtr())->status())
   {
       //rtLogDebug("pxImage SENDPROMISE for %s\n", mUrl.cString());
-      mReady.send("resolve",this); 
+      mReady.send("resolve",this);
   }
 }
 
-float pxImage::getOnscreenWidth() 
-{ 
-  if(mw == -1 ) 
+float pxImage::getOnscreenWidth()
+{
+  if(mw == -1 )
   {
     return mResource.get<float>("w");
   }
-  else 
-    return mw; 
+  else
+    return mw;
 
 }
-float pxImage::getOnscreenHeight() 
-{ 
-  if(mh == -1) 
+float pxImage::getOnscreenHeight()
+{
+  if(mh == -1)
   {
     return mResource.get<float>("h");
   }
-  else  
-    return mh;  
+  else
+    return mh;
  }
-      
-void pxImage::drawWithImage() 
+
+void pxImage::drawWithImage()
 {
-  drawWithTexture(getImageResource()->getTexture());
+  if (getImageResource() != NULL)
+  {
+    drawWithTexture(getImageResource()->getTexture());
+  }
 }
 
 void pxImage::draw()
 {
+  if (!strcmp(mType, "mesh"))
+  {
+    drawMesh();
+    return;
+  }
+
   pxTextureRef drawTexture;
-  pxRenderTexture *renderTexture = getRenderTexture();
+  pxRenderTexture* renderTexture = getRenderTexture();
   if (renderTexture != NULL)
   {
       drawTexture = renderTexture->getTexture();
@@ -191,7 +218,6 @@ void pxImage::draw()
   {
     drawWithTexture(drawTexture);
   }
-  
 }
 
 void pxImage::drawWithTexture(pxTextureRef texture)
@@ -202,16 +228,23 @@ void pxImage::drawWithTexture(pxTextureRef texture)
   }
   //rtLogDebug("pxImage::draw() mw=%f mh=%f\n", mw, mh);
   static pxTextureRef nullMaskRef;
-  context.drawImage(0, 0, 
-                    getOnscreenWidth(),
-                    getOnscreenHeight(), 
-                    texture, nullMaskRef, 
-                    false, NULL, mStretchX, mStretchY, mUvs);
-  // Raise the priority if we're still waiting on the image download    
+  context.drawImage(0, 0, getOnscreenWidth(), getOnscreenHeight(), texture, nullMaskRef,
+                      false, NULL, mStretchX, mStretchY);
+  // Raise the priority if we're still waiting on the image download
 #if 0
-  if (!imageLoaded && getImageResource()->isDownloadInProgress())
+  if (!imageLoaded && getImageResource() != NULL && getImageResource()->isDownloadInProgress())
     getImageResource()->raiseDownloadPriority();
-#endif  
+#endif
+}
+
+void pxImage::drawMesh()
+{
+  pxTextureRef texture = getImageResource()->getTexture();
+  if (!mUvs || !mVertices || !texture)
+  {
+    return;
+  }
+  context.drawMesh(texture, mUvs, mVertices, mUvsLength);
 }
 
 void pxImage::resourceReady(rtString readyResolution)
@@ -221,7 +254,7 @@ void pxImage::resourceReady(rtString readyResolution)
   //rtLogDebug("pxImage::resourceReady(%s) mInitialized=%d for \"%s\"\n",readyResolution.cString(),mInitialized,getImageResource()->getUrl().cString());
   if( !readyResolution.compare("resolve"))
   {
-    imageLoaded = true; 
+    imageLoaded = true;
     pxObject::onTextureReady();
     // Now that image is loaded, must force redraw;
     // dimensions could have changed.
@@ -229,13 +262,13 @@ void pxImage::resourceReady(rtString readyResolution)
     pxObject* parent = mParent;
     if( !parent)
     {
-      // Send the promise here because the image will not get an 
+      // Send the promise here because the image will not get an
       // update call until it has a parent
       sendPromise();
       //rtLogInfo("In pxImage::resourceReady, pxImage with url=%s has no parent!\n", getImageResource()->getUrl().cString());
     }
   }
-  else 
+  else
   {
       pxObject::onTextureReady();
       mReady.send("reject",this);
@@ -302,6 +335,6 @@ rtDefineProperty(pxImage, resource);
 rtDefineProperty(pxImage, stretchX);
 rtDefineProperty(pxImage, stretchY);
 rtDefineProperty(pxImage, uvs);
+rtDefineProperty(pxImage, vertices);
+rtDefineProperty(pxImage, type); // mesh or sprite , default is sprite
 rtDefineProperty(pxImage, texture);
-
-

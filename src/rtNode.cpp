@@ -18,7 +18,14 @@
 
 // rtNode.cpp
 
+#if defined WIN32
+#include <Windows.h>
+#include <direct.h>
+#define __PRETTY_FUNCTION__ __FUNCTION__
+#else
 #include <unistd.h>
+#endif
+
 #include <stdio.h>
 #include <errno.h>
 
@@ -54,11 +61,12 @@ extern uv_loop_t *nodeLoop;
 
 //extern rtThreadQueue gUIThreadQueue;
 
-
+#ifndef WIN32
 #ifdef USE_CONTEXTIFY_CLONES
 #warning Using USE_CONTEXTIFY_CLONES !!
 #else
 #warning NOT Using USE_CONTEXTIFY_CLONES !!
+#endif
 #endif
 
 #ifdef RUNINMAIN
@@ -244,7 +252,9 @@ void rtNodeContext::createEnvironment()
       EmitBeforeExit(mEnv);
 #else
       bool more;
+#ifdef ENABLE_NODE_V_6_9
       v8::platform::PumpMessageLoop(mPlatform, mIsolate);
+#endif //ENABLE_NODE_V_6_9
       more = uv_run(mEnv->event_loop(), UV_RUN_ONCE);
       if (more == false)
       {
@@ -356,8 +366,20 @@ void rtNodeContext::clonedEnvironment(rtNodeContextRef clone_me)
     Local<Context>  clone_local = node::makeContext(mIsolate, sandbox); // contextify context with 'sandbox'
 
     clone_local->SetEmbedderData(HandleMap::kContextIdIndex, Integer::New(mIsolate, mId));
+#ifdef ENABLE_NODE_V_6_9
+    Local<Context> envCtx = Environment::GetCurrent(mIsolate)->context();
+    Local<String> symbol_name = FIXED_ONE_BYTE_STRING(mIsolate, "_contextifyPrivate");
+    Local<Private> private_symbol_name = Private::ForApi(mIsolate, symbol_name);
+    MaybeLocal<Value> maybe_value = sandbox->GetPrivate(envCtx,private_symbol_name);
+    Local<Value> decorated;
+    if (true == maybe_value.ToLocal(&decorated))
+    {
+      mContextifyContext = decorated.As<External>()->Value();
+    }
+#else
     Local<String> hidden_name = FIXED_ONE_BYTE_STRING(mIsolate, "_contextifyHidden");
     mContextifyContext = sandbox->GetHiddenValue(hidden_name).As<External>()->Value();
+#endif
 
     mContextId = GetContextId(clone_local);
   
@@ -414,7 +436,9 @@ rtNodeContext::~rtNodeContext()
     {
     // clear out persistent javascript handles
       HandleMap::clearAllForContext(mId);
+#ifdef ENABLE_NODE_V_6_9
       node::deleteContextifyContext(mContextifyContext);
+#endif
       mContextifyContext = NULL;
     }
     if(exec_argv)
@@ -738,7 +762,11 @@ void rtNode::initializeNode()
 #endif
 
 #ifdef RUNINMAIN
+#ifdef WIN32
+  __rt_main_thread__ = GetCurrentThreadId();
+#else
   __rt_main_thread__ = pthread_self(); //  NB
+#endif
 #endif
   nodePath();
 
@@ -776,7 +804,9 @@ void rtNode::pump()
   Locker                locker(mIsolate);
   Isolate::Scope isolate_scope(mIsolate);
   HandleScope     handle_scope(mIsolate);    // Create a stack-allocated handle scope.
+#ifdef ENABLE_NODE_V_6_9
   v8::platform::PumpMessageLoop(mPlatform, mIsolate);
+#endif //ENABLE_NODE_V_6_9
   uv_run(uv_default_loop(), UV_RUN_NOWAIT);//UV_RUN_ONCE);
 
   // Enable this to expedite garbage collection for testing... warning perf hit
@@ -827,7 +857,12 @@ void rtNode::nodePath()
 
     if (getcwd(cwd, sizeof(cwd)) != NULL)
     {
-      ::setenv("NODE_PATH", cwd, 1); // last arg is 'overwrite' ... 0 means DON'T !
+#ifdef WIN32
+	  _putenv_s("NODE_PATH", cwd);
+#else
+	  ::setenv("NODE_PATH", cwd, 1); // last arg is 'overwrite' ... 0 means DON'T !
+#endif
+	  rtLogInfo("NODE_PATH=%s", cwd);
     }
     else
     {
@@ -976,7 +1011,6 @@ rtNodeContextRef rtNode::createContext(bool ownThread)
   {
     mRefContext = new rtNodeContext(mIsolate,mPlatform);
     ctxref = mRefContext;
-    
     static std::string sandbox_path;
 
     if(sandbox_path.empty()) // only once.

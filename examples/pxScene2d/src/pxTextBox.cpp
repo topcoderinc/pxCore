@@ -28,7 +28,7 @@
 extern pxContext context;
 #include <math.h>
 #include <map>
-
+#include <stdlib.h>
 
 static const char      isNewline_chars[] = "\n\v\f\r";
 static const char isWordBoundary_chars[] = " \t/:&,;.";
@@ -86,17 +86,25 @@ void pxTextBox::resourceReady(rtString readyResolution)
 
 float pxTextBox::getFBOWidth()
 {
-  if( !clip() && mTruncation == pxConstantsTruncation::NONE && !mWordWrap)
-     return noClipW;
-  else
-    return mw;
+  if( !clip() && mTruncation == pxConstantsTruncation::NONE && !mWordWrap) {
+     if( noClipW > MAX_TEXTURE_WIDTH) rtLogWarn("Text width is larger than maximum texture allowed: %lf.  Maximum texture size of %d will be used.",noClipW, MAX_TEXTURE_WIDTH);
+     return noClipW > MAX_TEXTURE_WIDTH?MAX_TEXTURE_WIDTH:noClipW;
+  }
+  else 
+  {
+    return pxText::getFBOWidth();
+  }
 }
 float pxTextBox::getFBOHeight()
 {
-  if( !clip() && mTruncation == pxConstantsTruncation::NONE)
-     return noClipH;
+  if( !clip() && mTruncation == pxConstantsTruncation::NONE) {
+    if( noClipH > MAX_TEXTURE_HEIGHT) rtLogWarn("Text height is larger than maximum texture allowed: %lf.  Maximum texture size of %d will be used.",noClipH, MAX_TEXTURE_HEIGHT);
+    return noClipH > MAX_TEXTURE_HEIGHT?MAX_TEXTURE_HEIGHT:noClipH;
+  }
   else
-    return mh;
+  {
+    return pxText::getFBOHeight();
+  }
 }
 
 void pxTextBox::onInit()
@@ -104,7 +112,7 @@ void pxTextBox::onInit()
   //rtLogDebug("pxTextBox::onInit. mFontLoaded=%d\n",mFontLoaded);
   mInitialized = true;
   // If this is using the default font, we would not get a callback
-  if(mFontLoaded || getFontResource()->isFontLoaded())
+  if(mFontLoaded || (getFontResource() != NULL && getFontResource()->isFontLoaded()))
   {
     mFontLoaded = true;
     setNeedsRecalc(true);
@@ -199,7 +207,8 @@ rtError pxTextBox::setFont(rtObjectRef o)
 }
 
 
-void pxTextBox::draw() {
+void pxTextBox::draw() 
+{
   static pxTextureRef nullMaskRef;
   if (mCached.getPtr() && mCached->getTexture().getPtr())
   {
@@ -210,11 +219,11 @@ void pxTextBox::draw() {
     }
     else
     {
-      context.drawImage(0,0,mw,mh,mCached->getTexture(),nullMaskRef, true);
+      context.drawImage(0,0,getFBOWidth(),getFBOHeight(),mCached->getTexture(),nullMaskRef, true);
     }
   }
   else
-    {
+  {
     renderText(true);
   }
 
@@ -242,10 +251,7 @@ void pxTextBox::update(double t)
  *  wrapping, truncation and dimensions; but it should not render the
  *  text yet.
  * */
-void pxTextBox::determineMeasurementBounds()
-{
-
-}
+void pxTextBox::determineMeasurementBounds() {}
 void pxTextBox::clearMeasurements()
 {
     lastLineNumber = 0;
@@ -261,7 +267,10 @@ void pxTextBox::clearMeasurements()
 
 void pxTextBox::renderText(bool render)
 {
-  if( !mInitialized || !mFontLoaded) {
+  //rtLogDebug("pxTextBox::renderText render=%d initialized=%d fontLoaded=%d\n",render,mInitialized,mFontLoaded);
+
+  if( !mInitialized || !mFontLoaded) 
+  {
     return;
   }
 
@@ -294,6 +303,9 @@ void pxTextBox::renderText(bool render)
 
 void pxTextBox::renderTextWithWordWrap(const char *text, float sx, float sy, float tempX, uint32_t size, float* color, bool render)
 {
+  // TODO ignoring sx and sy now
+  sx = 1.0;
+  sy = 1.0;
   float tempY = 0;
 
   if( mAlignHorizontal == pxConstantsAlignHorizontal::LEFT && mTruncation != pxConstantsTruncation::NONE )
@@ -304,16 +316,16 @@ void pxTextBox::renderTextWithWordWrap(const char *text, float sx, float sy, flo
       // need to wrap to a new line
     }
   }
-
-
    measureTextWithWrapOrNewLine( text, sx, sy, tempX, tempY, size, color, render);
-
 }
 
 
 void pxTextBox::measureTextWithWrapOrNewLine(const char *text, float sx, float sy, float tempX, float &tempY,
                                            uint32_t size, float* color, bool render)
 {
+    // TODO ignoring sx and sy now
+    sx = 1.0;
+    sy = 1.0;
     //rtLogDebug(">>>>>>>>>>>>>>>>>>>> pxTextBox::measureTextWithWrapOrNewLine\n");
 
     u_int32_t charToMeasure;
@@ -323,12 +335,13 @@ void pxTextBox::measureTextWithWrapOrNewLine(const char *text, float sx, float s
     bool lastLine = false;
     float lineWidth = mw;
 
-
     // If really rendering, startY should reflect value for any verticalAlignment adjustments
-    if( render) {
+    if( render) 
+    {
       tempY = startY;
     }
-    if(lineNumber == 0) {
+    if(lineNumber == 0) 
+    {
       if( mAlignHorizontal == pxConstantsAlignHorizontal::LEFT)
       {
    //     setLineMeasurements(true, mXStartPos, tempY);
@@ -347,8 +360,8 @@ void pxTextBox::measureTextWithWrapOrNewLine(const char *text, float sx, float s
     {
       // Determine if the character is multibyte
       numbytes = i-lasti;
-      char tempChar[(numbytes) +1];
-      memset(tempChar, '\0', sizeof(tempChar));
+      char *tempChar = (char*)malloc(sizeof(char)*(numbytes+1));
+      memset(tempChar, '\0', numbytes+1);
       if(numbytes == 1) {
         tempChar[0] = charToMeasure;
       } 
@@ -359,8 +372,11 @@ void pxTextBox::measureTextWithWrapOrNewLine(const char *text, float sx, float s
       }
       lasti = i;
 
-      getFontResource()->setOutlineSize(mStrokeWidth);
-      getFontResource()->measureTextChar(charToMeasure, size,  sx, sy, charW, charH);
+
+      if (getFontResource() != NULL){
+        getFontResource()->setOutlineSize(mStrokeWidth);
+        getFontResource()->measureTextChar(charToMeasure, size,  sx, sy, charW, charH);
+      }
       if( isNewline(charToMeasure))
       {
         //rtLogDebug("Found NEWLINE; calling renderOneLine\n");
@@ -476,12 +492,17 @@ void pxTextBox::measureTextWithWrapOrNewLine(const char *text, float sx, float s
             free(tempStr);
           }
 
+		      free(tempChar);
+
           // Now skip to next line
           tempY += (mLeading*sy) + charH;
           tempX = 0;
           lineNumber++;
 
-          getFontResource()->measureTextInternal(accString.cString(), size, sx, sy, charW, charH);
+          if (getFontResource() != NULL)
+          {
+            getFontResource()->measureTextInternal(accString.cString(), size, sx, sy, charW, charH);
+          }
 
           tempX += charW;
 
@@ -522,7 +543,10 @@ void pxTextBox::measureTextWithWrapOrNewLine(const char *text, float sx, float s
 
   if( !render) {
       float metricHeight=0;
-      getFontResource()->getHeight(mPixelSize,metricHeight);
+      if (getFontResource() != NULL)
+      {
+        getFontResource()->getHeight(mPixelSize, metricHeight);
+      }
       //rtLogDebug("pxTextBox::renderTextWithWordWrap metricHeight is %f\n",metricHeight);
       //rtLogDebug("pxTextBox::renderTextWithWordWrap lineNumer=%d\n",lineNumber);
       //rtLogDebug("pxTextBox::renderTextWithWordWrap mLeading=%f\n",mLeading);
@@ -624,11 +648,18 @@ void pxTextBox::measureTextWithWrapOrNewLine(const char *text, float sx, float s
 
 void pxTextBox::renderOneLine(const char * tempStr, float tempX, float tempY, float sx, float sy, uint32_t size, float* color, float lineWidth, bool render )
 {
+  // TODO ignoring sx and sy now.
+  sx = 1.0;
+  sy = 1.0;
+
   float charW =0, charH=0;
 
   //rtLogDebug("pxTextBox::renderOneLine tempY=%f noClipY=%f tempStr=%s\n",tempY,noClipY, tempStr);
   float xPos = tempX;
-  getFontResource()->measureTextInternal(tempStr, size, sx, sy, charW, charH);
+  if (getFontResource() != NULL)
+  {
+    getFontResource()->measureTextInternal(tempStr, size, sx, sy, charW, charH);
+  }
 
   if( !clip() && mTruncation == pxConstantsTruncation::NONE)
   {
@@ -636,6 +667,33 @@ void pxTextBox::renderOneLine(const char * tempStr, float tempX, float tempY, fl
     noClipW = (noClipW < charW) ? charW:noClipW;
     if( !mWordWrap)
     {
+      // If any one line exceeds texture maximums, warn and calculate text that will fit
+      if( charW > MAX_TEXTURE_WIDTH) 
+      {
+        rtLogWarn("Text width is larger than maximum texture allowed: %lf.  Maximum texture size of %d will be used.",charW, MAX_TEXTURE_WIDTH);
+        float tempWidthRatio = charW/MAX_TEXTURE_WIDTH;
+        uint32_t strLen = strlen(tempStr);
+        uint32_t tempNewLen = (uint32_t) strLen/tempWidthRatio;
+        char* trimmedTempStr = (char *)malloc(tempNewLen+1);
+        memset(trimmedTempStr,'\0',tempNewLen+1);
+
+        uint32_t tmpPos = 0;
+        if( mAlignHorizontal == pxConstantsAlignHorizontal::CENTER )
+          tmpPos = (strlen(tempStr)/2)-(tempNewLen/2); // Take middle of tempStr
+        else if( mAlignHorizontal == pxConstantsAlignHorizontal::RIGHT)
+          tmpPos = (strlen(tempStr)-(tempNewLen)); // Take end of tempStr
+
+        strncpy(trimmedTempStr, tempStr+tmpPos,tempNewLen);
+        getFontResource()->measureTextInternal(trimmedTempStr, size, sx, sy, charW, charH);
+        noClipW = charW;
+        // Render with new, trimmed string
+        renderOneLine(trimmedTempStr, tempX, tempY, sx, sy, size, color, lineWidth, render);
+
+        free(trimmedTempStr);   
+        return;
+      }   
+
+
       if( mAlignHorizontal == pxConstantsAlignHorizontal::CENTER )
       {
         if( charW < noClipW) {
@@ -808,7 +866,12 @@ void pxTextBox::renderOneLine(const char * tempStr, float tempX, float tempY, fl
             setMeasurementBounds(false, (xPos+width) > mw? mw:xPos+width, charH);
           }
         }
-        setLineMeasurements(false, (xPos+width) > mw? mw:xPos+width, tempY);
+        if( !clip())
+          setLineMeasurements(false, width > mw? mw:width, tempY);
+        else {
+          float tmpX = xPos<mx?mx:xPos;
+          setLineMeasurements(false, (tmpX+width) > mw? mw:tmpX+width, tempY);
+        }
       }
     }
     else
@@ -848,7 +911,7 @@ void pxTextBox::renderOneLine(const char * tempStr, float tempX, float tempY, fl
   }
 
   // Now, render the text
-  if( render)
+  if( render && getFontResource() != NULL)
   {
     getFontResource()->renderText(tempStr, size, xPos, tempY, sx, sy, color, lineWidth, mGradientColor, mStrokeColor,
                                   mDropShadowColor, mStrokeWidth, isItalic, isBold,
@@ -934,7 +997,11 @@ void pxTextBox::setLineMeasurements(bool firstLine, float xPos, float yPos)
 {
   //rtLogDebug("pxTextBox::setLineMeasurements firstLine=%d xPos=%f yPos=%f\n", firstLine, xPos, yPos);
   float height=0, ascent=0, descent=0, naturalLeading=0;
-  getFontResource()->getMetrics(mPixelSize, height, ascent, descent, naturalLeading);
+  if (getFontResource() != NULL)
+  {
+    getFontResource()->getMetrics(mPixelSize, height, ascent, descent, naturalLeading);
+  }
+  
   if(!firstLine) {
     getMeasurements()->getCharLast()->setX(xPos);
     getMeasurements()->getCharLast()->setY(yPos + ascent);
@@ -949,6 +1016,9 @@ void pxTextBox::setLineMeasurements(bool firstLine, float xPos, float yPos)
  * */
 void pxTextBox::renderTextNoWordWrap(float sx, float sy, float tempX, bool render)
 {
+  //TODO ignoring sx and sy now
+  sx = 1.0;
+  sy = 1.0;
   //rtLogDebug("pxTextBox::renderTextNoWordWrap render=%d\n",render);
 
   float charW=0, charH=0;
@@ -962,11 +1032,17 @@ void pxTextBox::renderTextNoWordWrap(float sx, float sy, float tempX, bool rende
   }
 
   // Measure as single line since there's no word wrapping
-  getFontResource()->measureTextInternal(mText, mPixelSize, sx, sy, charW, charH);
+  if (getFontResource() != NULL)
+  {
+    getFontResource()->measureTextInternal(mText, mPixelSize, sx, sy, charW, charH);
+  }
   //rtLogDebug(">>>>>>>>>>>> pxTextBox::renderTextNoWordWrap charH=%f charW=%f\n", charH, charW);
 
   float metricHeight=0;
-  getFontResource()->getHeight(mPixelSize, metricHeight);
+  if (getFontResource() != NULL)
+  {
+    getFontResource()->getHeight(mPixelSize, metricHeight);
+  }
   //rtLogDebug(">>>>>>>>>>>>>> metric height is %f and charH is %f\n", metricHeight, charH);
   
   if( charH > metricHeight) // There's a newline in the text somewhere
@@ -1031,6 +1107,9 @@ void pxTextBox::renderTextRowWithTruncation(rtString & accString, float lineWidt
   //rtLogDebug(">>>>>>>>>>>>>>>>>>pxTextBox::renderTextRowWithTruncation lineNumber = %d render = %d\n",lineNumber, render);
   //rtLogDebug(">>>>>>>>>>>>>>>>>>pxTextBox::renderTextRowWithTruncation tempY = %f tempX = %f\n",tempY, tempX);
   //rtLogDebug(">>>>>>>>>>>>>>>>>>pxTextBox::renderTextRowWithTruncation lineWidth = %f \n",lineWidth);
+  // TODO ignoring sx and sy now
+  sx = 1.0;
+  sy = 1.0;
 
   float charW=0, charH=0;
   char * tempStr = strdup(accString.cString()); // Should give a copy
@@ -1039,7 +1118,10 @@ void pxTextBox::renderTextRowWithTruncation(rtString & accString, float lineWidt
   if( mEllipsis)
   {
     length -= ELLIPSIS_LEN;
-    getFontResource()->measureTextInternal(ELLIPSIS_STR, pixelSize, sx, sy, ellipsisW, charH);
+    if (getFontResource() != NULL)
+    {
+      getFontResource()->measureTextInternal(ELLIPSIS_STR, pixelSize, sx, sy, ellipsisW, charH);
+    }
     //rtLogDebug("ellipsisW is %f\n",ellipsisW);
   }
 
@@ -1057,12 +1139,17 @@ void pxTextBox::renderTextRowWithTruncation(rtString & accString, float lineWidt
   }
 
 
+  // TODO this looks pretty inefficient... We should revisit... 
   for(int i = length; i > 0; i--)
   {
     tempStr[i] = '\0';
     charW = 0;
     charH = 0;
-    getFontResource()->measureTextInternal(tempStr, pixelSize, sx, sy, charW, charH);
+    if (getFontResource() != NULL)
+    {
+      getFontResource()->measureTextInternal(tempStr, pixelSize, sx, sy, charW, charH);
+    }
+	
     if( (tempX + charW + ellipsisW) <= lineWidth)
     {
       float xPos = tempX;
@@ -1083,7 +1170,8 @@ void pxTextBox::renderTextRowWithTruncation(rtString & accString, float lineWidt
         setLineMeasurements(false, xPos+charW, tempY);
         if( lineNumber==0) {setLineMeasurements(true, xPos, tempY);}
 
-        if( render) {
+
+        if(render && getFontResource() != NULL) {
           getFontResource()->renderText(tempStr, pixelSize, xPos, tempY, 1.0, 1.0, color, lineWidth, mGradientColor,
                                         mStrokeColor, mDropShadowColor, mStrokeWidth, isItalic, isBold,
                                         isDropShadow, mDropShadowOffsetX, mDropShadowOffsetY, mDropShadowBlur);
@@ -1091,7 +1179,8 @@ void pxTextBox::renderTextRowWithTruncation(rtString & accString, float lineWidt
         if( mEllipsis)
         {
           //rtLogDebug("rendering truncated text with ellipsis\n");
-          if( render) {
+
+          if(render && getFontResource() != NULL) {
             getFontResource()->renderText(ELLIPSIS_STR, pixelSize, xPos + charW, tempY, 1.0, 1.0, color, lineWidth,
                                           mGradientColor, mStrokeColor, mDropShadowColor, mStrokeWidth, isItalic, isBold,
                                           isDropShadow, mDropShadowOffsetX, mDropShadowOffsetY, mDropShadowBlur);
@@ -1123,7 +1212,10 @@ void pxTextBox::renderTextRowWithTruncation(rtString & accString, float lineWidt
         if( isWordBoundary(tempStr[i-n]))
         {
           tempStr[i-n+1] = '\0';
-          getFontResource()->measureTextInternal(tempStr, pixelSize, sx, sy, charW, charH);
+          if (getFontResource() != NULL)
+          {
+            getFontResource()->measureTextInternal(tempStr, pixelSize, sx, sy, charW, charH);
+          }
 
           // Ignore xStartPos and xStopPos if H align is not LEFT
           if( mAlignHorizontal == pxConstantsAlignHorizontal::CENTER)
@@ -1137,7 +1229,7 @@ void pxTextBox::renderTextRowWithTruncation(rtString & accString, float lineWidt
           if(!mWordWrap){ setMeasurementBounds(xPos, charW, tempY, charH); }
           setLineMeasurements(false, xPos+charW, tempY);
           if( lineNumber==0) {setLineMeasurements(true, xPos, tempY);  }
-          if( render)
+          if( render && getFontResource() != NULL)
           {
             getFontResource()->renderText(tempStr, pixelSize, xPos, tempY, 1.0, 1.0, color, lineWidth, mGradientColor,
                                           mStrokeColor, mDropShadowColor, mStrokeWidth, isItalic, isBold,
@@ -1147,11 +1239,10 @@ void pxTextBox::renderTextRowWithTruncation(rtString & accString, float lineWidt
         if( mEllipsis)
         {
           //rtLogDebug("rendering  text on word boundary with ellipsis\n");
-          if( render) {
+          if(render && getFontResource() != NULL) {
             getFontResource()->renderText(ELLIPSIS_STR, pixelSize, xPos + charW, tempY, 1.0, 1.0, color, lineWidth,
                                           mGradientColor, mStrokeColor, mDropShadowColor, mStrokeWidth, isItalic, isBold,
                                           isDropShadow, mDropShadowOffsetX, mDropShadowOffsetY, mDropShadowBlur);
-
           }
           if(!mWordWrap) { setMeasurementBounds(xPos, charW+ellipsisW, tempY, charH); }
           setLineMeasurements(false, xPos+charW+ellipsisW, tempY);
