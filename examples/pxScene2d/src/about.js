@@ -141,15 +141,15 @@ px.import({ scene: 'px:scene.1.js' }).then( function importsAreReady(imports)
   panel_bg.on("onFocus",   function(e) { /*showPanel(5000);*/ } );
   panel_bg.on("onKeyDown", function(e) { if(e.keyCode) { hidePanel();  }  });
            
-  Promise.all([fontRes.ready, logo.ready, title_bg.ready, panel.ready]).catch( (err) =>
+  Promise.all([fontRes.ready, logo.ready, title_bg.ready, panel.ready]).catch( function (err)
   {
     console.log(">>> Loading Assets ... err = " + err);
                                                       
-  }).then( () =>
+  }).then( function ()
   {
     title = scene.create({ t: "text", text: "About pxscene", font: fontRes, parent: panel, pixelSize: titlePts, textColor: 0xFFFFFFff });
         
-    title.ready.then( () =>
+    title.ready.then( function ()
     {
         var titleM = fontRes.measureText(titlePts, title.text);
 
