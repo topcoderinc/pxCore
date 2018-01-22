@@ -4,8 +4,9 @@ BUILDING client and server on linux (rtRemote is supported only on linux):
 2) cd ${PXCOREDIR}/remote
 3) make
 4) cd ../rtRemoteExample
-5) make
-6) run ./sample_client and ./sample_server
+5) cmake .
+6) make
+7) run ./sample_client and ./sample_server
 
 ARCHITECTURE:
 rtRemote is peer to peer remote wrapper around pxCore objects.
@@ -23,7 +24,7 @@ objects are identified by name.
 locating object host peer can be done via multicast or external name server,
 by default it is done by multicast (rt.rpc.resolver.type config-var)
 
-host objects are located on its host peer, 
+host objects are located on its host peer,
 remote objects are used to get/set properties of host objects
 
 in pxcore there several kinds of properties:
