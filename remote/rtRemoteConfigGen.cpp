@@ -165,7 +165,12 @@ static std::set<ConfigItem> buildConfigItems(rapidjson::Value const& configParam
       configItems.insert(item);
     }
   });
+#if __clang__
+  // For clang, remove std::move because of forbiding copy elision
+  return configItems;
+#else
   return std::move(configItems);
+#endif
 }
 
 

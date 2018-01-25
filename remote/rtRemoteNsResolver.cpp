@@ -4,6 +4,8 @@
 #include "rtRemoteConfig.h"
 #include "rtRemoteEnvironment.h"
 
+#include "polyfill.h"
+
 #include <condition_variable>
 #include <thread>
 #include <mutex>

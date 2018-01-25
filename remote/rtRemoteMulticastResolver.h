@@ -9,6 +9,8 @@
 #include <netinet/in.h>
 #include <rtObject.h>
 
+#include "polyfill.h"
+
 #include "rtRemoteCorrelationKey.h"
 #include "rtRemoteTypes.h"
 #include "rtRemoteSocketUtils.h"

@@ -169,4 +169,8 @@ examples/pxScene2d/src/Makefile
 
 tests/pxScene2d/Makefile
 
-
+.vscode/
+remote/mac/
+rtRemoteExample/librtRemote_s.a
+rtRemoteExample/sample_client
+rtRemoteExample/sample_server
