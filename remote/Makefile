@@ -78,7 +78,23 @@ endif
 CFLAGS+=-DRAPIDJSON_HAS_STDSTRING -Werror -Wall -Wextra -DRT_PLATFORM_LINUX -I../src -I. -fPIC -Wno-deprecated-declarations
 CFLAGS+=-DRT_REMOTE_LOOPBACK_ONLY
 CXXFLAGS+=-std=c++0x $(CFLAGS)
-LDFLAGS =-pthread -ldl $(LIBUUID) -Wl,-rpath=../../,--enable-new-dtags
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+	LDFLAGS =-L../../ -ldl $(LIBUUID) -Wl,-rpath -Xlinker ../../,--enable-new-dtags
+else
+	LDFLAGS =-pthread -ldl $(LIBUUID) -Wl,-rpath=../../,--enable-new-dtags
+endif
+
+EXTRA_LDFLAGS =-L../build/glut -L../build/egl
+
+# For macOS, ar -o is not supported.
+ifeq ($(UNAME_S),Darwin)
+  AR_OUT_FLAG =
+else
+  AR_OUT_FLAG =-o
+endif
+
 OBJDIR=obj
 
 RTCORE_OBJS =$(patsubst ../%.cpp, %.o        , $(notdir $(RTCORE_SRCS)))
@@ -140,21 +156,21 @@ perftest:
 	$(MAKE) -C tests perftest
 
 librtRemote.so: $(RTRPC_OBJS)
-	$(CXX_PRETTY) $(RTRPC_OBJS) $(LDFLAGS) -shared -o $@
+	$(CXX_PRETTY) $(RTRPC_OBJS) $(LDFLAGS) -lrtCore -shared -o $@
 
 librtRemote_s.a: $(RTRPC_OBJS)
-	$(AR) rcs -o $@ $(RTRPC_OBJS)
+	$(AR) rcs $(AR_OUT_FLAG) $@ $(RTRPC_OBJS)
 
 rpcSampleApp: $(SAMPLEAPP_OBJS) librtRemote.so
-	$(CXX_PRETTY) $(SAMPLEAPP_OBJS) $(LDFLAGS) -o $@ -L./ -L../build/glut -L../build/egl -lrtCore -lrtRemote $(LIBUUID)
+	$(CXX_PRETTY) $(SAMPLEAPP_OBJS) $(LDFLAGS) -o $@ -L./ $(EXTRA_LDFLAGS) -lrtCore -lrtRemote $(LIBUUID)
 
 rpcSampleApp_s: $(SAMPLEAPP_OBJS) librtRemote_s.a
-	$(CXX_PRETTY) $(SAMPLEAPP_OBJS) $(LDFLAGS) -o $@ -L./ -L../build/glut -L../build/egl -lrtCore_s -lrtRemote_s $(LIBUUID)
+	$(CXX_PRETTY) $(SAMPLEAPP_OBJS) $(LDFLAGS) -o $@ -L./ $(EXTRA_LDFLAGS) -lrtCore_s -lrtRemote_s $(LIBUUID)
 
 rpcSampleSimple: librtRemote.so
 	$(CXX_PRETTY) rtSampleClient.cpp -DRT_PLATFORM_LINUX -I. -DRAPIDJSON_HAS_STDSTRING\
-    -o rtSampleClient -I../src -L. -L../build/egl -lrtCore -lrtRemote $(LIBUUID) -std=c++11 -pthread
+    -o rtSampleClient -I../src -L. $(EXTRA_LDFLAGS) -lrtCore -lrtRemote $(LIBUUID) -std=c++11 -pthread
 	$(CXX_PRETTY) rtSampleServer.cpp -DRT_PLATFORM_LINUX -I. -DRAPIDJSON_HAS_STDSTRING\
-    -o rtSampleServer -I../src -L. -L../build/egl -lrtCore -lrtRemote $(LIBUUID) -std=c++11 -pthread
+    -o rtSampleServer -I../src -L. $(EXTRA_LDFLAGS) -lrtCore -lrtRemote $(LIBUUID) -std=c++11 -pthread
 
 .PHONY: all debug clean

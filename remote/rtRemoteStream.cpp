@@ -4,6 +4,8 @@
 #include "rtRemoteEnvironment.h"
 #include "rtRemoteStreamSelector.h"
 
+#include "polyfill.h"
+
 #include <algorithm>
 #include <memory>
 #include <thread>

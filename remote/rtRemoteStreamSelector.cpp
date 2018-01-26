@@ -5,6 +5,8 @@
 #include "rtError.h"
 #include "rtLog.h"
 
+#include "polyfill.h"
+
 #include <algorithm>
 #include <chrono>
 #include <unistd.h>

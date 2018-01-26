@@ -12,6 +12,8 @@
 #include "rtRemoteConfig.h"
 #include "rtRemoteFactory.h"
 
+#include "polyfill.h"
+
 #include <limits>
 #include <sstream>
 #include <set>
