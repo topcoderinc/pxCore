@@ -628,7 +628,15 @@ rtRemoteServer::openRpcListener()
   char path[UNIX_PATH_MAX];
 
   memset(path, 0, sizeof(path));
+
+  // Only execute on Linux, for Mac, we need
+  // to reimplement it.
+#if defined(__linux__)
   cleanupStaleUnixSockets();
+#else
+  // Avoid "error: unused function"
+  assert(cleanupStaleUnixSockets);
+#endif
 
   if (isUnixDomain(m_env))
   {
