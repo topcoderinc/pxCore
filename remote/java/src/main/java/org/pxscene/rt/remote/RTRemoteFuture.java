@@ -16,7 +16,7 @@ import org.pxscene.rt.RTStatus;
  *
  * @param <V> the value type
  */
-class RTRemoteFuture<V> implements Future<V> {
+public class RTRemoteFuture<V> implements Future<V> {
 
   /**
    * the private lock

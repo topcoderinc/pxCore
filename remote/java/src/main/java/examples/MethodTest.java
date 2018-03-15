@@ -45,49 +45,9 @@ public class MethodTest {
     RTObject obj = RTRemoteConnectionManager.getObjectProxy(uri);
 
     MethodTest methodTest = new MethodTest();
-
     while (true) {
       try {
-        methodTest.setTotal(0);
-        methodTest.setSuceed(0);
-
-        // test no args passed, and return 10 , rtMethod1ArgAndReturn
-        methodTest
-            .checkMethod(obj, "method0AndReturn10",
-                new RTValue(10, RTValueType.INT32), null);
-
-        // test method passed two int and return the sum, rtMethod2ArgAndReturn
-        RTValue a = new RTValue(123, RTValueType.INT32);
-        RTValue b = new RTValue(12, RTValueType.INT32);
-        methodTest
-            .checkMethod(obj, "twoIntNumberSum", new RTValue(123 + 12, RTValueType.INT32), a,
-                b);
-
-        // test method passed two float and return the sum, rtMethod2ArgAndReturn
-        RTValue fa = new RTValue(123.3f, RTValueType.FLOAT);
-        RTValue fb = new RTValue(12.3f, RTValueType.FLOAT);
-        methodTest.checkMethod(obj, "twoFloatNumberSum",
-            new RTValue(123.3f + 12.3f, RTValueType.FLOAT), fa, fb);
-
-        // test method that passed 1 arg and no return, rtMethod1ArgAndNoReturn
-        methodTest
-            .checkMethodNoReturn(obj, "method1IntAndNoReturn",
-                new RTValue(11, RTValueType.INT32));
-
-        // test method that passed RtFunction and invoke this function , rtMethod2ArgAndNoReturn
-        RTFunction function = new RTFunction(rtValueList -> {
-          logger.debug("function invoke by remote, args count = " + rtValueList.size());
-          for (RTValue rtValue : rtValueList) {
-            logger.debug(
-                "value=" + rtValue.getValue() + ", type=" + rtValue.getType().toString());
-          }
-          logger.debug("function invoke by remote done");
-        });
-
-        methodTest
-            .checkMethodNoReturn(obj, "method2FunctionAndNoReturn",
-                new RTValue(function), new RTValue(10, RTValueType.INT32));
-
+        methodTest.doMethodTest(methodTest, obj);
         logger.debug(String
             .format("========= %d of %d example succeed, %d failed.", methodTest.getSuceed(),
                 methodTest.getTotal(), methodTest.getTotal() - methodTest.getSuceed()));
@@ -98,6 +58,50 @@ public class MethodTest {
       }
       Thread.sleep(1000 * 10);
     }
+  }
+
+  public void doMethodTest(MethodTest methodTest, RTObject obj)
+      throws RTException, ExecutionException, InterruptedException {
+    methodTest.setTotal(0);
+    methodTest.setSuceed(0);
+
+    // test no args passed, and return 10 , rtMethod1ArgAndReturn
+    methodTest
+        .checkMethod(obj, "method0AndReturn10",
+            new RTValue(10, RTValueType.INT32), null);
+
+    // test method passed two int and return the sum, rtMethod2ArgAndReturn
+    RTValue a = new RTValue(123, RTValueType.INT32);
+    RTValue b = new RTValue(12, RTValueType.INT32);
+    methodTest
+        .checkMethod(obj, "twoIntNumberSum", new RTValue(123 + 12, RTValueType.INT32), a,
+            b);
+
+    // test method passed two float and return the sum, rtMethod2ArgAndReturn
+    RTValue fa = new RTValue(123.3f, RTValueType.FLOAT);
+    RTValue fb = new RTValue(12.3f, RTValueType.FLOAT);
+    methodTest.checkMethod(obj, "twoFloatNumberSum",
+        new RTValue(123.3f + 12.3f, RTValueType.FLOAT), fa, fb);
+
+    // test method that passed 1 arg and no return, rtMethod1ArgAndNoReturn
+    methodTest
+        .checkMethodNoReturn(obj, "method1IntAndNoReturn",
+            new RTValue(11, RTValueType.INT32));
+
+    // test method that passed RtFunction and invoke this function , rtMethod2ArgAndNoReturn
+    RTFunction function = new RTFunction(rtValueList -> {
+      logger.debug("function invoke by remote, args count = " + rtValueList.size());
+      for (RTValue rtValue : rtValueList) {
+        logger.debug(
+            "value=" + rtValue.getValue() + ", type=" + rtValue.getType().toString());
+      }
+      logger.debug("function invoke by remote done");
+    });
+
+    methodTest
+        .checkMethodNoReturn(obj, "method2FunctionAndNoReturn",
+            new RTValue(function), new RTValue(10, RTValueType.INT32));
+
   }
 
   /**
@@ -160,12 +164,12 @@ public class MethodTest {
     return this.total;
   }
 
-  public int getSuceed() {
-    return this.suceed;
-  }
-
   public void setTotal(int total) {
     this.total = total;
+  }
+
+  public int getSuceed() {
+    return this.suceed;
   }
 
   public void setSuceed(int suceed) {

@@ -158,7 +158,7 @@ public class TypeTest {
   /**
    * test function type
    */
-  private void doFunctionTest(RTObject rtObject, String propertiesName)
+  public void doFunctionTest(RTObject rtObject, String propertiesName)
       throws RTException, ExecutionException, InterruptedException {
 
     RTValue oldRtValue = new RTValue(new RTFunction(rtValueList -> {
@@ -184,7 +184,7 @@ public class TypeTest {
   /**
    * test object type
    */
-  private void doObjectTest(RTObject rtObject, String propertiesName)
+  public void doObjectTest(RTObject rtObject, String propertiesName)
       throws RTException, ExecutionException, InterruptedException {
     TestObject oldObj = new TestObject("type test");
     RTValue oldRtValue = new RTValue(oldObj, RTValueType.OBJECT);

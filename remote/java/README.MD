@@ -47,10 +47,18 @@
 * startup server
   * **c++ sample server** , Follow *Build remote and run example* section to start up sample server
   * **java sample server**, Follow *Build java remote* to build java codes, then ``cd pxCore/rtRemote/java` use `mvn exec:java -Dexec.mainClass="examples.server.SampleServer"` to startup server.
+
 * Basic client examples , cd `pxCore/rtRemote/java` , `mvn compile`
   * `mvn exec:java -Dexec.mainClass="examples.TypeTest"`, this example include all types test.
   * `mvn exec:java -Dexec.mainClass="examples.MethodTest"`, this example include a lot of method test.
   * `mvn exec:java -Dexec.mainClass="examples.ThreadTest"`, this example create 4 threads for each 10 seconds to test type and methods.
+
+* run junits
+
+  * run `mvn clean test`
+  * open `target/jacoco-ut/index.html` , you can see the code coverage, for now the code coverage is 87%.
+
+  notes: for now, there are 3 failures junit examples,  they are bugs, see the test results, i marked as **TODO** in junit codes.
 
 
 #### loop to find object validation 
