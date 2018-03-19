@@ -2,6 +2,7 @@ package org.pxscene.rt;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.Test;
 import org.pxscene.rt.remote.RTConst;
@@ -19,22 +20,34 @@ public class RTHelperTest {
   @Test
   void testGetPropertyByName() {
     RTMessageGetPropertyByNameRequest request = new RTMessageGetPropertyByNameRequest();
-    ObjTest objTest = new ObjTest();
-    objTest.field1 = "f1";
-    objTest.setField2("f2");
+    TestObj testObj = new TestObj();
+    testObj.field1 = "f1";
+    testObj.setField2("f2");
     request.setObjectId("test");
     request.setPropertyName("field1");
 
     request.setCorrelationKey("testKey");
-    assertEquals(RTHelper.getPropertyByName(objTest, request).getValue().getValue(), "f1");
+    assertEquals(RTHelper.getPropertyByName(testObj, request).getValue().getValue(), "f1");
+  }
 
+  /**
+   * test obj get property by name with invalid type
+   */
+  @Test
+  void testGetPropertyByNameWithInvalidType() {
+    RTMessageGetPropertyByNameRequest request = new RTMessageGetPropertyByNameRequest();
+    TestObj testObj = new TestObj();
+    testObj.field1 = "f1";
+    testObj.setField2("f2");
+    request.setObjectId("test");
+    request.setPropertyName("field1");
     try {
-      request.setPropertyName("unkown_prop");
-      assertEquals(RTHelper.getPropertyByName(objTest, request).getStatus().getCode(),
-          RTStatusCode.PROP_NOT_FOUND);
+      request.setPropertyName("unknown_prop");
+      assertEquals(RTHelper.getPropertyByName(testObj, request).getStatus().getCode(),
+              RTStatusCode.PROP_NOT_FOUND);
     } catch (Exception e) {
       // TODO this should not be raise Exception , should be return PROP_NOT_FOUND
-      assertEquals(false, true);
+      fail("this should not be raise Exception , should be return PROP_NOT_FOUND");
     }
   }
 
@@ -43,25 +56,41 @@ public class RTHelperTest {
    */
   @Test
   void testSetPropertyName() {
-    ObjTest objTest = new ObjTest();
-    objTest.field1 = "f1";
-    objTest.setField2("f2");
+    TestObj testObj = new TestObj();
+    testObj.field1 = "f1";
+    testObj.setField2("f2");
 
     RTMessageSetPropertyByNameRequest request = new RTMessageSetPropertyByNameRequest();
     request.setObjectId("test");
     request.setCorrelationKey("key");
     request.setPropertyName("field2");
     request.setValue(new RTValue("f1"));
-    assertEquals(RTHelper.setPropertyByName(objTest, request).getStatusCode(), RTStatusCode.OK);
+    assertEquals(RTHelper.setPropertyByName(testObj, request).getStatusCode(), RTStatusCode.OK);
 
+
+    request.setPropertyName("unknown_prop");
+    assertEquals(RTHelper.setPropertyByName(testObj, request).getStatusCode(),
+        RTStatusCode.PROPERTY_NOT_FOUND);
+  }
+
+  /**
+   * test set object property by name with different value type
+   */
+  @Test
+  void testSetPropertyNameWithDifferentType() {
+    TestObj testObj = new TestObj();
+    testObj.field1 = "f1";
+    testObj.setField2("f2");
+
+    RTMessageSetPropertyByNameRequest request = new RTMessageSetPropertyByNameRequest();
+    request.setObjectId("test");
+    request.setCorrelationKey("key");
+    request.setPropertyName("field2");
+    request.setValue(new RTValue("f1"));
     request.setPropertyName("field1");
     request.setValue(new RTValue("f1"));
-    assertEquals(RTHelper.setPropertyByName(objTest, request).getStatusCode(),
-        RTStatusCode.OK);  // TODO this should return ok, but is return  TYPE_MISMATCH
-
-    request.setPropertyName("unkonw_prop");
-    assertEquals(RTHelper.setPropertyByName(objTest, request).getStatusCode(),
-        RTStatusCode.PROPERTY_NOT_FOUND);
+    assertEquals(RTHelper.setPropertyByName(testObj, request).getStatusCode(),
+            RTStatusCode.OK, "this should return ok, but is return  TYPE_MISMATCH");  // TODO this should return ok, but is return  TYPE_MISMATCH
   }
 
   /**
@@ -92,7 +121,7 @@ public class RTHelperTest {
     } catch (Exception e) {
       assertEquals(e.getClass(), RTException.class); // protocol is null
     }
-    assertEquals(RTEnvironment.getRtFunctionMap().get("test").getFunctionName(), "test");
+    assertEquals(RTEnvironment.getRtFunctionMap().get("test").getFunctionName(), "test", "can update listener for RT function");
   }
 
   /**
@@ -100,7 +129,7 @@ public class RTHelperTest {
    */
   @Test
   void testDumpObject() {
-    RTHelper.dumpObject("Test", new ObjTest());
+    RTHelper.dumpObject("Test", new TestObj());
   }
 
   /**

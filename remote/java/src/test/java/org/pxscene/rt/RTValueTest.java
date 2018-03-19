@@ -1,6 +1,7 @@
 package org.pxscene.rt;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 
 import examples.TestObject;
 import org.junit.jupiter.api.Test;
@@ -30,8 +31,9 @@ public class RTValueTest {
   @Test
   void testInt() {
     int v = 1023;
-    assertEquals(v, new RTValue(v).getValue());
-    assertEquals(RTValueType.INT32, new RTValue(v).getType());
+    RTValue rtValue = new RTValue(v);
+    assertEquals(v, rtValue.getValue());
+    assertEquals(RTValueType.INT32, rtValue.getType());
   }
 
   /**
@@ -40,7 +42,9 @@ public class RTValueTest {
   @Test
   void testFloat() {
     float v = 1234.123f;
-    assertEquals(v, new RTValue(v).getValue());
+    RTValue rtValue = new RTValue(v);
+    assertEquals(v, rtValue.getValue());
+    assertEquals(RTValueType.FLOAT, rtValue.getType());
   }
 
   /**
@@ -49,7 +53,9 @@ public class RTValueTest {
   @Test
   void testDouble() {
     double v = 1234.12345123;
-    assertEquals(v, new RTValue(v).getValue());
+    RTValue rtValue = new RTValue(v);
+    assertEquals(v, rtValue.getValue());
+    assertEquals(RTValueType.DOUBLE, rtValue.getType());
   }
 
   /**
@@ -58,7 +64,9 @@ public class RTValueTest {
   @Test
   void testString() {
     String v = "hello world !";
-    assertEquals(v, new RTValue(v).getValue());
+    RTValue rtValue = new RTValue(v);
+    assertEquals(v, rtValue.getValue());
+    assertEquals(RTValueType.STRING, rtValue.getType());
   }
 
   /**
@@ -67,7 +75,9 @@ public class RTValueTest {
   @Test
   void testObject() {
     TestObject testObject = new TestObject("testObj");
-    assertEquals(testObject, new RTValue(testObject).getValue());
+    RTValue rtValue = new RTValue(testObject);
+    assertEquals(testObject, rtValue.getValue());
+    assertEquals(RTValueType.OBJECT, rtValue.getType());
   }
 
   /**
@@ -78,7 +88,9 @@ public class RTValueTest {
     RTFunction rtFunction = new RTFunction(rtValueList -> {
 
     });
-    assertEquals(rtFunction, new RTValue(rtFunction).getValue());
+    RTValue rtValue = new RTValue(rtFunction);
+    assertEquals(rtFunction, rtValue.getValue());
+    assertEquals(RTValueType.FUNCTION, rtValue.getType());
   }
 
 
@@ -90,7 +102,7 @@ public class RTValueTest {
     char code = '\0';
     RTValueType type = RTValueType.fromTypeCode(code);
     assertEquals(code, type.getTypeCode());
-    assertEquals(RTValueType.VOID, RTValueType.fromTypeCode('n')); // unkown -> void
+    assertEquals(RTValueType.VOID, RTValueType.fromTypeCode('n')); // unknown -> void
   }
 
 }

@@ -33,13 +33,20 @@ public class MethodTest {
    */
   private int suceed = 0;
 
+  /**
+   * service config
+   */
+  static public String remoteServerAddress = "224.10.10.12";
+  static public Integer remoteServerPort = 10004;
+
 
   public static void main(String[] args) throws Exception {
 
     RTEnvironment.init();
+
+    logger.debug(String.format("remote.server.address: %s", remoteServerAddress));
     RTRemoteMulticastResolver resolver = new RTRemoteMulticastResolver(
-        InetAddress.getByName("224.10.10.12"),
-        10004);
+        InetAddress.getByName(remoteServerAddress), remoteServerPort);
 
     URI uri = resolver.locateObject("host_object");
     RTObject obj = RTRemoteConnectionManager.getObjectProxy(uri);
@@ -47,7 +54,7 @@ public class MethodTest {
     MethodTest methodTest = new MethodTest();
     while (true) {
       try {
-        methodTest.doMethodTest(methodTest, obj);
+        doMethodTest(methodTest, obj);
         logger.debug(String
             .format("========= %d of %d example succeed, %d failed.", methodTest.getSuceed(),
                 methodTest.getTotal(), methodTest.getTotal() - methodTest.getSuceed()));
@@ -60,7 +67,7 @@ public class MethodTest {
     }
   }
 
-  public void doMethodTest(MethodTest methodTest, RTObject obj)
+  public static void doMethodTest(MethodTest methodTest, RTObject obj)
       throws RTException, ExecutionException, InterruptedException {
     methodTest.setTotal(0);
     methodTest.setSuceed(0);

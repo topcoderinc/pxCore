@@ -2,6 +2,7 @@ package org.pxscene.rt;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,6 +56,6 @@ public class RTRemoteFutureTest {
 //      assertEquals(e.getMessage(), "error waiting for response");
 //    }
     // TODO this should be return timeout error after 10ms, but is always block the thread and didn't return
-    assertEquals(false, true);
+    fail("this should be return timeout error after 10ms, but is always block the thread and did not return");
   }
 }

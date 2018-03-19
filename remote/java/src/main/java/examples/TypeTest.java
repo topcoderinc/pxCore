@@ -28,6 +28,12 @@ public class TypeTest {
   private int totalExamplesCount = 0;
 
   /**
+   * service config
+   */
+  static public String remoteServerAddress = "224.10.10.12";
+  static public Integer remoteServerPort = 10004;
+
+  /**
    * the suceed examples
    */
   private int succeedExamplesCount = 0;
@@ -36,8 +42,8 @@ public class TypeTest {
 
     RTEnvironment.init();
     RTRemoteMulticastResolver resolver = new RTRemoteMulticastResolver(
-        InetAddress.getByName("224.10.10.12"),
-        10004);
+        InetAddress.getByName(remoteServerAddress),
+            remoteServerPort);
     URI uri = resolver.locateObject("host_object");
     RTObject obj = RTRemoteConnectionManager.getObjectProxy(uri);
     TypeTest rtRemoteTestClient = new TypeTest();
