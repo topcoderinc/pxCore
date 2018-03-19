@@ -21,7 +21,10 @@ public class RTRemoteSerializerTest {
   void testIntToJson() {
     RTValue rtValue = new RTValue(100);
     JsonObject jsonObject = RTRemoteSerializer.valueToJson(rtValue);
-    assertEquals("{'type':52,'value':100}", jsonObject.toString());
+    JsonObjectBuilder builder = Json.createObjectBuilder();
+    builder.add(RTConst.TYPE, RTValueType.INT32.getTypeCode());
+    builder.add(RTConst.VALUE, 100);
+    assertEquals(builder.build().toString(), jsonObject.toString());
   }
 
 

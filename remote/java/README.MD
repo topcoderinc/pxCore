@@ -106,3 +106,8 @@ Loop to find object test , close server , then start `mvn exec:java -Dexec.mainC
   Aborted (core dumped)
   ```
 
+## Failed Tests
+1. RTHelperTest.testGetPropertyByNameWithInvalidType:50 this should not be raise Exception , should be return PROP_NOT_FOUND
+2. RTHelperTest.testSetPropertyNameWithDifferentType:92 this should return ok, but is return  TYPE_MISMATCH ==> expected: <TYPE_MISMATCH> but was: <OK>
+3. RTMethodTest.testUnknownMethod:119 this should not be raise Exception , should be return METHOD_NOT_FOUND
+4. RTRemoteFutureTest.testRTRemoteFutureGet:59 this should be return timeout error after 10ms, but is always block the thread and did not return
