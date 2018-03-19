@@ -12,8 +12,6 @@ import org.pxscene.rt.RTValue;
 import org.pxscene.rt.RTValueType;
 import org.pxscene.rt.remote.RTRemoteConnectionManager;
 import org.pxscene.rt.remote.RTRemoteMulticastResolver;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 /**
  * test method
@@ -35,11 +33,11 @@ public class MethodTest {
    */
   private int suceed = 0;
 
-  @Value("${remote.server.address}")
-  static private String remoteServerAddress;
-
-  @Value("${remote.server.port")
-  static private Integer remoteServerPort;
+  /**
+   * service config
+   */
+  static public String remoteServerAddress = "224.10.10.12";
+  static public Integer remoteServerPort = 10004;
 
 
   public static void main(String[] args) throws Exception {
