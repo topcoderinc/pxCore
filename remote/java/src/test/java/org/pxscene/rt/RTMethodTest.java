@@ -40,7 +40,7 @@ public class RTMethodTest {
   @Test
   void testMethods() throws ExecutionException, InterruptedException, RTException {
     MethodTest methodTest = new MethodTest();
-    methodTest.doMethodTest(methodTest, rtObject);
+    MethodTest.doMethodTest(methodTest, rtObject);
   }
 
   /**

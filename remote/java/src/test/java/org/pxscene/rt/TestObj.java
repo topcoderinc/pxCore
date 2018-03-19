@@ -4,10 +4,10 @@ package org.pxscene.rt;
 /**
  * The test obj for unit test.
  */
-public class ObjTest {
+public class TestObj {
 
   public String field1;
-  public ObjTest obj;
+  public TestObj obj;
   private String field2;
 
   public String getField2() {

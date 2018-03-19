@@ -30,8 +30,9 @@ public class RTValueTest {
   @Test
   void testInt() {
     int v = 1023;
-    assertEquals(v, new RTValue(v).getValue());
-    assertEquals(RTValueType.INT32, new RTValue(v).getType());
+    RTValue rtValue = new RTValue(v);
+    assertEquals(v, rtValue.getValue());
+    assertEquals(RTValueType.INT32, rtValue.getType());
   }
 
   /**

@@ -17,13 +17,18 @@ import org.pxscene.rt.remote.RTRemoteMulticastResolver;
  */
 public class ThreadTest {
 
+  /**
+   * service config
+   */
+  static public String remoteServerAddress = "224.10.10.12";
+  static public Integer remoteServerPort = 10004;
 
   public static void main(String[] args) throws Exception {
 
     RTEnvironment.init();
     RTRemoteMulticastResolver resolver = new RTRemoteMulticastResolver(
-        InetAddress.getByName("224.10.10.12"),
-        10004);
+        InetAddress.getByName(remoteServerAddress),
+            remoteServerPort);
 
     URI uri = resolver.locateObject("host_object");
     RTObject obj1 = RTRemoteConnectionManager.getObjectProxy(uri);
