@@ -289,147 +289,6 @@ function createModule_pxScope(xModule) {
 }
 
 
-//duktape merge hack
-
-if (isDuk) {
-    AppSceneContext.prototype.runScriptInNewVMContext = function (packageUri, moduleLoader, configImport) {
-        var apiForChild = this;
-        var isJar = moduleLoader.jarFileWasLoaded();
-        var currentFileArchive = moduleLoader.getFileArchive();
-        var currentFileManifest = moduleLoader.getManifest();
-        var main = currentFileManifest.getMain();
-        var code = currentFileArchive.getFileContents(main);
-        
-        // TODO: This is the name that will show up in stack traces. We should
-        // resolve ./ to full paths (maybe).
-        var fname = main;
-        var urlParts = url.parse(main, true);
-        var moduleName = urlParts.pathname;
-        var uri = main;
-        var basePath, jarName;
-        if (isJar) {
-            basePath = main.substring(0, main.lastIndexOf('/'));
-            jarName = moduleName;
-        } else {
-            basePath = packageUri.substring(0, packageUri.lastIndexOf('/'));
-        }
-        
-        var thisAppSceneContext = this;
-        log.message(4, "runScriptInNewVMContext: create XModule(" + moduleName + ") basePath=" + basePath + " packageUri=" + packageUri);
-        var xModule = new XModule(moduleName, this, basePath, jarName);
-        this.topXModule = xModule;
-        if( configImport !== null ) {
-            xModule.configImport(configImport);
-        }
-        if (isJar) {
-            this.jarFileMap.addArchive(xModule.name,currentFileArchive);
-            log.message(4, "JAR added: " + xModule.name);
-        }
-        
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        var self = this;
-        var newSandbox;
-        try {
-            newSandbox = {
-            sandboxName: "InitialSandbox",
-            xmodule: xModule,
-            console: console,
-            runtime: apiForChild,
-            urlModule: require("url"),
-            queryStringModule: require("querystring"),
-            theNamedContext: "Sandbox: " + uri,
-            Buffer: Buffer,
-            importTracking: {}
-            }; // end sandbox
-            
-            // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            
-            xModule.initSandbox(newSandbox);
-            thisAppSceneContext.sandbox = newSandbox; //xModule.sandbox;
-            
-            try {
-                //JRJRJRJR  This line causing a garbage collection leak...
-                // LEAKLEAK
-                //      this.innerscene.api = {isReady:false, onModuleReady:onAppModuleReady.bind(this) };
-                
-                var sourceCode = AppSceneContext.wrap(code);
-                
-                log.message(4, "createModule_pxScope.call()");
-                var px = createModule_pxScope.call(this, xModule);
-                log.message(4, "createModule_pxScope.call() done");
-                vm.runInNewContext(sourceCode, newSandbox, { filename: path.normalize(fname), displayErrors: true },
-                                   px, xModule, fname, this.basePackageUri);
-                log.message(4, "vm.runInNewContext done");
-                /*
-                 if (false) {
-                 // TODO do the old scenes context get released when we reload a scenes url??
-                 // TODO part of an experiment to eliminate intermediate rendering of the scene - from original load.js
-                 // while it is being set up
-                 if (true) { // enable to fade scenes in
-                 this.container.a = 0;
-                 this.container.painting = true;
-                 this.container.animateTo({a: 1}, 0.2, this.innerscene.animation.TWEEN_LINEAR,this.innerscene.animation.OPTION_LOOP,1);
-                 }
-                 else {
-                 this.container.painting = true;
-                 }
-                 }
-                 */
-                
-                console.log("Main Module: readyPromise=" + xModule.moduleReadyPromise);
-                if( !xModule.hasOwnProperty('moduleReadyPromise') || xModule.moduleReadyPromise === null ) {
-                    //        this.container.makeReady(true); // DEPRECATED ?
-                    
-                    //        this.innerscene.api = {isReady:true};
-                    this.makeReady(true,{});
-                }
-                else
-                {
-                    var modulePromise = xModule.moduleReadyPromise;
-                    var thisMakeReady = this.makeReady; // NB:  capture for async then() closure.
-                    
-                    modulePromise.then( function(i)
-                                       {
-                                       self.innerscene.api = xModule.exports;
-                                       
-                                       console.log("Main module[" + self.packageUrl + "] about to notify");
-                                       thisMakeReady(true, xModule.exports);
-                                       console.log("Main module[" + self.packageUrl + "] about to notify done");
-                                       
-                                       }).catch( function(err)
-                                                {
-                                                console.error("Main module[" + self.packageUrl + "]" + " load has failed - on failed imports: " + ", err=" + err);
-                                                thisMakeReady(false,{});
-                                                } );
-                }
-                
-            }
-            catch (err) {
-                console.error("failed to run app:" + uri);
-                console.error(err);
-                
-                // TODO: scene.onError(err); ???
-                // TODO: at this point we need to destroy the child scene
-                scene.url = "";  // This destroys the child scene and releases scene.ctx
-                apiForChild.destroyScene(sandbox.scene);
-                
-                sandbox.console = null;
-                sandbox.scene = null;
-                sandbox.runtime = null;
-                sandbox.process = null;
-                
-                // log.message(4, util.inspect(sandbox));
-            }
-        }
-        catch (err) {
-            console.error("failed to load script:" + uri + "; error=" + err);
-            console.error(err);
-            // TODO: scene.onError(err); ???
-        }
-    };
-    
-}
-else {
 AppSceneContext.prototype.runScriptInNewVMContext = function (packageUri, moduleLoader, configImport) {
   var apiForChild = this;
   var isJar = moduleLoader.jarFileWasLoaded();
@@ -474,9 +333,9 @@ AppSceneContext.prototype.runScriptInNewVMContext = function (packageUri, module
       return requireIt(pkg);
     };
 
-    var requireFileOverridePath = process.env.PXSCENE_REQUIRE_ENABLE_FILE_PATH;
+    var requireFileOverridePath = isDuk?false:process.env.PXSCENE_REQUIRE_ENABLE_FILE_PATH;
     var requireEnableFilePath = "/tmp/";
-    if (process.env.HOME && process.env.HOME !== '') {
+    if (!isDuk && process.env.HOME && process.env.HOME !== '') {
       requireEnableFilePath = process.env.HOME;
     }
     if (requireFileOverridePath && requireFileOverridePath !== ''){
@@ -485,7 +344,7 @@ AppSceneContext.prototype.runScriptInNewVMContext = function (packageUri, module
 
     var fs = require("fs");
     var requireEnableFile = requireEnableFilePath + "/.pxsceneEnableRequire";
-    if (fs.existsSync(requireEnableFile)) {
+    if (!isDuk && fs.existsSync(requireEnableFile)) {
       console.log("enabling pxscene require support");
       requireMethod = require;
     }
@@ -546,19 +405,26 @@ AppSceneContext.prototype.runScriptInNewVMContext = function (packageUri, module
       //var script = new vm.Script(sourceCode, fname);
       //var moduleFunc = script.runInNewContext(newSandbox, {filename:fname, displayErrors:true});
       // fix debug under windows issue
-      var moduleFunc = vm.runInNewContext(sourceCode, newSandbox, {filename:path.normalize(fname), displayErrors:true});
-
-      if (process._debugWaitConnect) {
-        // Set breakpoint on module start
-        if (process.env.BREAK_ON_SCRIPTSTART != 1)
-          delete process._debugWaitConnect;
-        const Debug = vm.runInDebugContext('Debug');
-        Debug.setBreakPoint(moduleFunc, 0, 0);
-      }
 
       var px = createModule_pxScope.call(this, xModule);
-      var rtnObject = moduleFunc(px, xModule, fname, this.basePackageUri);
-      rtnObject = xModule.exports;
+
+      if (isDuk) {
+        vm.runInNewContext(sourceCode, newSandbox, { filename: path.normalize(fname), displayErrors: true }, px, xModule, fname, this.basePackageUri);
+      } else {
+          var moduleFunc = vm.runInNewContext(sourceCode, newSandbox, {filename:path.normalize(fname), displayErrors:true});
+    
+          if (process._debugWaitConnect) {
+            // Set breakpoint on module start
+            if (process.env.BREAK_ON_SCRIPTSTART != 1)
+              delete process._debugWaitConnect;
+            const Debug = vm.runInDebugContext('Debug');
+            Debug.setBreakPoint(moduleFunc, 0, 0);
+          }
+    
+          var rtnObject = moduleFunc(px, xModule, fname, this.basePackageUri);
+          rtnObject = xModule.exports;
+      }
+
 /*
 if (false) {
       // TODO do the old scenes context get released when we reload a scenes url??
@@ -624,7 +490,6 @@ if (false) {
     // TODO: scene.onError(err); ???
   }
 };
-}
 
 AppSceneContext.prototype.getPackageBaseFilePath = function() {
   var fullPath;
@@ -702,127 +567,6 @@ AppSceneContext.prototype.resolveModulePath = function(filePath, currentXModule)
   return {fileUri:fileUri};
 };
 
-// duktape merge hack
-
-if (isDuk) {
-    AppSceneContext.prototype.include = function(filePath, currentXModule) {
-        log.message(4, ">>> include(" + filePath + ") for " + currentXModule.name + " <<<");
-        var _this = this;
-        var origFilePath = filePath;
-        
-        return new Promise(function (onImportComplete, reject) {
-                           if( filePath === 'px' || filePath === 'url' || filePath === 'querystring') {
-                           // built-ins
-                           var modData = require(filePath);
-                           onImportComplete([modData, origFilePath]);
-                           return;
-                           } else if( filePath === 'fs' || filePath === 'os' ) {
-                           console.log("Not permitted to use the module " + filePath);
-                           reject("include failed due to module not permitted");
-                           return;
-                           } else if ( filePath === 'zlib' || filePath === 'events' || filePath === 'crypto' || filePath === 'stream' || filePath === 'util' || filePath === 'BufferList' ) {
-                           modData = require('duk_modules/' + filePath);
-                           onImportComplete([modData, origFilePath]);
-                           return;
-                           } else if ( filePath === 'ws' ) {
-                           modData = require('rcvrcore/' + filePath + '_wrap');
-                           onImportComplete([modData, origFilePath]);
-                           return;
-                           } else if( filePath === 'net' || filePath === 'htmlparser') {
-                           //modData = require('rcvrcore/' + filePath + '_wrap');
-                           //onImportComplete([modData, origFilePath]);
-                           console.log("Not permitted to use the module " + filePath);
-                           reject("include failed due to module not permitted");
-                           return;
-                           } 
-                           else if (filePath === 'ws') {
-                            console.log("creating websocket instance")
-                            modData = websocket;
-                            onImportComplete([modData, origFilePath]);
-                            return;
-                           } else if (filePath === 'http' || filePath === 'https') {
-                           //console.log("Not permitted to use the module " + filePath);
-                           //reject("include failed due to module not permitted");
-                           if (filePath === 'http')
-                           {
-                           modData = new http_wrap();
-                           }
-                           else
-                           {
-                           modData = new https_wrap();
-                           }
-                           var localapp = true; //(isLocalApp(_this.packageUrl) || isLocalIPV6App(_this.packageUrl));
-                           modData.setLocalApp(localapp);
-                           onImportComplete([modData, origFilePath]);
-                           return;
-                           } else if( filePath.substring(0, 9) === "px:scene.") {
-                           var Scene = require('rcvrcore/' + filePath.substring(3));
-                           if( _this.sceneWrapper === null ) {
-                           _this.sceneWrapper = new Scene();
-                           }
-                           _this.sceneWrapper._setNativeScene(_this.innerscene, currentXModule.name);
-                           _this.sceneWrapper._setRPCController(_this.rpcController);
-                           onImportComplete([_this.sceneWrapper, origFilePath]);
-                           return;
-                           } else if( filePath.substring(0,9) === "px:tools.") {
-                           modData = require('rcvrcore/tools/' + filePath.substring(9));
-                           onImportComplete([modData, origFilePath]);
-                           return;
-                           }
-                           
-                           //console.log("this path is temporarily disabled by akuts");
-                           //reject("this path is temporarily disabled by akuts");
-                           
-                           
-                           filePath = _this.resolveModulePath(filePath, currentXModule).fileUri;
-                           
-                           console.log("this path is by akuts: " + filePath);
-                           
-                           log.message(4, "filePath=" + filePath);
-                           if( _this.isScriptDownloading(filePath) ) {
-                           log.message(4, "Script is downloading for " + filePath);
-                           _this.addModuleReadyListener(filePath, function(moduleExports) {
-                                                        onImportComplete([moduleExports, origFilePath]);
-                                                        });
-                           return;
-                           }
-                           if (_this.isScriptLoaded(filePath)) {
-                           log.message(4, "Already have file loaded and ready, just return the existing content: " + filePath);
-                           modData = _this.getScriptContents(filePath);
-                           onImportComplete([modData, origFilePath]);
-                           return;
-                           }
-                           
-                           _this.setScriptStatus(filePath, 'downloading');
-                           
-                           var file = _this.jarFileMap.getArchiveFile(currentXModule.getJarName(), filePath);
-                           if (file) {
-                           // FIXME: no support for jars in jar because nativeFileArchive uses getFileAsString which is not ok for jar
-                           log.message(4, "Found file '" + filePath+"' in JAR: "+currentXModule.getJarName());
-                           var moduleLoader = new SceneModuleLoader();
-                           moduleLoader.processFileData(filePath, file);
-                           moduleLoader.loadedJarFile = false;
-                           moduleLoader.manifest = new SceneModuleManifest();
-                           moduleLoader.manifest.loadFromJSON(moduleLoader.getFileArchive().getFileContents('package.json'));
-                           _this.processCodeBuffer(origFilePath, filePath, currentXModule, moduleLoader, onImportComplete, reject);
-                           return;
-                           }
-                           
-                           _this.asyncFileAcquisition.acquire(filePath)
-                           .then(function(moduleLoader){
-                                 log.message(4, "PROCESS RCVD MODULE: " + filePath);
-                                 // file acquired
-                                 _this.processCodeBuffer(origFilePath, filePath, currentXModule, moduleLoader, onImportComplete, reject);
-                                 }).catch(function(err){
-                                          console.error("Error: could not load file " + filePath  + ", err=" + err);
-                                          reject("include failed");
-                                          });
-                           });
-    };
-    
-    
-}
-else {
 AppSceneContext.prototype.include = function(filePath, currentXModule) {
   log.message(4, ">>> include(" + filePath + ") for " + currentXModule.name + " <<<");
   var _this = this;
@@ -904,7 +648,6 @@ AppSceneContext.prototype.include = function(filePath, currentXModule) {
       });
   });
 };
-}
 
 AppSceneContext.prototype.processCodeBuffer = function(origFilePath, filePath, currentXModule, moduleLoader, onImportComplete, onImportRejected) {
   var _this = this;
