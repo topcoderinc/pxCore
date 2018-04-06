@@ -32,6 +32,7 @@ import org.pxscene.rt.RTFunction;
 import org.pxscene.rt.RTStatus;
 import org.pxscene.rt.RTStatusCode;
 import org.pxscene.rt.RTValue;
+import org.pxscene.rt.RTValueType;
 import org.pxscene.rt.remote.messages.RTMessageCallMethodRequest;
 import org.pxscene.rt.remote.messages.RTMessageCallMethodResponse;
 import org.pxscene.rt.remote.messages.RTMessageGetPropertyByIndexRequest;
@@ -143,14 +144,13 @@ public class RTRemoteProtocol implements Runnable {
 
   /**
    * send get by property by index request
-   * TODO not implemented
    *
    * @param objectId the object id
    * @param index the property index
    * @return the future task
    * @throws RTException if any other error occurred during operation
    */
-  Future<RTValue> sendGetByIndex(String objectId,String name, int index) throws RTException {
+  Future<RTValue> sendGetByIndex(String objectId, int index) throws RTException {
     String correlationKey = RTRemoteProtocol.newCorrelationKey();
     RTRemoteFuture<RTValue> future = new RTRemoteFuture<>(correlationKey);
     CallContext context = new CallContext(future, (message, closure) -> {
@@ -164,7 +164,6 @@ public class RTRemoteProtocol implements Runnable {
     put(correlationKey, context);
     RTMessageGetPropertyByIndexRequest m = new RTMessageGetPropertyByIndexRequest();
     m.setObjectId(objectId);
-    m.setPropertyName(name);
     m.setIndex(index);
     m.setCorrelationKey(correlationKey);
     transport.send(serializer.toBytes(m));
@@ -172,16 +171,15 @@ public class RTRemoteProtocol implements Runnable {
   }
 
   /**
-   * send set by property by id request
+   * send set property by index request
    *
    * @param objectId the object id
-   * @param name the property name
    * @param index the property index
    * @param value the new value
    * @return the future task
    * @throws RTException if any other error occurred during operation
    */
-  Future<Void> sendSetByIndex(String objectId,String name, int index, RTValue value) throws RTException {
+  Future<Void> sendSetByIndex(String objectId, int index, RTValue value) throws RTException {
     String correlationKey = RTRemoteProtocol.newCorrelationKey();
     RTRemoteFuture<Void> future = new RTRemoteFuture<>(correlationKey);
 
@@ -197,7 +195,6 @@ public class RTRemoteProtocol implements Runnable {
     put(correlationKey, context);
     RTMessageSetPropertyByIndexRequest m = new RTMessageSetPropertyByIndexRequest();
     m.setObjectId(objectId);
-    m.setPropertyName(name);
     m.setCorrelationKey(correlationKey);
     m.setIndex(index);
     m.setValue(value);
@@ -366,14 +363,15 @@ public class RTRemoteProtocol implements Runnable {
         RTRemoteMessage message = serializer.fromBytes(buff, 0, buff.length);
         CallContext context = get(message.getCorrelationKey());
         if (context != null) {
+          injectProtocolToMessageObjectValue(message);
           context.complete(message);
-        } else if(message.getMessageType().equals(RTRemoteMessageType.KEEP_ALIVE_REQUEST)){
+        } else if (message.getMessageType().equals(RTRemoteMessageType.KEEP_ALIVE_REQUEST)) {
           // return keep alive response
           this.sendkeepAliveReponse(message.getCorrelationKey());
-        } else if(message.getMessageType().equals(RTRemoteMessageType.KEEP_ALIVE_RESPONSE)){
+        } else if (message.getMessageType().equals(RTRemoteMessageType.KEEP_ALIVE_RESPONSE)) {
           // ignore this
-        } else if(message.getMessageType().equals(RTRemoteMessageType.SESSION_OPEN_REQUEST)){
-          this.sendOpenSessionReponse((RTMessageOpenSessionRequest)message);
+        } else if (message.getMessageType().equals(RTRemoteMessageType.SESSION_OPEN_REQUEST)) {
+          this.sendOpenSessionReponse((RTMessageOpenSessionRequest) message);
         } else if (RTEnvironment.isServerMode()) {
           processMessageInServerMode(message);
         } else {
@@ -385,11 +383,55 @@ public class RTRemoteProtocol implements Runnable {
     }
   }
 
+  /**
+   * inject protocol to rtValue (object type)
+   *
+   * @param rtValue the RTValue
+   */
+  private void injectProtocolToRTValue(RTValue rtValue) {
+    if (rtValue != null
+        && rtValue.getType().equals(RTValueType.OBJECT)
+        && rtValue.getValue() instanceof RTRemoteObject) {
+      RTRemoteObject rtRemoteObject = (RTRemoteObject) rtValue.getValue();
+      if (rtRemoteObject != null) {
+        rtRemoteObject.setProtocol(this);
+      }
+    }
+  }
+
+  /**
+   * inject protocol into message that message contains rtValues(RTObject type)
+   *
+   * @param message the remote message
+   */
+  private void injectProtocolToMessageObjectValue(RTRemoteMessage message) {
+
+    if (message.getMessageType().equals(RTRemoteMessageType.GET_PROPERTY_BYINDEX_RESPONSE)) {
+      // maybe return object value
+      injectProtocolToRTValue(((RTMessageGetPropertyByIndexResponse) message).getValue());
+    } else if (message.getMessageType().equals(RTRemoteMessageType.GET_PROPERTY_BYNAME_RESPONSE)) {
+      // maybe return object value
+      injectProtocolToRTValue(((RTMessageGetPropertyByNameResponse) message).getValue());
+    } else if (message.getMessageType().equals(RTRemoteMessageType.METHOD_CALL_REQUEST)) {
+      // call request
+      RTMessageCallMethodRequest request = (RTMessageCallMethodRequest) message;
+      if (request.getFunctionArgs() != null && request.getFunctionArgs().size() > 0) {
+        request.getFunctionArgs().forEach(this::injectProtocolToRTValue);
+      }
+    }
+  }
+
+  /**
+   * process message in client mode
+   *
+   * @param message the remote message
+   */
   private void processMessageInClientMode(RTRemoteMessage message) throws RTException {
     if (message.getMessageType().equals(RTRemoteMessageType.METHOD_CALL_REQUEST)) {
       // this mean server invoke client function,and these is no CallContext
       // let do this in this thread for now
       RTMessageCallMethodRequest request = (RTMessageCallMethodRequest) message;
+      injectProtocolToMessageObjectValue(request);
       if (request.getRtFunction() != null
           && request.getRtFunction().getValue() != null) {
         RTFunction rtFunction = ((RTFunction) request.getRtFunction().getValue());
@@ -409,6 +451,7 @@ public class RTRemoteProtocol implements Runnable {
 
   /**
    * when otherside send keep alive request, should return response
+   *
    * @param correlationKey the call request correlation key
    * @throws RTException if any other error occurred during operation
    */
@@ -422,6 +465,7 @@ public class RTRemoteProtocol implements Runnable {
 
   /**
    * when otherside send open session request, should return response
+   *
    * @param request the open session request
    * @throws RTException if any other error occurred during operation
    */

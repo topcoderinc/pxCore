@@ -14,6 +14,7 @@ import org.pxscene.rt.RTValue;
 import org.pxscene.rt.RTValueType;
 import org.pxscene.rt.remote.RTRemoteConnectionManager;
 import org.pxscene.rt.remote.RTRemoteMulticastResolver;
+import org.pxscene.rt.remote.RTRemoteObject;
 
 /**
  * test all types, set type with new value and check get value equals old value.
@@ -161,13 +162,15 @@ public class TypeTest {
    *
    * @param rtObject the remote object
    * @param rtValue the rt value
-   * @param name the property name
    * @param index the array index for property
    */
-  private void doBasicTestWithIndex(RTObject rtObject, RTValue rtValue, String name, int index)
+  private void doBasicTestWithIndex(RTObject rtObject, RTValue rtValue, int index)
       throws RTException, ExecutionException, InterruptedException {
-    rtObject.set(name, index, rtValue).get();
-    Object newVal = rtObject.get(name, index).get().getValue();
+    RTValue arrValue = rtObject.get("arr").get();
+    RTRemoteObject rtRemoteArrObject = (RTRemoteObject) arrValue.getValue();
+
+    rtRemoteArrObject.set(index, rtValue).get();
+    Object newVal = rtRemoteArrObject.get(index).get().getValue();
     Object value = rtValue.getValue();
     totalExamplesCount += 1;
     boolean result = value.equals(newVal);
@@ -184,9 +187,9 @@ public class TypeTest {
    */
   private void doIndexTest(RTObject rtObject)
       throws RTException, ExecutionException, InterruptedException {
-    doBasicTestWithIndex(rtObject, new RTValue(102), "arr", 0);
-    doBasicTestWithIndex(rtObject, new RTValue(122.123f), "arr", 1);
-    doBasicTestWithIndex(rtObject, new RTValue("Hello world !!!"), "arr", 2);
+    doBasicTestWithIndex(rtObject, new RTValue(102), 0);
+    doBasicTestWithIndex(rtObject, new RTValue(122.123f), 1);
+    doBasicTestWithIndex(rtObject, new RTValue("Hello world !!!"), 2);
   }
 
 

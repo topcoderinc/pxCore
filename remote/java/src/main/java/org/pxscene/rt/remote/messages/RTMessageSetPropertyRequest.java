@@ -12,10 +12,6 @@ import org.pxscene.rt.remote.RTRemoteMessageType;
 
 public class RTMessageSetPropertyRequest extends RTRemoteMessage {
 
-  /**
-   * the remote object property name
-   */
-  protected String propertyName;
 
   /**
    * the remote object id
@@ -34,15 +30,6 @@ public class RTMessageSetPropertyRequest extends RTRemoteMessage {
     super(type);
   }
 
-
-  public String getPropertyName() {
-    return this.propertyName;
-  }
-
-  public void setPropertyName(String propertyName) {
-    RTHelper.ensureNotNull(propertyName, "propertyName");
-    this.propertyName = propertyName;
-  }
 
   public String getObjectId() {
     return this.objectId;

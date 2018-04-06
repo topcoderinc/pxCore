@@ -264,7 +264,7 @@ public class RTRemoteServer {
     RTRemoteMessage message = rtRemoteTask.getMessage();
     RTMessageGetPropertyByNameRequest getRequest = (RTMessageGetPropertyByNameRequest) message;
     RTMessageGetPropertyByNameResponse getResponse = RTHelper
-        .getProperty(getObjectByName(getRequest.getObjectId()), getRequest);
+        .getProperty(getObjectByName(getRequest.getObjectId()), getRequest, this);
     rtRemoteTask.getProtocol().getTransport().send(serializer.toBytes(getResponse));
   }
 
@@ -278,7 +278,7 @@ public class RTRemoteServer {
     RTRemoteMessage message = rtRemoteTask.getMessage();
     RTMessageGetPropertyByIndexRequest getRequest = (RTMessageGetPropertyByIndexRequest) message;
     RTMessageGetPropertyByNameResponse getResponse = RTHelper
-        .getProperty(getObjectByName(getRequest.getObjectId()), getRequest);
+        .getProperty(getObjectByName(getRequest.getObjectId()), getRequest, this);
     getResponse.setMessageType(RTRemoteMessageType.GET_PROPERTY_BYINDEX_RESPONSE);
     rtRemoteTask.getProtocol().getTransport().send(serializer.toBytes(getResponse));
   }
@@ -335,7 +335,6 @@ public class RTRemoteServer {
    */
   public void registerObject(String objectName, Object object) {
     registerObjectMap.put(objectName, object);
-    RTHelper.dumpObject(objectName, object);
   }
 
 
@@ -351,6 +350,17 @@ public class RTRemoteServer {
       throw new RTException("cannot found register object named " + objectName);
     }
     registerObjectMap.remove(objectName);
+  }
+
+  /**
+   * check the object is register or not
+   *
+   * @param objectName the object name
+   * @return the result
+   */
+  public boolean isRegister(String objectName) {
+    Object object = registerObjectMap.get(objectName);
+    return object != null;
   }
 
   public Queue<RTRemoteTask> getMessageQueue() {

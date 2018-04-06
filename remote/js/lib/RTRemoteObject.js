@@ -23,29 +23,27 @@ class RTRemoteObject {
 
   /**
    * set property by name or index
-   * @param {string|number} name the property name or index
+   * @param {string|number} prop the property name or index
    * @param {object} value the rtValue
-   * @param {number|int} index the array index for property
    * @return {promise<object> | Promise<{}>} the promise with object/rtValue
    */
-  set(name, value, index = -1) {
-    if (index >= 0) {
-      return this.protocol.sendSetByIndex(this.id, name, index, value);
+  set(prop, value) {
+    if (typeof prop === 'number') {
+      return this.protocol.sendSetByIndex(this.id, prop, value);
     }
-    return this.protocol.sendSetByName(this.id, name, value);
+    return this.protocol.sendSetByName(this.id, prop, value);
   }
 
   /**
    * get property by name or index
-   * @param {string|number} name the property name or index
-   * @param {number|int} index the array index for property
+   * @param {string|number} prop the property name or index
    * @return {Promise<object>} the promise with object/rtValue
    */
-  get(name, index = -1) {
-    if (index >= 0) {
-      return this.protocol.sendGetByIndex(this.id, name, index);
+  get(prop) {
+    if (typeof prop === 'number') {
+      return this.protocol.sendGetByIndex(this.id, prop);
     }
-    return this.protocol.sendGetByName(this.id, name);
+    return this.protocol.sendGetByName(this.id, prop);
   }
 
   /**
