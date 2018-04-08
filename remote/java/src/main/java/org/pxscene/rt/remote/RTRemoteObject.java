@@ -66,8 +66,8 @@ public class RTRemoteObject implements RTObject {
    * @return the future task
    * @throws RTException if any other error occurred during operation
    */
-  public Future<Void> set(String name, int index, RTValue value) throws RTException {
-    return protocol.sendSetByIndex(id, name, index, value);
+  public Future<Void> set(int index, RTValue value) throws RTException {
+    return protocol.sendSetByIndex(id, index, value);
   }
 
   /**
@@ -88,8 +88,8 @@ public class RTRemoteObject implements RTObject {
    * @return the future task
    * @throws RTException if any other error occurred during operation
    */
-  public Future<RTValue> get(String name, int index) throws RTException {
-    return protocol.sendGetByIndex(id, name, index);
+  public Future<RTValue> get(int index) throws RTException {
+    return protocol.sendGetByIndex(id, index);
   }
 
   /**
@@ -114,6 +114,14 @@ public class RTRemoteObject implements RTObject {
    */
   public Future<RTValue> sendReturns(String name, RTValue... arguments) throws RTException {
     return protocol.sendCallByNameAndReturns(id, name, arguments);
+  }
+
+  public void setProtocol(RTRemoteProtocol protocol) {
+    this.protocol = protocol;
+  }
+
+  public RTRemoteProtocol getProtocol() {
+    return protocol;
   }
 
   public String getId() {

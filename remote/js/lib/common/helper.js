@@ -24,6 +24,12 @@ const logger = require('./logger');
 let rtMessageHelper = null;
 
 /**
+ * the array object hash map
+ * @type {object|map}
+ */
+const arrayObjectHashmap = {};
+
+/**
  * get a random uuid
  * @return {string} the random uuid value
  */
@@ -162,18 +168,23 @@ function setProperty(object, requestMessage) {
   } else {
     const propName = requestMessage[RTConst.PROPERTY_NAME];
     const rtValue = requestMessage[RTConst.VALUE];
-    if (!object[propName]) { // not found
-      response[RTConst.STATUS_CODE] = RTStatusCode.PROPERTY_NOT_FOUND;
-    } else if (requestMessage[RTConst.MESSAGE_TYPE] === RTRemoteMessageType.SET_PROPERTY_BYINDEX_REQUEST) {
+
+    // set array element by index
+    if (requestMessage[RTConst.MESSAGE_TYPE] === RTRemoteMessageType.SET_PROPERTY_BYINDEX_REQUEST) {
       const index = requestMessage[RTConst.PROPERTY_INDEX];
-      if (!Array.isArray(object[propName])) { // should be array
+      if (!Array.isArray(object)) { // is an array
         response[RTConst.STATUS_CODE] = RTStatusCode.TYPE_MISMATCH;
-      } else if (index >= object[propName].length) {
+      } else if (index >= object.length) {
         response[RTConst.STATUS_CODE] = RTStatusCode.INVALID_ARGUMENT;
       } else {
-        object[propName][index] = rtValue;
+        object[index] = rtValue;
         response[RTConst.STATUS_CODE] = RTStatusCode.OK;
       }
+      return response;
+    }
+
+    if (!object[propName]) { // not found
+      response[RTConst.STATUS_CODE] = RTStatusCode.PROPERTY_NOT_FOUND;
     } else if (getValueType(object[propName]) !== rtValue[RTConst.TYPE]) { // type mismatch
       response[RTConst.STATUS_CODE] = RTStatusCode.TYPE_MISMATCH;
     } else { // ok
@@ -191,33 +202,55 @@ function setProperty(object, requestMessage) {
  * get value by property name/index
  * @param {object} object the object value
  * @param {object} getRequest the request message
+ * @param {RTRemoteServer} server the server instance
  * @return {object} the get response with value
  */
-function getProperty(object, getRequest) {
+function getProperty(object, getRequest, server) {
   const response = getRTMessageHelper().newGetPropertyResponse(
     getRequest[RTConst.CORRELATION_KEY],
     RTStatusCode.UNKNOWN,
     getRequest[RTConst.OBJECT_ID_KEY],
     null,
   );
+
   if (!object) { // object not found
     response[RTConst.STATUS_CODE] = RTStatusCode.OBJECT_NOT_FOUND;
   } else {
     const propName = getRequest[RTConst.PROPERTY_NAME];
-    if (!object[propName]) { // not found
-      response[RTConst.STATUS_CODE] = RTStatusCode.PROPERTY_NOT_FOUND;
-    } else if (getRequest[RTConst.MESSAGE_TYPE] === RTRemoteMessageType.GET_PROPERTY_BYINDEX_REQUEST) { // get by index
+
+    // get element by index in array
+    if (getRequest[RTConst.MESSAGE_TYPE] === RTRemoteMessageType.GET_PROPERTY_BYINDEX_REQUEST) { // get by index
       const index = getRequest[RTConst.PROPERTY_INDEX];
-      if (!Array.isArray(object[propName])) { // should be array
+      const arr = object;
+      if (!Array.isArray(arr)) { // should be an array
         response[RTConst.STATUS_CODE] = RTStatusCode.TYPE_MISMATCH;
-      } else if (index >= object[propName].length) { // check index
+      } else if (index >= arr.length) { // check index
         response[RTConst.STATUS_CODE] = RTStatusCode.INVALID_ARGUMENT;
       } else {
-        response[RTConst.VALUE] = object[propName][index];
+        response[RTConst.VALUE] = arr[index];
         response[RTConst.STATUS_CODE] = RTStatusCode.OK;
       }
+      return response;
+    }
+
+    if (!object[propName]) { // not found
+      response[RTConst.STATUS_CODE] = RTStatusCode.PROPERTY_NOT_FOUND;
     } else { // ok
-      if (typeof object[propName] === 'function') {
+      if (Array.isArray(object[propName])) { // array object
+        let objectId = arrayObjectHashmap[object[propName]];
+        if (!objectId) {
+          objectId = `obj://${getRandomUUID()}`;
+          arrayObjectHashmap[object[propName]] = objectId;
+        }
+        if (!server.isRegister(objectId)) {
+          server.registerObject(objectId, object[propName]);
+        }
+        const v = {};
+        v[RTConst.TYPE] = RTValueType.OBJECT;
+        v[RTConst.VALUE] = {};
+        v[RTConst.VALUE][RTConst.OBJECT_ID_KEY] = objectId;
+        response[RTConst.VALUE] = v;
+      } else if (typeof object[propName] === 'function') {
         const v = {};
         v[RTConst.TYPE] = RTValueType.FUNCTION;
         v[RTConst.OBJECT_ID_KEY] = getRequest[RTConst.OBJECT_ID_KEY];

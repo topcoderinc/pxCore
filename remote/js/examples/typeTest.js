@@ -50,9 +50,9 @@ resolve.start()
         // object test
         .then(() => doObjectTest(rtObject, 'objvar'))
 
-        .then(() => doBasicTestWithIndex(rtObject, RTValueType.INT32, 104, 'arr', 0))
-        .then(() => doBasicTestWithIndex(rtObject, RTValueType.FLOAT, 123.2, 'arr', 1))
-        .then(() => doBasicTestWithIndex(rtObject, RTValueType.STRING, 'Sample String', 'arr', 2))
+        .then(() => doBasicTestWithIndex(rtObject, RTValueType.INT32, 104, 0))
+        .then(() => doBasicTestWithIndex(rtObject, RTValueType.FLOAT, 123.2, 1))
+        .then(() => doBasicTestWithIndex(rtObject, RTValueType.STRING, 'Sample String', 2))
 
         // in c++/java, float only had 7 valid digits
         .then(() => doBasicTest(rtObject, RTValueType.FLOAT, 1.23456789, 'ffloat'))
@@ -178,12 +178,12 @@ function doBasicTest(rtObject, type, value, propertyName) {
  * @param rtObject the remote object
  * @param type the rt value type
  * @param value the value
- * @param propertyName the property name
  * @param index the index
  */
-function doBasicTestWithIndex(rtObject, type, value, propertyName, index) {
-  return rtObject.set(propertyName, RTValueHelper.create(value, type), index)
-    .then(() => rtObject.get(propertyName, index).then((rtValue) => {
+function doBasicTestWithIndex(rtObject, type, value, index) {
+  return rtObject.get('arr') // get array object first
+    .then(arrValue => arrValue.value.set(index, RTValueHelper.create(value, type)).then(() => arrValue))
+    .then(arrValue => arrValue.value.get(index).then((rtValue) => {
       let result = false;
       if (type === RTValueType.FLOAT) {
         result = checkEqualsFloat(rtValue.value, value);

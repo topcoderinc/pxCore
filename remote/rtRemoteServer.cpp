@@ -173,68 +173,6 @@ namespace
     RT_ASSERT(false);
     return false;
   } // sameEndpoint
-
-
-  rtError
-  getArrObjectRefAndCheckIndex(rtObjectRef const& obj, char const* propertyName, uint32_t index
-                               , rtObjectRef& returnArrRef)
-  {
-    rtValue propValue;
-    obj->Get(propertyName, &propValue);
-
-    if (propValue.getType() != RT_rtObjectRefType)
-    {
-      return RT_ERROR_TYPE_MISMATCH;
-    }
-
-    rtObjectRef arrayRef;
-    propValue.getObject(arrayRef);
-    if (arrayRef.getPtr() == nullptr)
-    {
-      return RT_PROP_NOT_FOUND;
-    }
-
-    auto* arrPtr = dynamic_cast<rtArrayObject*>(arrayRef.getPtr());
-    if (arrPtr == nullptr)
-    {
-      return RT_PROP_NOT_FOUND;
-    }
-    rtValue lenRTValue;
-    uint32_t len;
-    arrPtr->Get("length", &lenRTValue);
-    lenRTValue.getUInt32(len);
-    if (index >= len)
-    {
-      return RT_ERROR_INVALID_OPERATION;
-    }
-    returnArrRef = arrayRef;
-    return RT_OK;
-  } // getArrObjectRefAndCheckIndex
-
-  rtError
-  getArrayPropertyByIndex(rtObjectRef const& obj, char const* propertyName, uint32_t index, rtValue& v)
-  {
-    rtObjectRef arrRef;
-    rtError e = getArrObjectRefAndCheckIndex(obj, propertyName, index, arrRef);
-    if (e == RT_OK)
-    {
-      e = arrRef->Get(index, &v);
-    }
-    return e;
-  } // getArrayPropertyByIndex
-
-  rtError
-  setArrayPropertyByIndex(rtObjectRef const& obj, char const* propertyName, uint32_t index, rtValue const& v)
-  {
-    rtObjectRef arrRef;
-    rtError e = getArrObjectRefAndCheckIndex(obj, propertyName, index, arrRef);
-    if (e == RT_OK)
-    {
-      e = arrRef->Set(index, &v);
-    }
-    return e;
-  } // setArrayPropertyByIndex
-
 } // namespace
 
 rtRemoteServer::rtRemoteServer(rtRemoteEnvironment* env)
@@ -804,7 +742,6 @@ rtRemoteServer::onGet(std::shared_ptr<rtRemoteClient>& client, rtRemoteMessagePt
 
   rtRemoteMessagePtr res(new rapidjson::Document());
   res->SetObject();
-  res->AddMember(kFieldNameMessageType, kMessageTypeGetByNameResponse, res->GetAllocator());
   res->AddMember(kFieldNameCorrelationKey, key.toString(), res->GetAllocator());
   res->AddMember(kFieldNameObjectId, std::string(objectId), res->GetAllocator());
 
@@ -819,27 +756,24 @@ rtRemoteServer::onGet(std::shared_ptr<rtRemoteClient>& client, rtRemoteMessagePt
     rtError err = RT_OK;
     rtValue value;
 
-    uint32_t    index = rtMessage_GetPropertyIndex(*doc);
+    uint32_t    index = 0;
     char const* name = rtMessage_GetPropertyName(*doc);
 
-    if (name == nullptr)
+    if (name)
     {
-      rtLogError("failed to get property, %s", "property name should not be null");
-      err = RT_ERROR_INVALID_ARG;
-    }
-
-    if (index != kInvalidPropertyIndex) // get by index
-    {
-      err = getArrayPropertyByIndex(obj, name, index, value);
-      res->AddMember(kFieldNameMessageType, kMessageTypeGetByIndexResponse, res->GetAllocator());
-    }
-    else
-    { // get by property name
+      res->AddMember(kFieldNameMessageType, kMessageTypeGetByNameResponse, res->GetAllocator());
       err = obj->Get(name, &value);
       if (err != RT_OK)
       {
         rtLogWarn("failed to get property: %s. %s", name, rtStrError(err));
       }
+    }
+    else
+    {
+      res->AddMember(kFieldNameMessageType, kMessageTypeGetByIndexResponse, res->GetAllocator());
+      index = rtMessage_GetPropertyIndex(*doc);
+      if (index != kInvalidPropertyIndex)
+        err = obj->Get(index, &value);
     }
     if (err == RT_OK)
     {
@@ -865,6 +799,7 @@ rtRemoteServer::onGet(std::shared_ptr<rtRemoteClient>& client, rtRemoteMessagePt
       }
       else
       {
+        rtLogInfo("convert value to string %s",value.toObject()?"object":"nil");
         err = rtRemoteValueWriter::write(m_env, value, val, *res);
         if (err != RT_OK)
           rtLogWarn("failed to write value: %d", err);
@@ -891,7 +826,6 @@ rtRemoteServer::onSet(std::shared_ptr<rtRemoteClient>& client, rtRemoteMessagePt
 
   rtRemoteMessagePtr res(new rapidjson::Document());
   res->SetObject();
-  res->AddMember(kFieldNameMessageType, kMessageTypeSetByNameResponse, res->GetAllocator());
   res->AddMember(kFieldNameCorrelationKey, key.toString(), res->GetAllocator());
   res->AddMember(kFieldNameObjectId, std::string(objectId), res->GetAllocator());
 
@@ -917,20 +851,18 @@ rtRemoteServer::onSet(std::shared_ptr<rtRemoteClient>& client, rtRemoteMessagePt
     if (err == RT_OK)
     {
       char const* name = rtMessage_GetPropertyName(*doc);
-      index = rtMessage_GetPropertyIndex(*doc);
-      if (name == nullptr)
+
+      if (name)
       {
-        rtLogError("failed to get property, %s", "property name should not be null");
-        err = RT_ERROR_INVALID_ARG;
-      }
-      else if (index != kInvalidPropertyIndex)
-      {
-        err = setArrayPropertyByIndex(obj, name, index, value);
-        res->AddMember(kFieldNameMessageType, kMessageTypeSetByIndexResponse, res->GetAllocator());
+        res->AddMember(kFieldNameMessageType, kMessageTypeSetByNameResponse, res->GetAllocator());
+        err = obj->Set(name, &value);
       }
       else
       {
-        err = obj->Set(name, &value);
+        res->AddMember(kFieldNameMessageType, kMessageTypeSetByIndexResponse, res->GetAllocator());
+        index = rtMessage_GetPropertyIndex(*doc);
+        if (index != kInvalidPropertyIndex)
+          err = obj->Set(index, &value);
       }
     }
 

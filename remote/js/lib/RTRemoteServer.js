@@ -231,7 +231,7 @@ class RTRemoteServer {
    */
   handlerGetPropertyByIndexRequest(task) {
     const { message } = task;
-    const response = helper.getProperty(this.getObjectByName(message[RTConst.OBJECT_ID_KEY]), message);
+    const response = helper.getProperty(this.getObjectByName(message[RTConst.OBJECT_ID_KEY]), message, this);
     response[RTConst.MESSAGE_TYPE] = RTRemoteMessageType.GET_PROPERTY_BYINDEX_RESPONSE;
     return task.protocol.transport.send(RTRemoteSerializer.toBuffer(response));
   }
@@ -243,7 +243,7 @@ class RTRemoteServer {
    */
   handlerGetPropertyByNameRequest(task) {
     const { message } = task;
-    const response = helper.getProperty(this.getObjectByName(message[RTConst.OBJECT_ID_KEY]), message);
+    const response = helper.getProperty(this.getObjectByName(message[RTConst.OBJECT_ID_KEY]), message, this);
     return task.protocol.transport.send(RTRemoteSerializer.toBuffer(response));
   }
 
@@ -278,7 +278,14 @@ class RTRemoteServer {
     }
     registeredObjectMap[objectName] = obj;
     logger.info(`object with name = ${objectName} register successfully in server ${this.serverName}`);
-    helper.checkAndDumpObject(objectName, obj);
+  }
+
+  /**
+   * check the objectName is register or not
+   * @param objectName the object name
+   */
+  isRegister(objectName) { // eslint-disable-line
+    return !!registeredObjectMap[objectName];
   }
 
   /**

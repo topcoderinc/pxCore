@@ -278,7 +278,6 @@ public class RTRemoteSerializer {
     RTMessageGetPropertyByIndexRequest req = new RTMessageGetPropertyByIndexRequest();
     req.setCorrelationKey(obj.getString(RTConst.CORRELATION_KEY));
     req.setObjectId(obj.getString(RTConst.OBJECT_ID_KEY));
-    req.setPropertyName(obj.getString(RTConst.PROPERTY_NAME));
     req.setIndex(obj.getInt(RTConst.PROPERTY_INDEX));
     return req;
   }
@@ -319,7 +318,6 @@ public class RTRemoteSerializer {
     RTMessageSetPropertyByIndexRequest req = new RTMessageSetPropertyByIndexRequest();
     req.setCorrelationKey(obj.getString(RTConst.CORRELATION_KEY));
     req.setObjectId(obj.getString(RTConst.OBJECT_ID_KEY));
-    req.setPropertyName(obj.getString(RTConst.PROPERTY_NAME));
     req.setIndex(obj.getInt(RTConst.PROPERTY_INDEX));
     req.setValue(valueFromJson(obj.getJsonObject(RTConst.VALUE)));
     return req;
@@ -775,7 +773,6 @@ public class RTRemoteSerializer {
     JsonObject obj = Json.createObjectBuilder()
         .add(RTConst.MESSAGE_TYPE, req.getMessageType().toString())
         .add(RTConst.CORRELATION_KEY, req.getCorrelationKey())
-        .add(RTConst.PROPERTY_NAME, req.getPropertyName())
         .add(RTConst.PROPERTY_INDEX, req.getIndex())
         .add(RTConst.OBJECT_ID_KEY, req.getObjectId())
         .build();
@@ -971,7 +968,6 @@ public class RTRemoteSerializer {
         .add(RTConst.MESSAGE_TYPE, req.getMessageType().toString())
         .add(RTConst.CORRELATION_KEY, req.getCorrelationKey())
         .add(RTConst.OBJECT_ID_KEY, req.getObjectId())
-        .add(RTConst.PROPERTY_NAME, req.getPropertyName())
         .add(RTConst.PROPERTY_INDEX, req.getIndex())
         .add(RTConst.VALUE, RTRemoteSerializer.valueToJson(req.getValue()))
         .build();

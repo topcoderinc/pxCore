@@ -52,7 +52,7 @@ function newLocateResponse(endpoint, objectId, senderId, correlationKey) {
 /**
  * create set property by name request message
  * @param {string} objectId the object id
- * @param {string} propName the property name
+ * @param {string|null} propName the property name
  * @param {object} rtValue the set value
  * @return {object} the set request message
  */
@@ -61,7 +61,9 @@ function newSetRequest(objectId, propName, rtValue) {
   setRequestObj[RTConst.MESSAGE_TYPE] = RTRemoteMessageType.SET_PROPERTY_BYNAME_REQUEST;
   setRequestObj[RTConst.CORRELATION_KEY] = helper.getRandomUUID();
   setRequestObj[RTConst.OBJECT_ID_KEY] = objectId;
-  setRequestObj[RTConst.PROPERTY_NAME] = propName;
+  if (propName) {
+    setRequestObj[RTConst.PROPERTY_NAME] = propName;
+  }
   setRequestObj[RTConst.VALUE] = rtValue;
   return setRequestObj;
 }
@@ -69,7 +71,7 @@ function newSetRequest(objectId, propName, rtValue) {
 /**
  * create new get property by name request message
  * @param {string} objectId the object id
- * @param {string} propName the property name
+ * @param {string|null} propName the property name
  * @return {object} the get property message
  */
 function newGetRequest(objectId, propName) {
@@ -77,7 +79,9 @@ function newGetRequest(objectId, propName) {
   getRequestObj[RTConst.MESSAGE_TYPE] = RTRemoteMessageType.GET_PROPERTY_BYNAME_REQUEST;
   getRequestObj[RTConst.CORRELATION_KEY] = helper.getRandomUUID();
   getRequestObj[RTConst.OBJECT_ID_KEY] = objectId;
-  getRequestObj[RTConst.PROPERTY_NAME] = propName;
+  if (propName) {
+    getRequestObj[RTConst.PROPERTY_NAME] = propName;
+  }
   return getRequestObj;
 }
 

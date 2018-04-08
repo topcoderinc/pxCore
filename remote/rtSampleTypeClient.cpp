@@ -156,19 +156,26 @@ doBasicTest(const rtObjectRef& remoteObj, const rtValue& value, const char* prop
 
 // test basic type with index
 void
-doBasicTestWithIndex(const rtObjectRef& remoteObj, const rtValue& value, const char* propName, uint32_t index)
+doBasicTestWithIndex(const rtObjectRef& remoteObj, const rtValue& value, uint32_t index)
 {
   totalExamplesCount += 1;
-  auto* robj = dynamic_cast<rtRemoteObject*>(remoteObj.getPtr());
-  rtError e = robj->Set(propName, index, &value);
+  rtValue rtArrayVal;
+  rtError e = remoteObj->Get("arr", &rtArrayVal);  // get arr object first
+  if (e != RT_OK)
+  {
+    rtLogInfo("Get arr object failed, passed = [%s]", "false");
+  }
+  rtObjectRef arrRef;
+  rtArrayVal.getObject(arrRef);
+
+  e = arrRef->Set(index, &value);
   if (e != RT_OK)
   {
     rtLogInfo("%s , passed=[%s], err=%s", value.getTypeStr(), "false", rtStrError(e));
     return;
   }
-
   rtValue newVal;
-  e = robj->Get(propName, index, &newVal);
+  e = arrRef->Get(index, &newVal);
   if (e != RT_OK)
   {
     rtLogInfo("%s , passed=[%s], err=%s", value.getTypeStr(), "false", rtStrError(e));
@@ -245,9 +252,9 @@ testAllTypes(const rtObjectRef& remoteObj)
 void
 doIndexTest(const rtObjectRef& rtObject)
 {
-  doBasicTestWithIndex(rtObject, rtValue(102), "arr", 0);
-  doBasicTestWithIndex(rtObject, rtValue(122.123f), "arr", 1);
-  doBasicTestWithIndex(rtObject, rtValue("Hello world !!!"), "arr", 2);
+  doBasicTestWithIndex(rtObject, rtValue(102), 0);
+  doBasicTestWithIndex(rtObject, rtValue(122.123f), 1);
+  doBasicTestWithIndex(rtObject, rtValue("Hello world !!!"), 2);
 }
 
 // object test
