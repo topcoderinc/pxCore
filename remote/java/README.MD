@@ -8,8 +8,6 @@
 
 -  `git clone https://github.com/topcoderinc/pxCore.git`
 -  `cd pxCore`
--  `git checkout 6b81cb052317a6eab6632093e7646b7f414de4ab`
--  `git apply remote.patch`
 
 
 
@@ -56,7 +54,7 @@
 * run junits
 
   * run `mvn clean test`
-  * open `target/jacoco-ut/index.html` , you can see the code coverage, for now the code coverage is 87%.
+  * open `target/jacoco-ut/index.html` , you can see the code coverage, for now the code coverage is 88%.
 
   notes: for now, there are 3 failures junit examples,  they are bugs, see the test results, i marked as **TODO** in junit codes.
 
@@ -105,9 +103,50 @@ Loop to find object test , close server , then start `mvn exec:java -Dexec.mainC
     what():  std::bad_alloc
   Aborted (core dumped)
   ```
+- only RTObject and RTFunction returned from server has the same pointer/ref  when client cached, other basic values all are new Object, the don't have the same pointer/ref.
 
 ## Failed Tests
+
 1. RTHelperTest.testGetPropertyByNameWithInvalidType:50 this should not be raise Exception , should be return PROP_NOT_FOUND
+
 2. RTHelperTest.testSetPropertyNameWithDifferentType:92 this should return ok, but is return  TYPE_MISMATCH ==> expected: <TYPE_MISMATCH> but was: <OK>
+
 3. RTMethodTest.testUnknownMethod:119 this should not be raise Exception , should be return METHOD_NOT_FOUND
+
 4. RTRemoteFutureTest.testRTRemoteFutureGet:59 this should be return timeout error after 10ms, but is always block the thread and did not return
+
+5. RTRemoteSerializerTest.testDeserializerRTMessageKeepAliveResponse:321 there should no exception, but got cannot prase the message where type = keep_alive.response
+
+   **reason**: *RTRemoteSerializer didn't implement prase the keep_alive.response type message.*
+
+6. RTRemoteSerializerTest.testDeserializerRTMessageOpenSessionRequest:395 there should no exception, but got cannot prase the message where type = session.open.request
+
+   **reason**: *RTRemoteSerializer didn't implement prase the session.open.request type message.*
+
+7. RTRemoteSerializerTest.testDeserializerRTMessageOpenSessionResponse:426 there should no exception, but got cannot prase the message where type = session.open.response
+
+   **reason**: *RTRemoteSerializer didn't implement prase the session.open.response type message.*
+
+8. RTRemoteSerializerTest.testDeserializerRTMessageSetPropertyByNameResponse:543 there should not be has exception, but got org.pxscene.rt.remote.messages.RTMessageGetPropertyByNameResponse cannot be cast to org.pxscene.rt.remote.messages.RTMessageSetPropertyByNameResponse
+
+   **reason**: *in RTRemoteSerializer method fromJson_SetPropertyByNameResponse,line 247 should return RTMessageSetPropertyByNameResponse , but is return RTMessageGetPropertyByNameResponse*
+
+9. RTRemoteSerializerTest.testSerializerRTMessageKeepAliveRequest:281 there is should a serializer to serialize RTMessageKeepAliveRequest, but not found
+
+   **reason**: *RTRemoteSerializer didn't implement serialize the RTMessageKeepAliveRequest message.*
+
+10. RTRemoteSerializerTest.testSerializerRTMessageKeepAliveResponse:306 there is should a serializer to serialize RTMessageKeepAliveResponse, but not found
+
+    **reason**: *RTRemoteSerializer didn't implement serialize the RTMessageKeepAliveResponse message.*
+
+11. RTRemoteSerializerTest.testSerializerRTMessageLocate:345 there should no exception, but got null
+
+    **reason**: *RTRemoteSerializer missing the sender id property when serialize the RTMessageLocate message, so it return null value when get the sender id from serialized jsonObject.*
+
+12. RTRemoteSerializerTest.testSerializerRTMessageOpenSessionRequest:380 there is should a serializer to serialize RTMessageOpenSessionRequest, but not found
+
+    **reason**: *RTRemoteSerializer didn't implement serialize the RTMessageOpenSessionRequest message.*
+
+13. RTRemoteSerializerTest.testSerializerRTMessageOpenSessionResponse:411 there is should a serializer to serialize RTMessageOpenSessionResponse, but not found
+
+    **reason**: *RTRemoteSerializer didn't implement serialize the RTMessageOpenSessionResponse message.*

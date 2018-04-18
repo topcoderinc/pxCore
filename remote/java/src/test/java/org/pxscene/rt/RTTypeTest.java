@@ -4,13 +4,11 @@ package org.pxscene.rt;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import examples.TestObject;
-import examples.TypeTest;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.pxscene.rt.remote.RTRemoteConnectionManager;
@@ -35,34 +33,25 @@ public class RTTypeTest {
     rtObject = RTRemoteConnectionManager.getObjectProxy(uri);
   }
 
-//  /**
-//   * test types, the unit test base on src/main/examples/TypeTest, no exceptions mean test passed
-//   */
-//  @Test
-//  void testTypes() throws ExecutionException, InterruptedException, RTException {
-//    TypeTest rtRemoteTestClient = new TypeTest();
-//    rtRemoteTestClient.setTotalExamplesCount(0);
-//    rtRemoteTestClient.setSucceedExamplesCount(0);
-//    rtRemoteTestClient.doFunctionTest(rtObject, "onTick");
-//    rtRemoteTestClient.doObjectTest(rtObject, "objvar");
-//    rtRemoteTestClient.testAllTypes(rtObject);
-//  }
 
   /**
-   * test function type
+   * test function type ,rtValue is a new value, but rtFunction should be has the same ref/hashCode
    */
   @Test
   void testFunctionType() throws ExecutionException, InterruptedException, RTException {
-    RTValue oldRtValue = new RTValue(new RTFunction(rtValueList -> {}));
+    RTValue oldRtValue = new RTValue(new RTFunction(rtValueList -> {
+    }));
     rtObject.set("onTick", oldRtValue).get();
     Future<RTValue> valueFuture = rtObject.get("onTick");
     RTValue rtValue = valueFuture.get();
     ((RTFunction) rtValue.getValue()).getListener().invoke(null);
     assertEquals(true, checkEqualsFunction(oldRtValue, rtValue));
+    assertEquals(rtValue.getValue(), oldRtValue.getValue());
+    assertEquals(rtValue.getValue().hashCode(), oldRtValue.getValue().hashCode());
   }
 
   /**
-   * test object type
+   * test object type, the object should be has the same ref/hasCode
    */
   @Test
   void testObjectType() throws ExecutionException, InterruptedException, RTException {
@@ -72,6 +61,8 @@ public class RTTypeTest {
     RTValue newObj = rtObject.get("objvar").get();
     TestObject testObject = (TestObject) newObj.getValue();
     assertEquals(oldObj.getId(), testObject.getId(), "Object type must have the same id");
+    assertEquals(oldObj, testObject);
+    assertEquals(oldObj.hashCode(), testObject.hashCode());
   }
 
   /**
@@ -82,6 +73,20 @@ public class RTTypeTest {
     rtObject.set("int8", new RTValue((byte) -128, RTValueType.INT8)).get();
     Object newVal = rtObject.get("int8").get().getValue();
     assertEquals((byte) -128, newVal);
+
+    rtObject.set("int8", new RTValue((byte) -127, RTValueType.INT8)).get();
+    Object newVal2 = rtObject.get("int8").get().getValue();
+    assertEquals((byte) -127, newVal2);
+  }
+
+  /**
+   * test UINT8 type
+   */
+  @Test
+  void testUint8() throws RTException, ExecutionException, InterruptedException {
+    rtObject.set("uint8", new RTValue((short)255, RTValueType.UINT8)).get();
+    Object newVal = rtObject.get("uint8").get().getValue();
+    assertEquals((short) 255, newVal);
   }
 
   /**
@@ -154,7 +159,7 @@ public class RTTypeTest {
   void testFloatTypePositive() throws ExecutionException, InterruptedException, RTException {
     rtObject.set("ffloat", new RTValue(12.0123123f, RTValueType.FLOAT)).get();
     Object newVal = rtObject.get("ffloat").get().getValue();
-    assertEquals( true, checkEqualsFloat(12.0123123f, newVal));
+    assertEquals(true, checkEqualsFloat(12.0123123f, newVal));
   }
 
   /**
@@ -164,7 +169,7 @@ public class RTTypeTest {
   void testFloatTypeNegative() throws ExecutionException, InterruptedException, RTException {
     rtObject.set("ffloat", new RTValue(-123.8818f, RTValueType.FLOAT)).get();
     Object newVal = rtObject.get("ffloat").get().getValue();
-    assertEquals( true, checkEqualsFloat(-123.8818f, newVal));
+    assertEquals(true, checkEqualsFloat(-123.8818f, newVal));
   }
 
   /**
@@ -174,7 +179,7 @@ public class RTTypeTest {
   void testDoubleTypePositive() throws ExecutionException, InterruptedException, RTException {
     rtObject.set("ddouble", new RTValue(1231.12312312312, RTValueType.DOUBLE)).get();
     Object newVal = rtObject.get("ddouble").get().getValue();
-    assertEquals( true, checkEqualsDouble(1231.12312312312, newVal));
+    assertEquals(true, checkEqualsDouble(1231.12312312312, newVal));
   }
 
   /**
@@ -184,7 +189,7 @@ public class RTTypeTest {
   void testDoubleTypeNegative() throws ExecutionException, InterruptedException, RTException {
     rtObject.set("ddouble", new RTValue(-1231.12312312312, RTValueType.DOUBLE)).get();
     Object newVal = rtObject.get("ddouble").get().getValue();
-    assertEquals( true, checkEqualsDouble(-1231.12312312312, newVal));
+    assertEquals(true, checkEqualsDouble(-1231.12312312312, newVal));
   }
 
   /**
@@ -230,6 +235,17 @@ public class RTTypeTest {
   }
 
   /**
+   * test void ptr
+   */
+  @Test
+  void testVoidPtr() throws RTException, ExecutionException, InterruptedException {
+    RTValue voidPtrV = new RTValue(723123231L, RTValueType.VOIDPTR);
+    rtObject.set("vptr", voidPtrV).get();
+    RTValue rpcValue = rtObject.get("vptr").get();
+    assertEquals(voidPtrV.getValue(), rpcValue.getValue());
+  }
+
+  /**
    * test PROPERTY_NOT_FOUND exception
    */
   @Test
@@ -246,7 +262,7 @@ public class RTTypeTest {
    */
   private boolean checkEqualsFunction(RTValue v1, RTValue v2) {
     return ((RTFunction) v1.getValue()).getFunctionName()
-            .equals(((RTFunction) v2.getValue()).getFunctionName());
+        .equals(((RTFunction) v2.getValue()).getFunctionName());
   }
 
   /**

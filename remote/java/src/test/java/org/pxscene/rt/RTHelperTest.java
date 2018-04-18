@@ -44,7 +44,7 @@ public class RTHelperTest {
     try {
       request.setPropertyName("unknown_prop");
       assertEquals(RTHelper.getPropertyByName(testObj, request).getStatus().getCode(),
-              RTStatusCode.PROP_NOT_FOUND);
+          RTStatusCode.PROP_NOT_FOUND);
     } catch (Exception e) {
       // TODO this should not be raise Exception , should be return PROP_NOT_FOUND
       fail("this should not be raise Exception , should be return PROP_NOT_FOUND");
@@ -66,7 +66,6 @@ public class RTHelperTest {
     request.setPropertyName("field2");
     request.setValue(new RTValue("f1"));
     assertEquals(RTHelper.setPropertyByName(testObj, request).getStatusCode(), RTStatusCode.OK);
-
 
     request.setPropertyName("unknown_prop");
     assertEquals(RTHelper.setPropertyByName(testObj, request).getStatusCode(),
@@ -90,7 +89,8 @@ public class RTHelperTest {
     request.setPropertyName("field1");
     request.setValue(new RTValue("f1"));
     assertEquals(RTHelper.setPropertyByName(testObj, request).getStatusCode(),
-            RTStatusCode.OK, "this should return ok, but is return  TYPE_MISMATCH");  // TODO this should return ok, but is return  TYPE_MISMATCH
+        RTStatusCode.OK,
+        "this should return ok, but is return  TYPE_MISMATCH");  // TODO this should return ok, but is return  TYPE_MISMATCH
   }
 
   /**
@@ -121,7 +121,8 @@ public class RTHelperTest {
     } catch (Exception e) {
       assertEquals(e.getClass(), RTException.class); // protocol is null
     }
-    assertEquals(RTEnvironment.getRtFunctionMap().get("test").getFunctionName(), "test", "can update listener for RT function");
+    assertEquals(RTEnvironment.getRtFunctionMap().get("test").getFunctionName(), "test",
+        "can update listener for RT function");
   }
 
   /**

@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import org.pxscene.rt.remote.RTRemoteMulticastResolver;
 import org.pxscene.rt.remote.RTRemoteServer;
-import org.springframework.beans.factory.annotation.Value;
 
 /**
  * The helper class of junit tests.

@@ -1,19 +1,17 @@
 package org.pxscene.rt;
 
 
-import examples.MethodTest;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.IOException;
 import java.net.URI;
-import java.rmi.server.ExportException;
 import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.pxscene.rt.remote.RTConst;
 import org.pxscene.rt.remote.RTRemoteConnectionManager;
 import org.pxscene.rt.remote.RTRemoteMulticastResolver;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * The junit examples of rt methods
@@ -51,15 +49,6 @@ public class RTMethodTest {
     }
     return false;
   }
-
-//  /**
-//   * do method unit tests, no exceptions mean test passed
-//   */
-//  @Test
-//  void testMethods() throws ExecutionException, InterruptedException, RTException {
-//    MethodTest methodTest = new MethodTest();
-//    MethodTest.doMethodTest(methodTest, rtObject);
-//  }
 
   /**
    * test method Method0AndReturn1
@@ -119,6 +108,7 @@ public class RTMethodTest {
       fail("this should not be raise Exception , should be return METHOD_NOT_FOUND");
     }
   }
+
   /**
    * set environment as client mode, then test method, no exceptions mean test passed
    */
