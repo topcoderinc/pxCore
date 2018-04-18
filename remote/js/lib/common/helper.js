@@ -189,7 +189,8 @@ function setProperty(object, requestMessage) {
       response[RTConst.STATUS_CODE] = RTStatusCode.TYPE_MISMATCH;
     } else { // ok
       if (rtValue[RTConst.TYPE] === RTValueType.OBJECT) { // object need add object.id to client
-        rtValue[RTConst.VALUE][RTConst.OBJECT_ID_KEY] = rtValue[RTConst.VALUE].id;
+        rtValue[RTConst.VALUE][RTConst.OBJECT_ID_KEY] = rtValue[RTConst.VALUE].id
+          || rtValue[RTConst.VALUE][RTConst.OBJECT_ID_KEY];
       }
       object[propName] = rtValue;
       response[RTConst.STATUS_CODE] = RTStatusCode.OK;

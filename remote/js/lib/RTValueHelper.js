@@ -30,6 +30,7 @@ function create(value, type) {
         const v = {};
         v[RTConst.FUNCTION_KEY] = functionName;
         v[RTConst.OBJECT_ID_KEY] = RTConst.FUNCTION_GLOBAL_SCOPE;
+        v[RTConst.VALUE] = value;
         rtValue[RTConst.VALUE] = v;
         RTEnvironment.getRtFunctionMap()[functionName] = value; // cache the callback
       }
