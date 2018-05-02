@@ -4,15 +4,6 @@
 
 - ubuntu 16.04
 
-### Download pxCore code
-
--  `git clone https://github.com/topcoderinc/pxCore.git`
--  `cd pxCore`
--  `git checkout 32e435490d988fc8a4e7be53ac6248133821f720`
--  `git apply remote-js.patch`
-
-
-
 ### Build remote
 
 * Install dependencies,  `sudo apt-get install git libglew-dev freeglut3 freeglut3-dev libgcrypt11-dev zlib1g-dev g++ libssl-dev nasm autoconf libtool cmake gnutls-bin libgnutls-dev autoconf libtool nasm uuid-dev maven quilt`
@@ -101,19 +92,3 @@ note that , **BigNumber** from lib ' **bignumer.js**'
 | rtObject          | object        |
 | rtFunctionRef     | function      |
 | voidPtr           | BigNumber     |
-
-
-
-## Notes
-
-- c++ rtRemote server didn't suport define **void** type properties, so *TypeTest* ignored set void test
-
-- c++ rtRemote server didn't implement **RT_valueType** type properties, so *TypeTest* ignored set/get **VALUE** test
-
-- all client examples run about long time, like 10-30mins, c++ remote server crashed, c++ remote code had mem leak problem or something else ( **java server didn't have these errors**).
-
-  ```
-  terminate called after throwing an instance of 'std::bad_alloc'
-    what():  std::bad_alloc
-  Aborted (core dumped)
-  ```
