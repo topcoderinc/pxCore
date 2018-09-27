@@ -1,5 +1,21 @@
-// pxCore CopyRight 2007-2015 John Robinson
-// Portable Framebuffer and Windowing Library
+/*
+
+ pxCore Copyright 2005-2018 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // pxPixel.h
 
 #ifndef PX_PIXELS_H
@@ -10,21 +26,16 @@
 
 #pragma pack(push, 4)
 
-struct pxPixel {
-
+struct pxPixel 
+{
   inline pxPixel() {}
-  inline pxPixel(uint32_t _u) {u=_u;}
-	inline pxPixel(const pxPixel& p) { u = p.u; }
+  inline pxPixel(uint32_t _u)      {u=_u;}
+	inline pxPixel(const pxPixel& p) {u=p.u;}
   
   inline pxPixel(uint8_t _r,uint8_t _g,uint8_t _b,uint8_t _a=255)     
-  {
-    r=_r; 
-    g=_g; 
-    b=_b; 
-    a=_a;
-  }
+    {r=_r;g=_g;b=_b;a=_a;}
 
-	pxPixel& operator=(const pxPixel& p) { u = p.u; return *this; }
+	pxPixel& operator=(const pxPixel& p) {u = p.u;return *this;}
 
   union 
   {

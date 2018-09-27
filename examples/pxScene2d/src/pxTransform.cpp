@@ -1,7 +1,26 @@
-// pxCore Copyright 2007-2015 John Robinson
+/*
+
+ pxCore Copyright 2005-2018 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // pxTransform.h
 
 #include "pxTransform.h"
+#include "errno.h"
+
 #include <ctype.h>
 
 // non-destructive applies transform on top of provided matrix
@@ -68,14 +87,14 @@ pxTransform::pxTransform():mStack(NULL),mByteCode(NULL)
     i.set("ry",0);
     i.set("rz",1);
 #endif // ANIMATION_ROTATE_XYZ
-    printf("before initTransform\n");
+    rtLogDebug("before initTransform\n");
     initTransform(i, 
       "x cx + y cy + translateXY "
       "r rx ry rz rotateInDegreesXYZ "
       "sx sy scaleXY "
       "cx -1 * cy -1 * translateXY "
       );
-    printf("after initTransform\n");
+    rtLogDebug("after initTransform\n");
 
     pxTransformData* d = newData();
     if (d)
@@ -90,13 +109,13 @@ pxTransform::pxTransform():mStack(NULL),mByteCode(NULL)
       d->get("x", v);
       d->get("cx", v);
       
-      printf("Before applyMatrix\n");    
+      rtLogDebug("Before applyMatrix\n");    
       d->applyMatrix(m);
-      printf("After applyMatrix\n");    
+      rtLogDebug("After applyMatrix\n");    
      
 #endif 
       deleteData(d);
-      printf("After deleteData\n");
+      rtLogDebug("After deleteData\n");
     }
     else
       rtLogError("Could not allocate pxTransformData");
@@ -105,12 +124,12 @@ pxTransform::pxTransform():mStack(NULL),mByteCode(NULL)
 
 pxTransform::~pxTransform()
 {
-  printf("In ~pxTransform\n");
+  rtLogDebug("In ~pxTransform\n");
   if (mStack)
     free(mStack);
   if (mByteCode)
     free(mByteCode);
-  printf("Exit ~pxTranform\n");
+  rtLogDebug("Exit ~pxTranform\n");
 }
 
   // Can only do this once per
@@ -122,7 +141,7 @@ rtError pxTransform::initTransform(rtObjectRef regs, const char* transform)
   {
     rtString key = keys.get<rtString>(i);
     float defaultValue = regs.get<float>(key);
-    printf("define reg %s: %f\n", key.cString(), defaultValue);
+    rtLogDebug("define reg %s: %f\n", key.cString(), defaultValue);
     regInfo r;
     r.name = key;
     r.defaultValue = defaultValue;
@@ -133,29 +152,29 @@ rtError pxTransform::initTransform(rtObjectRef regs, const char* transform)
 
 rtError pxTransform::applyMatrix(pxTransformData* /*d*/, pxMatrix4f& /*m*/)
 {
-  printf("pxTransform applyMatrix\n");
+  rtLogDebug("pxTransform applyMatrix\n");
   mStackTop = -1;
   instruction* ip = mByteCode;
-  printf("Here\n");
+  rtLogDebug("Here\n");
 
   while(ip < mByteCode+mByteCodeLen)
   {
-    printf("There\n");
+    rtLogDebug("There\n");
     switch(ip->opcode)
     {
     case OP_PUSHFLOAT:
-      printf("OP_PUSHFLOAT %f\n", ip->floatValue);
+      rtLogDebug("OP_PUSHFLOAT %f\n", ip->floatValue);
       if (!push(ip->floatValue))
         return RT_FAIL;
       break;
     case OP_PUSHREGISTER:
-      printf("OP_PUSHREG %f\n", 5.0);
+      rtLogDebug("OP_PUSHREG %f\n", 5.0);
       if (!push(5.0))
         return RT_FAIL;
       break;
     case OP_CALLFUNCTION:
-      printf("OP_CALLFUNCTION \n");
-      printf("stacktop %d\n", mStackTop);
+      rtLogDebug("OP_CALLFUNCTION \n");
+      rtLogDebug("stacktop %d\n", mStackTop);
       if (!ip->func(this))
         return RT_FAIL;
       break;
@@ -178,7 +197,7 @@ bool pxTransform::emitInstruction(instruction& i)
 
 bool pxTransform::emitCallFunction(transformFunc f)
 {
-  printf("emitCallFunction\n");
+  rtLogDebug("emitCallFunction\n");
   instruction i;
   i.opcode = OP_CALLFUNCTION;
   i.func = f;
@@ -187,7 +206,7 @@ bool pxTransform::emitCallFunction(transformFunc f)
 
 bool pxTransform::emitPushFloat(float f)
 {
-  printf("emitPushFloat\n");
+  rtLogDebug("emitPushFloat\n");
   instruction i;
   i.opcode = OP_PUSHFLOAT;
   i.floatValue = f;
@@ -196,7 +215,7 @@ bool pxTransform::emitPushFloat(float f)
 
 bool pxTransform::emitPushRegister(int r)
 {
-  printf("emitPushRegister\n");
+  rtLogDebug("emitPushRegister\n");
   instruction i;
   i.opcode = OP_PUSHREGISTER;
   i.regIndex = r;
@@ -247,7 +266,7 @@ rtError pxTransform::compile(const char*s)
           return RT_FAIL;
         }
         s = e;
-        printf("push %f\n", f);
+        rtLogDebug("push %f\n", f);
         emitPushFloat(f);
       }
       else if (isalpha(*s))  
@@ -256,13 +275,13 @@ rtError pxTransform::compile(const char*s)
         ++s;
         while(*s == '_' || isalnum(*s)) 
           s++;
-        printf("id: %.*s\n", (int)(s-id), id);
-        transformFunc func = getFunc(id,s-id);
+        rtLogDebug("id: %.*s\n", (int)(s-id), id);
+        transformFunc func = getFunc(id,(uint32_t) (s-id) );
         if (func)
           emitCallFunction(func);
         else
         {
-          uint32_t i = getReg(id, s-id);
+          uint32_t i = getReg(id, (uint32_t) (s-id) );
           if (i != INVALID_REG)
             emitPushRegister(i);
           else
@@ -275,25 +294,25 @@ rtError pxTransform::compile(const char*s)
       else if (*s == '+')
       {
         ++s;
-        printf("add\n");
+        rtLogDebug("add\n");
         emitCallFunction(opAdd);
       }
       else if (*s == '-')
       {
         ++s;
-        printf("sub\n");
+        rtLogDebug("sub\n");
         emitCallFunction(opSub);
       }
       else if (*s == '*')
       {
         ++s;
-        printf("mul\n");
+        rtLogDebug("mul\n");
         emitCallFunction(opMul);
       }
       else if (*s == '/')
       {
         ++s;
-        printf("div\n");
+        rtLogDebug("div\n");
         emitCallFunction(opDiv);
       }
       else

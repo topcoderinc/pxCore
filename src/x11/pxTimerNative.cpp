@@ -1,5 +1,21 @@
-// pxCore CopyRight 2005-2006 John Robinson
-// Portable Framebuffer and Windowing Library
+/*
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
 // pxTimerNative.cpp
 
 #include "../pxTimer.h"
@@ -53,6 +69,23 @@ double  pxMicroseconds()
 #endif
 }
 
+
+#if 1
+
+void pxSleepMS(uint32_t msToSleep)
+{
+    uint32_t ms = msToSleep;
+
+    struct timespec res;
+
+    res.tv_sec  = (ms / 1000);
+    res.tv_nsec = (ms * 1000000) % 1000000000;
+
+    clock_nanosleep(CLOCK_MONOTONIC, 0, &res, NULL);
+}
+
+#else
+
 void pxSleepMS(uint32_t msToSleep)
 {
     timeval tv;
@@ -60,3 +93,5 @@ void pxSleepMS(uint32_t msToSleep)
     tv.tv_usec = 1000 * msToSleep;
     select(0, NULL, NULL, NULL, &tv);
 }
+
+#endif

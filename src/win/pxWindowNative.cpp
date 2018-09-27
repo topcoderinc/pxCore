@@ -1,5 +1,21 @@
-// pxCore CopyRight 2007-2009 John Robinson
-// Portable Framebuffer and Windowing Library
+/*
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
 // pxWindowNative.cpp
 
 #define PX_NATIVE
@@ -7,6 +23,8 @@
 #include "pxWindowNative.h"
 #include "../pxWindow.h"
 #include "../pxWindowUtil.h"
+
+#include "../pxKeycodes.h"
 
 #ifndef WINCE
 #include <tchar.h>
@@ -28,6 +46,8 @@
 #define MOBILE
 #include "aygshell.h"
 #endif
+
+using namespace std;
 
 void setWindowPtr(HWND w, void* p)
 {
@@ -59,16 +79,18 @@ pxError pxWindow::init(int left, int top, int width, int height)
 #endif
 }
 
+#include <string>
+
 pxError pxWindowNative::initNative(HWND parent, int left, int top, int width, int height, DWORD style, DWORD styleEx)
 {
     HINSTANCE hInstance = ::GetModuleHandle(NULL);
 
-    TCHAR* className = _T("pxWindow");
+    std::string className = "pxWindow";
     WNDCLASS wc;
-    if (!::GetClassInfo(hInstance, className, &wc))
+    if (!::GetClassInfo(hInstance, className.c_str(), &wc))
     {
 
-	wc.style         = CS_HREDRAW | CS_VREDRAW;
+	wc.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 	wc.lpfnWndProc   = (WNDPROC)windowProc;
 	wc.cbClsExtra    = 0;
 	wc.cbWndExtra    = 0;
@@ -77,16 +99,16 @@ pxError pxWindowNative::initNative(HWND parent, int left, int top, int width, in
 	wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
 	wc.lpszMenuName  = 0;
-	wc.lpszClassName = className;
+	wc.lpszClassName = className.c_str();
 
 	RegisterClass(&wc);
     }
 
 #ifndef MOBILE
-    mWindow = ::CreateWindowEx(styleEx, className, _T(""), style, left, top, width, height, parent, NULL, 
+    mWindow = ::CreateWindowEx(styleEx, "pxWindow", "", style, left, top, width, height, parent, NULL,
         hInstance, (pxWindowNative*)this);
 #else
-    mWindow = CreateWindow(className, L"", style,
+    mWindow = CreateWindow(className.c_str(), L"", style,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, (pxWindowNative*)this);
 
     if (mWindow)
@@ -216,6 +238,9 @@ LRESULT __stdcall pxWindowNative::windowProc(HWND hWnd, UINT msg, WPARAM wParam,
     int mouseButtonShift = 0;
 
     pxWindowNative* w;
+
+	static HDC hDC;
+	static HGLRC hRC;
     
 #ifndef WINCE
     if (msg == WM_NCCREATE)
@@ -302,6 +327,9 @@ LRESULT __stdcall pxWindowNative::windowProc(HWND hWnd, UINT msg, WPARAM wParam,
         case WM_DESTROY:
             w->onClose(); 
             //SetProp(hWnd, _T("wnWindow"), NULL);
+
+			wglMakeCurrent(hDC, nullptr);
+			wglDeleteContext(hRC);
 #ifdef WINCE
             setWindowPtr(hWnd, NULL);
 #endif
@@ -397,9 +425,12 @@ LRESULT __stdcall pxWindowNative::windowProc(HWND hWnd, UINT msg, WPARAM wParam,
                 }
 
                 w->onKeyDown(keycodeFromNative((int)wParam), flags);
-                w->onChar((char)wParam);
+                //w->onChar((char)wParam);
             }
             break;
+				case WM_CHAR: 
+					w->onChar((char)wParam);
+					break;
 
         case WM_KEYUP:
         case WM_SYSKEYUP:
@@ -428,6 +459,7 @@ LRESULT __stdcall pxWindowNative::windowProc(HWND hWnd, UINT msg, WPARAM wParam,
                 PAINTSTRUCT ps;
                 HDC dc = BeginPaint(w->mWindow, &ps);
                 w->onDraw(dc);
+								SwapBuffers(dc);
                 EndPaint(w->mWindow, &ps);
 				return 0;
             }

@@ -1,5 +1,21 @@
-// pxCore CopyRight 2005-2015 John Robinson
-// Portable Framebuffer and Windowing Library
+/*
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
 // pxWindowNativeGlut.h
 
 #ifndef PX_WINDOW_NATIVE_GLUT_H
@@ -26,8 +42,6 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 #endif
-
-using namespace std;
 
 // Since the lifetime of the Display should include the lifetime of all windows
 // and eventloop that uses it - refcounting is utilized through this
@@ -74,7 +88,7 @@ pxWindowNative(): mTimerFPS(0),/*, mLastWidth(-1), mLastHeight(-1),
 
   static void runEventLoopOnce();
 
-  static vector<pxWindowNative*> getNativeWindows(){return mWindowVector;}
+  static std::vector<pxWindowNative*> getNativeWindows(){return mWindowVector;}
 
   virtual void onMouseDown(int32_t x, int32_t y, uint32_t flags) = 0;
   virtual void onMouseUp(int32_t x, int32_t y, uint32_t flags) = 0;
@@ -154,7 +168,7 @@ protected:
 
   static void registerWindow(pxWindowNative* p);
   static void unregisterWindow(pxWindowNative* p); //call this method somewhere
-  static vector<pxWindowNative*> mWindowVector;
+  static std::vector<pxWindowNative*> mWindowVector;
 };
 
 // Key Codes

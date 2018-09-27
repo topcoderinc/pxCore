@@ -1,4 +1,21 @@
-// pxCore CopyRight 2007-2015 John Robinson
+/*
+
+ pxCore Copyright 2005-2018 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // pxWaylandContainer.h
 
 #ifndef PX_WAYLAND_CONTAINER_H
@@ -16,10 +33,14 @@ class pxWaylandContainer: public pxViewContainer, pxWaylandEvents {
   rtProperty(hasApi, hasApi, setHasApi, bool);
   rtReadOnlyProperty(api, api, rtValue);
   rtReadOnlyProperty(remoteReady, remoteReady, rtValue);
+  rtMethod1ArgAndReturn("suspend", suspend, rtValue, bool);
+  rtMethod1ArgAndReturn("resume", resume, rtValue, bool);
+  rtMethodNoArgAndReturn("destroy", destroy, bool);
 public:
   pxWaylandContainer(pxScene2d* scene);
   ~pxWaylandContainer();
   rtError setView(pxWayland* v);
+  virtual void dispose(bool pumpJavascript);
 
   virtual void onInit();
 
@@ -32,6 +53,7 @@ public:
   virtual void clientStoppedAbnormal( int pid, int signo );
   virtual void isReady( bool ready );
   virtual void isRemoteReady(bool ready);
+  virtual void sendPromise();
 
   rtError displayName(rtString& s) const;
   rtError setDisplayName(const char* s);
@@ -53,6 +75,10 @@ public:
   rtError api(rtValue& v) const;
   rtError remoteReady(rtValue& v) const;
 
+  rtError suspend(const rtValue& v, bool& b);
+  rtError resume(const rtValue& v, bool& b);
+  rtError destroy(bool& b);
+
 private:
   rtString mDisplayName;
   rtString mCmd;
@@ -62,10 +88,11 @@ private:
   uint32_t mFillColor;
   bool mHasApi;
   rtValue mAPI;  
-  rtPromise* mRemoteReady;
+  rtObjectRef mRemoteReady;
+  rtString mBinary;
 };
 
-typedef rtRefT<pxWayland> pxWaylandRef;
+typedef rtRef<pxWayland> pxWaylandRef;
 
 #endif
 

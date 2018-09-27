@@ -1,5 +1,21 @@
-// pxCore CopyRight 2007-2015 John Robinson
-// Portable Framebuffer and Windowing Library
+/*
+
+ pxCore Copyright 2005-2018 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // pxKeycodes.h
 
 #ifndef PX_KEYCODES_H
@@ -105,5 +121,27 @@
 #define PX_KEY_CLOSEBRACKET 	221
 #define PX_KEY_SINGLEQUOTE 	222
 #define PX_KEY_PRINTSCREEN 	44
+#define PX_KEY_FASTFORWARD 	223
+#define PX_KEY_REWIND 	224
+#define PX_KEY_PLAY 	226
+#define PX_KEY_PLAYPAUSE 	227
 
+// flags used in onMouseDown and onMouseUp
+#define PX_LEFTBUTTON       1
+#define PX_MIDDLEBUTTON     2
+#define PX_RIGHTBUTTON      4
+
+// flags used in onMouseDown, onMouseUp, onKeyDown, onKeyUp
+#define PX_MOD_SHIFT        8
+#define PX_MOD_CONTROL      16
+#define PX_MOD_ALT          32
+#define PX_MOD_COMMAND      64
+
+// flag used in onKeyDown
+#define PX_KEYDOWN_REPEAT   128
+
+#define PX_KEY_YELLOW       403
+#define PX_KEY_BLUE         404
+#define PX_KEY_RED          405
+#define PX_KEY_GREEN        406
 #endif //PX_KEYCODES_H

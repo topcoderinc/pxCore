@@ -141,9 +141,11 @@ static const char* eval_string = nullptr;
 static unsigned int preload_module_count = 0;
 static const char** preload_modules = nullptr;
 #if HAVE_INSPECTOR
-static bool use_inspector = false;
+/* MODIFIED CODE */
+bool use_inspector = false;
 #else
-static const bool use_inspector = false;
+/* MODIFIED CODE */
+const bool use_inspector = false;
 #endif
 /*MODIFIED CODE BEGIN*/
 //static bool use_debug_agent = false;
@@ -207,6 +209,7 @@ static Mutex node_isolate_mutex;
 /*MODIFIED CODE BEGIN*/
 //static v8::Isolate* node_isolate;
 v8::Isolate* node_isolate;
+FILE* errorFile = NULL;
 /*MODIFIED CODE END*/
 
 static struct {
@@ -252,6 +255,28 @@ static uv_sem_t debug_semaphore;
 static const unsigned kMaxSignal = 32;
 #endif
 
+/* MODIFIED CODE BEGIN */
+static void PrintErrorStringToFile(const char* format, ...) {
+  va_list filelog;
+  va_start(filelog, format);
+  const char* val = getenv("NODE_ERROR_FILE");
+  if (val) {
+    errorFile = fopen(val,"w");
+  }
+  else
+  {
+    errorFile = fopen("/tmp/nodeerror.log","w");
+  }
+  if (NULL != errorFile)
+  {
+    vfprintf(errorFile, format, filelog);
+    fclose(errorFile);
+    errorFile = NULL;
+  }
+  va_end(filelog);
+}
+/* MODIFIED CODE END */
+
 static void PrintErrorString(const char* format, ...) {
   va_list ap;
   va_start(ap, format);
@@ -286,7 +311,6 @@ static void PrintErrorString(const char* format, ...) {
 #endif
   va_end(ap);
 }
-
 
 static void CheckImmediate(uv_check_t* handle) {
   Environment* env = Environment::from_immediate_check_handle(handle);
@@ -1644,6 +1668,9 @@ void AppendExceptionLine(Environment* env,
 
     uv_tty_reset_mode();
     PrintErrorString("\n%s", arrow);
+    /* MODIFIED CODE BEGIN */
+    PrintErrorStringToFile("\n%s", arrow);
+    /* MODIFIED CODE END */
     return;
   }
 
@@ -1683,9 +1710,15 @@ static void ReportException(Environment* env,
   if (trace.length() > 0 && !trace_value->IsUndefined()) {
     if (arrow.IsEmpty() || !arrow->IsString() || decorated) {
       PrintErrorString("%s\n", *trace);
+      /* MODIFIED CODE BEGIN */
+      PrintErrorStringToFile("%s\n", *trace);
+      /* MODIFIED CODE END */
     } else {
       node::Utf8Value arrow_string(env->isolate(), arrow);
       PrintErrorString("%s\n%s\n", *arrow_string, *trace);
+      /* MODIFIED CODE BEGIN */
+      PrintErrorStringToFile("%s\n%s\n", *arrow_string, *trace);
+      /* MODIFIED CODE END */
     }
   } else {
     // this really only happens for RangeErrors, since they're the only
@@ -1709,18 +1742,31 @@ static void ReportException(Environment* env,
 
       PrintErrorString("%s\n", *message ? *message :
                                           "<toString() threw exception>");
+      /* MODIFIED CODE BEGIN */
+      PrintErrorStringToFile("%s\n", *message ? *message :
+                                          "<toString() threw exception>");
+      /* MODIFIED CODE END */
     } else {
       node::Utf8Value name_string(env->isolate(), name);
       node::Utf8Value message_string(env->isolate(), message);
 
       if (arrow.IsEmpty() || !arrow->IsString() || decorated) {
         PrintErrorString("%s: %s\n", *name_string, *message_string);
+        /* MODIFIED CODE BEGIN */
+        PrintErrorStringToFile("%s: %s\n", *name_string, *message_string);
+        /* MODIFIED CODE END */
       } else {
         node::Utf8Value arrow_string(env->isolate(), arrow);
         PrintErrorString("%s\n%s: %s\n",
                          *arrow_string,
                          *name_string,
                          *message_string);
+        /* MODIFIED CODE BEGIN */
+        PrintErrorStringToFile("%s\n%s: %s\n",
+                         *arrow_string,
+                         *name_string,
+                         *message_string);
+        /* MODIFIED CODE END */
       }
     }
   }
@@ -2521,14 +2567,19 @@ static void OnFatalError(const char* location, const char* message) {
     PrintErrorString("FATAL ERROR: %s\n", message);
   }
   fflush(stderr);
-  ABORT();
+  /* MODIFIED CODE BEGIN */
+  //ABORT();
+  /* MODIFIED CODE END */
 }
 
-
-NO_RETURN void FatalError(const char* location, const char* message) {
+/* MODIFIED CODE BEGIN */
+/*NO_RETURN*/ void FatalError(const char* location, const char* message) {
+/* MODIFIED CODE END */
   OnFatalError(location, message);
   // to suppress compiler warning
-  ABORT();
+  /* MODIFIED CODE BEGIN */
+  //ABORT();
+  /* MODIFIED CODE END */
 }
 
 
@@ -2572,14 +2623,15 @@ void FatalException(Isolate* isolate,
       exit_code = 1;
     }
   }
-
   if (exit_code) {
 #if HAVE_INSPECTOR
     if (use_inspector) {
       env->inspector_agent()->FatalException(error, message);
     }
 #endif
-    exit(exit_code);
+    /* MODIFIED CODE BEGIN */
+    //exit(exit_code);
+    /* MODIFIED CODE END */
   }
 }
 
@@ -3878,13 +3930,14 @@ static void ParseArgs(int* argc,
   uv_async_send(&dispatch_debug_messages_async);
 }
 
-
-/*static - MODIFIED CODE*/ void StartDebug(Environment* env, const char* path, bool wait) {
+/* MODIFIED CODE BEGIN */ void StartDebug(Environment* env, const char* path, bool wait, v8::Platform* platform) {
   CHECK(!debugger_running);
+#ifdef HAVE_INSPECTOR
   if (use_inspector) {
-    debugger_running = v8_platform.StartInspector(env, path, inspector_port,
-                                                  wait);
-  } else {
+    debugger_running = env->inspector_agent()->Start(platform, path, inspector_port, wait);
+  } else
+#endif
+  {
     env->debugger_agent()->set_dispatch_handler(
           DispatchMessagesDebugAgentCallback);
     debugger_running =
@@ -3897,7 +3950,7 @@ static void ParseArgs(int* argc,
     }
   }
 }
-
+/* MODIFIED CODE END */
 
 // Called from the main thread.
 /*static - MODIFIED CODE*/ void EnableDebug(Environment* env) {

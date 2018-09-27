@@ -1,9 +1,27 @@
-// pxCore CopyRight 2007-2015 John Robinson
+/*
+
+ pxCore Copyright 2005-2018 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // pxWayland.h
 
 #ifndef PX_WAYLAND_H
 #define PX_WAYLAND_H
 
+#include <atomic>
 #include <pthread.h>
 #include "pxIView.h"
 #include "pxScene2d.h"
@@ -37,7 +55,7 @@ public:
 class pxWayland: public pxIView {
 
 public:
-  pxWayland();
+  pxWayland(bool usefbo=false, pxScene2d* sceneContainer=NULL);
   virtual ~pxWayland();
 
   virtual unsigned long AddRef() {
@@ -55,6 +73,11 @@ public:
     mContainer = l;
   }
   
+  virtual void RT_STDCALL onCloseRequest()
+  {
+    rtLogInfo("pxWayland::onCloseRequest()");
+  }
+
   void setEvents( pxWaylandEvents *events )
   {
      mEvents= events;
@@ -66,6 +89,11 @@ public:
   rtError cmd(rtString& s) const { s = mCmd; return RT_OK; }
   rtError setCmd(const char* s)
   {
+#ifdef ENABLE_PERMISSIONS_CHECK
+  if (mSceneContainer != NULL && RT_OK != mSceneContainer->permissions()->allows(s, rtPermissions::WAYLAND))
+    return RT_ERROR_NOT_ALLOWED;
+#endif
+
      mCmd= s;
      return RT_OK;
   }
@@ -132,7 +160,9 @@ public:
   rtError delListener(const rtString& eventName, const rtFunctionRef& f);
   rtError startRemoteObjectLocator();
   rtError connectToRemoteObject(unsigned int timeout_ms);
-
+  rtError useDispatchThread(bool use);
+  rtError resume(const rtValue& v);
+  rtError suspend(const rtValue& v);
 private:
   rtAtomic mRefCount;
   pthread_t mClientMonitorThreadId;
@@ -140,19 +170,22 @@ private:
   pxIViewContainer *mContainer;
   bool mReadyEmitted;
   bool mClientMonitorStarted;
-  bool mWaitingForRemoteObject;
+  std::atomic<bool> mWaitingForRemoteObject;
   bool mUseDispatchThread;
   int mX;
   int mY;
   int mWidth;
   int mHeight;
+  bool mUseFbo;
+  bool mSuspended;
+  pxMatrix4f mLastMatrix;
 
   static void invalidate( WstCompositor *wctx, void *userData );
   static void hidePointer( WstCompositor *wctx, bool hide, void *userData );
   static void clientStatus( WstCompositor *wctx, int status, int pid, int detail, void *userData );
   static void remoteDisconnectedCB(void *data);
 
-  void handleInvalidate();  
+  void handleInvalidate();
   void handleHidePointer( bool hide );
   void handleClientStatus( int status, int pid, int detail );
   void launchClient();
@@ -176,6 +209,7 @@ protected:
   pxContextFramebufferRef mFBO;
   WstCompositor *mWCtx;
   float mFillColor[4];
+  float mClearColor[4];
 
   bool mHasApi;
   rtValue mAPI;
@@ -184,9 +218,10 @@ protected:
 #endif //ENABLE_PX_WAYLAND_RPC
   rtString mRemoteObjectName;
   mutable rtMutex mRemoteObjectMutex;
+  pxScene2d* mSceneContainer;
 };
 
-typedef rtRefT<pxWayland> pxWaylandRef;
+typedef rtRef<pxWayland> pxWaylandRef;
 
 #endif
 

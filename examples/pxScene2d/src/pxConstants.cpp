@@ -1,17 +1,35 @@
-// pxCore CopyRight 2007-2015 John Robinson
+/*
+
+ pxCore Copyright 2005-2018 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // pxConstants.cpp
 
 #include "pxConstants.h"
 
-rtRefT<pxConstantsAnimation> pxConstants::animationConstants = new pxConstantsAnimation();
-rtRefT<pxConstantsStretch> pxConstants::stretchConstants = new pxConstantsStretch();
-rtRefT<pxConstantsAlignVertical> pxConstants::alignVerticalConstants = new pxConstantsAlignVertical();
-rtRefT<pxConstantsAlignHorizontal> pxConstants::alignHorizontalConstants = new pxConstantsAlignHorizontal();
-rtRefT<pxConstantsTruncation> pxConstants::truncationConstants = new pxConstantsTruncation(); 
+rtRef<pxConstantsAnimation> pxConstants::animationConstants = new pxConstantsAnimation();
+rtRef<pxConstantsStretch> pxConstants::stretchConstants = new pxConstantsStretch();
+rtRef<pxConstantsMaskOperation>          pxConstants::maskOpConstants          = new pxConstantsMaskOperation();
+rtRef<pxConstantsAlignVertical> pxConstants::alignVerticalConstants = new pxConstantsAlignVertical();
+rtRef<pxConstantsAlignHorizontal> pxConstants::alignHorizontalConstants = new pxConstantsAlignHorizontal();
+rtRef<pxConstantsTruncation> pxConstants::truncationConstants = new pxConstantsTruncation(); 
   
 rtError pxConstantsAnimation::interpolators(rtObjectRef& v) const
 {
-  rtRefT<rtArrayObject> keys = new rtArrayObject;
+  rtRef<rtArrayObject> keys = new rtArrayObject;
   {
     rtMethodMap* m = getMap();      
 
@@ -51,11 +69,19 @@ rtDefineProperty(pxConstantsAnimation, OPTION_FASTFORWARD);
 rtDefineProperty(pxConstantsAnimation, OPTION_REWIND);
 rtDefineProperty(pxConstantsAnimation, COUNT_FOREVER);
 rtDefineProperty(pxConstantsAnimation, interpolators);
+rtDefineProperty(pxConstantsAnimation, STATUS_IDLE);
+rtDefineProperty(pxConstantsAnimation, STATUS_INPROGRESS);
+rtDefineProperty(pxConstantsAnimation, STATUS_CANCELLED);
+rtDefineProperty(pxConstantsAnimation, STATUS_ENDED);
 // Constants for Stretch
 rtDefineObject(pxConstantsStretch, rtObject);
 rtDefineProperty(pxConstantsStretch,NONE);
 rtDefineProperty(pxConstantsStretch,STRETCH);
 rtDefineProperty(pxConstantsStretch,REPEAT);
+// Constantes for Mask operation
+rtDefineObject(pxConstantsMaskOperation, rtObject);
+rtDefineProperty(pxConstantsMaskOperation,NORMAL);
+rtDefineProperty(pxConstantsMaskOperation,INVERT);
 // Constants for Vertical Alignment
 rtDefineObject(pxConstantsAlignVertical, rtObject);
 rtDefineProperty(pxConstantsAlignVertical, TOP);

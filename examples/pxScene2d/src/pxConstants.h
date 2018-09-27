@@ -1,16 +1,28 @@
-// rtCore Copyright 2007-2015 John Robinson
+/*
+
+ pxCore Copyright 2005-2018 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // pxConstants.h
 
 #ifndef _PX_CONSTANTS
 #define _PX_CONSTANTS
 
-#include <stdint.h>
-
-#include "rtRefT.h"
-
-// TODO rtDefs vs rtCore.h
-#include "rtDefs.h"
-#include "rtError.h"
+#include "rtCore.h"
+#include "rtRef.h"
 #include "rtValue.h"
 #include "rtObject.h"
 #include "rtObjectMacros.h"
@@ -48,6 +60,13 @@ public:
     COUNT_FOREVER = -1
   };
 
+  enum animationStatus {
+    STATUS_IDLE = 0,
+    STATUS_INPROGRESS,
+    STATUS_CANCELLED,
+    STATUS_ENDED
+  };
+
   rtDeclareObject(pxConstantsAnimation, rtObject);
   
   rtConstantProperty(TWEEN_LINEAR, TWEEN_LINEAR, uint32_t);
@@ -69,6 +88,11 @@ public:
   rtConstantProperty(OPTION_FASTFORWARD, OPTION_FASTFORWARD, uint32_t);
   rtConstantProperty(OPTION_REWIND, OPTION_REWIND, uint32_t);
   rtConstantProperty(COUNT_FOREVER, COUNT_FOREVER, int32_t);
+
+  rtConstantProperty(STATUS_IDLE, STATUS_IDLE, uint32_t);
+  rtConstantProperty(STATUS_INPROGRESS, STATUS_INPROGRESS, uint32_t);
+  rtConstantProperty(STATUS_CANCELLED, STATUS_CANCELLED, uint32_t);
+  rtConstantProperty(STATUS_ENDED, STATUS_ENDED, uint32_t);
 
   rtReadOnlyProperty(interpolators, interpolators, rtObjectRef);
   
@@ -98,6 +122,20 @@ public:
 
 
 
+class pxConstantsMaskOperation : public rtObject
+{
+public:
+  enum constants {
+    NORMAL = 0,
+    INVERT,
+  };
+  rtDeclareObject(pxConstantsMaskOperation, rtObject);
+  
+  rtConstantProperty(NORMAL, NORMAL, uint32_t);
+  rtConstantProperty(INVERT, INVERT, uint32_t);
+};
+
+
 class pxConstantsStretch : public rtObject
 {
 public:
@@ -108,9 +146,9 @@ public:
   };
   rtDeclareObject(pxConstantsStretch, rtObject);
   
-  rtConstantProperty(NONE, NONE, uint32_t);
+  rtConstantProperty(NONE,    NONE,    uint32_t);
   rtConstantProperty(STRETCH, STRETCH, uint32_t);
-  rtConstantProperty(REPEAT, REPEAT, uint32_t);
+  rtConstantProperty(REPEAT,  REPEAT,  uint32_t);
 };
 
 
@@ -124,7 +162,7 @@ public:
   };
   rtDeclareObject(pxConstantsAlignVertical, rtObject);
   
-  rtConstantProperty(TOP, TOP, uint32_t);
+  rtConstantProperty(TOP,    TOP,    uint32_t);
   rtConstantProperty(CENTER, CENTER, uint32_t);
   rtConstantProperty(BOTTOM, BOTTOM, uint32_t);
 };
@@ -154,8 +192,8 @@ public:
   };
   rtDeclareObject(pxConstantsTruncation, rtObject);
   
-  rtConstantProperty(NONE, NONE, uint32_t);
-  rtConstantProperty(TRUNCATE, TRUNCATE, uint32_t);
+  rtConstantProperty(NONE,             NONE,             uint32_t);
+  rtConstantProperty(TRUNCATE,         TRUNCATE,         uint32_t);
   rtConstantProperty(TRUNCATE_AT_WORD, TRUNCATE_AT_WORD, uint32_t);
 };
 
@@ -166,11 +204,13 @@ class pxConstants : public rtObject
   
 public: 
 
-  static rtRefT<pxConstantsAnimation> animationConstants;
-  static rtRefT<pxConstantsStretch> stretchConstants;
-  static rtRefT<pxConstantsAlignVertical> alignVerticalConstants;
-  static rtRefT<pxConstantsAlignHorizontal> alignHorizontalConstants;
-  static rtRefT<pxConstantsTruncation> truncationConstants;  
+  static rtRef<pxConstantsAnimation> animationConstants;
+  static rtRef<pxConstantsStretch>   stretchConstants;
+  static rtRef<pxConstantsMaskOperation>    maskOpConstants;
+  
+  static rtRef<pxConstantsAlignVertical>   alignVerticalConstants;
+  static rtRef<pxConstantsAlignHorizontal> alignHorizontalConstants;
+  static rtRef<pxConstantsTruncation>      truncationConstants;  
   
 };
 

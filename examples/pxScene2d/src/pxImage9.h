@@ -1,4 +1,21 @@
-// pxCore CopyRight 2007-2015 John Robinson
+/*
+
+ pxCore Copyright 2005-2018 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // pxImage9.h
 
 #ifndef PX_IMAGE9_H
@@ -19,7 +36,7 @@ public:
   rtProperty(resource, resource, setResource, rtObjectRef);  
 
   pxImage9(pxScene2d* scene) : pxObject(scene),mInsetLeft(0),mInsetTop(0),mInsetRight(0),mInsetBottom(0), 
-                               imageLoaded(false) 
+                               imageLoaded(false), mListenerAdded(false) 
   { 
     mResource = pxImageManager::getImage("");
     mw = -1;
@@ -29,8 +46,9 @@ public:
   rtError url(rtString& s) const;
   rtError setUrl(const char* s);
 
-  rtError resource(rtObjectRef& o) const { /*printf("!!!!!!!!!!!!!!!!!!!!pxImage9 getResource\n");*/o = mResource; return RT_OK; }
-  rtError setResource(rtObjectRef o) { /*printf("!!!!!!!!!!!!!!!!!!!!!!!pxImage9 setResource\n");*/mResource = o; return RT_OK; }
+  rtError resource(rtObjectRef& o) const { /*rtLogDebug("!!!!!!!!!!!!!!!!!!!!pxImage9 getResource\n");*/o = mResource; return RT_OK; }
+  rtError setResource(rtObjectRef o);// { /*rtLogDebug("!!!!!!!!!!!!!!!!!!!!!!!pxImage9 setResource\n");*/mResource = o; return RT_OK; }
+  rtError removeResourceListener();
     
   rtError insetLeft(float& v) const { v = mInsetLeft; return RT_OK; }
   rtError setInsetLeft(float v) { mInsetLeft = v; return RT_OK; }
@@ -45,11 +63,16 @@ public:
   virtual ~pxImage9();
   virtual void onInit();
   virtual void resourceReady(rtString readyResolution);
+  virtual void resourceDirty();
   //virtual bool onTextureReady(pxTextureCacheObject* textureCacheObject) {return true;}
   virtual void sendPromise();
   virtual void createNewPromise() { rtLogDebug("pxImage9 ignoring createNewPromise\n"); }
   virtual float getOnscreenWidth();
   virtual float getOnscreenHeight();
+
+  virtual void releaseData(bool sceneSuspended);
+  virtual void reloadData(bool sceneSuspended);
+  virtual uint64_t textureMemoryUsage();
   
 protected:
   virtual void draw();

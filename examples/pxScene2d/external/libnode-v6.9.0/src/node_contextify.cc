@@ -43,6 +43,9 @@ using v8::UnboundScript;
 using v8::Value;
 using v8::WeakCallbackInfo;
 
+/* MODIFIED CODE BEGIN */
+extern bool use_inspector;
+/* MODIFIED CODE END */
 
 class ContextifyContext {
  protected:
@@ -67,6 +70,7 @@ class ContextifyContext {
 
 
   ~ContextifyContext() {
+    context_.ClearWeak();
     context_.Reset();
   }
 
@@ -224,6 +228,12 @@ class ContextifyContext {
     // directly in an Object, we instead hold onto the new context's global
     // object instead (which then has a reference to the context).
     ctx->SetEmbedderData(kSandboxObjectIndex, sandbox_obj);
+/*MODIFIED CODE BEGIN */
+    if (use_inspector)
+    {
+      ctx->SetEmbedderData(0, String::NewFromUtf8(env->isolate(), "1,1,Inspector"));
+    }
+/*MODIFIED CODE END */
     sandbox_obj->SetPrivate(env->context(),
                             env->contextify_global_private_symbol(),
                             ctx->Global());
@@ -459,6 +469,12 @@ class ContextifyContext {
 };
 
 /*MODIFIED CODE BEGIN*/
+void deleteContextifyContext(void *ctx)
+{
+  ContextifyContext* context =  (ContextifyContext*)ctx;
+  if (nullptr != context)
+    delete context;
+}
 
 v8::Handle<Context> makeContext(v8::Isolate *isolate, v8::Handle<Object> sandbox)  // basically MakeContext()  circa line 268
 {
@@ -481,13 +497,17 @@ v8::Handle<Context> makeContext(v8::Isolate *isolate, v8::Handle<Object> sandbox
 
   // Local<Object> sandbox = args[0].As<Object>();
 
-  Local<String> hidden_name =
-      FIXED_ONE_BYTE_STRING(isolate, "_contextifyHidden");
+  Local<String> symbol_name =
+      FIXED_ONE_BYTE_STRING(isolate, "_contextifyPrivate");
 
   // Don't allow contextifying a sandbox multiple times.
-  assert(sandbox->GetHiddenValue(hidden_name).IsEmpty());
+  Local<v8::Private> private_symbol_name = v8::Private::ForApi(isolate, symbol_name);
+  CHECK(
+      !sandbox->HasPrivate(
+          env->context(),
+          private_symbol_name).FromJust());
 
-  TryCatch try_catch;
+  TryCatch try_catch(isolate);
   ContextifyContext* context = new ContextifyContext(env, sandbox);
 
   if (try_catch.HasCaught())
@@ -502,7 +522,10 @@ v8::Handle<Context> makeContext(v8::Isolate *isolate, v8::Handle<Object> sandbox
   }
   
   Local<External> hidden_context = External::New(isolate, context);
-  sandbox->SetHiddenValue(hidden_name, hidden_context);
+  sandbox->SetPrivate(
+      env->context(),
+      private_symbol_name,
+      hidden_context);
 
   Local<Context>  local_context = context->context(); // returns a local context 
   

@@ -1,5 +1,21 @@
-// pxCore CopyRight 2005-2006 John Robinson
-// Portable Framebuffer and Windowing Library
+/*
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
 // pxWindowNative.cpp
 
 #include "../pxCore.h"
@@ -7,11 +23,15 @@
 #include "pxWindowNative.h"
 #include "../pxTimer.h"
 #include "../pxWindowUtil.h"
+#include "../pxKeycodes.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h> //for close()
 #include <fcntl.h> //for files
+#include <vector>
+
+using namespace std;
 
 waylandDisplay* displayRef::mDisplay = NULL;
 struct wl_registry_listener displayRef::mWaylandRegistryListener;
@@ -72,8 +92,8 @@ static void
 pointer_handle_leave(void *data, struct wl_pointer *pointer,
              uint32_t serial, struct wl_surface *surface)
 {
-    vector<pxWindowNative*> windowVector = pxWindow::getNativeWindows();
-    vector<pxWindowNative*>::iterator i;
+    std::vector<pxWindowNative*> windowVector = pxWindow::getNativeWindows();
+    std::vector<pxWindowNative*>::iterator i;
     for (i = windowVector.begin(); i < windowVector.end(); i++)
     {
         pxWindowNative* w = (*i);
@@ -90,8 +110,8 @@ pointer_handle_motion(void *data, struct wl_pointer *pointer,
     waylandDisplay* wDisplay = (waylandDisplay*)data;
     wDisplay->mousePositionX = lastMouseXPosition;
     wDisplay->mousePositionY = lastMouseYPosition;
-    vector<pxWindowNative*> windowVector = pxWindow::getNativeWindows();
-    vector<pxWindowNative*>::iterator i;
+    std::vector<pxWindowNative*> windowVector = pxWindow::getNativeWindows();
+    std::vector<pxWindowNative*>::iterator i;
     for (i = windowVector.begin(); i < windowVector.end(); i++)
     {
         pxWindowNative* w = (*i);
@@ -119,8 +139,8 @@ pointer_handle_button(void *data, struct wl_pointer *wl_pointer,
     int lastMouseXPosition = wDisplay->mousePositionX;
     int lastMouseYPosition = wDisplay->mousePositionY;
 
-    vector<pxWindowNative*> windowVector = pxWindow::getNativeWindows();
-    vector<pxWindowNative*>::iterator i;
+    std::vector<pxWindowNative*> windowVector = pxWindow::getNativeWindows();
+    std::vector<pxWindowNative*>::iterator i;
     for (i = windowVector.begin(); i < windowVector.end(); i++)
     {
         pxWindowNative* w = (*i);
@@ -165,8 +185,8 @@ keyboard_handle_key(void *data, struct wl_keyboard *keyboard,
             uint32_t serial, uint32_t time, uint32_t key,
             uint32_t state)
 {
-    vector<pxWindowNative*> windowVector = pxWindow::getNativeWindows();
-    vector<pxWindowNative*>::iterator i;
+    std::vector<pxWindowNative*> windowVector = pxWindow::getNativeWindows();
+    std::vector<pxWindowNative*>::iterator i;
     unsigned long flags = 0;
     for (i = windowVector.begin(); i < windowVector.end(); i++)
     {
@@ -253,7 +273,7 @@ pxError displayRef::createWaylandDisplay()
 
     mDisplay->display = wl_display_connect(NULL);
     if (mDisplay->display == NULL) {
-        cout << "Error opening display" << endl;
+        std::cout << "Error opening display" << std::endl;
         delete mDisplay;
         mDisplay = NULL;
         return PX_FAIL;
@@ -283,7 +303,7 @@ void displayRef::cleanupWaylandDisplay()
     mDisplay = NULL;
 }
 
-vector<pxWindowNative*> pxWindowNative::mWindowVector;
+std::vector<pxWindowNative*> pxWindowNative::mWindowVector;
 
 bool exitFlag = false;
 
@@ -297,7 +317,7 @@ pxError pxWindow::init(int left, int top, int width, int height)
     waylandDisplay* wDisplay = mDisplayRef.getDisplay();
     if (wDisplay == NULL)
     {
-        cout << "Error initializing display\n" << endl;
+        std::cout << "Error initializing display\n" << std::endl;
         return PX_FAIL;
     }
     else
@@ -390,7 +410,7 @@ void pxWindowNative::runEventLoop()
     while(!exitFlag)
     {
         double currentAnimationTime = pxMilliseconds();
-        vector<pxWindowNative*>::iterator i;
+        std::vector<pxWindowNative*>::iterator i;
         for (i = mWindowVector.begin(); i < mWindowVector.end(); i++)
         {
             pxWindowNative* w = (*i);
@@ -616,9 +636,9 @@ void pxWindowNative::drawFrame(wl_callback *callback, pxRect *rect)
     pxSurfaceNativeDesc d;
     d.windowWidth = mLastWidth;
     d.windowHeight = mLastHeight;
-    waylandBuffer *buffer = nextBuffer();
-    struct wl_buffer *waylandBuffer = buffer->buffer;
-    d.pixelData = (uint32_t*)buffer->shm_data;
+    //waylandBuffer *buffer = nextBuffer();
+    //struct wl_buffer *waylandBuffer = buffer->buffer;
+    //d.pixelData = (uint32_t*)buffer->shm_data;
 
     int left = 0;
     int top = 0;
@@ -657,7 +677,7 @@ void pxWindowNative::registerWindow(pxWindowNative* p)
 
 void pxWindowNative::unregisterWindow(pxWindowNative* p)
 {
-    vector<pxWindowNative*>::iterator i;
+    std::vector<pxWindowNative*>::iterator i;
 
     for (i = mWindowVector.begin(); i < mWindowVector.end(); i++)
     {

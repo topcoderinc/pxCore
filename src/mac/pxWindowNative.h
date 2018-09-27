@@ -1,17 +1,35 @@
-// pxCore CopyRight 2005-2007 John Robinson
-// Portable Framebuffer and Windowing Library
+/*
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
 // pxWindowNative.h
 
 #ifndef PX_WINDOW_NATIVE_H
 #define PX_WINDOW_NATIVE_H
 
 #include <string>
+#include <algorithm>
+#include <vector>
 
 class pxWindowNative
 {
 public:
   pxWindowNative(): mWindow(NULL),mTimer(NULL)/*: mWindowRef(NULL), mTrackingRegion(NULL), theTimer(NULL), mLastModifierState(0), mDragging(false)*/ {}
-  virtual ~pxWindowNative() {}
+  virtual ~pxWindowNative();
   
   // The Joy of ObjectiveC++
   static void _helper_onCreate(pxWindowNative* w)
@@ -81,7 +99,10 @@ public:
       w->onAnimationTimer();
   }
 
-    
+  static void closeAllWindows();
+  static void registerWindow(pxWindowNative*);
+  static void unregisterWindow(pxWindowNative*);
+  static std::vector<pxWindowNative *> sWindowVector;
 protected:
   
   virtual void onCreate() = 0;
@@ -108,6 +129,7 @@ protected:
   virtual void onAnimationTimer() = 0;
   
   void* mWindow;
+  void* mDelegate;
   void* mTimer;
 };
 

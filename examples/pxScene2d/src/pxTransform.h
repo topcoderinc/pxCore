@@ -1,21 +1,42 @@
-// pxCore Copyright 2007-2015 John Robinson
+/*
+
+ pxCore Copyright 2005-2018 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // pxTransform.h
 
 #ifndef PX_TRANSFORM_H
 #define PX_TRANSFORM_H
 
-#include <errno.h>
-#include <stdint.h>
-
-#include "rtRefT.h"
-#include "rtDefs.h"
 #include "rtCore.h"
-#include "rtError.h"
+#include "rtRef.h"
 #include "rtValue.h"
 #include "rtObject.h"
 #include "pxMatrix4T.h"
 
+#ifdef PX_PLATFORM_MAC
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#endif
+
+
 #define INVALID_REG UINT32_MAX
+
+#include <vector>
+using std::vector;
 
 class pxTransform;
 
@@ -31,7 +52,7 @@ public:
 
   ~pxTransformData()
   {
-    printf("In ~pxTransformData\n");
+    //rtLogDebug("In ~pxTransformData\n");
 #if 0
     if (mRegData)
       free(mRegData);
@@ -57,7 +78,7 @@ public:
   }
 
 private:
-  rtRefT<pxTransform> mTransform;
+  rtRef<pxTransform> mTransform;
   float* mRegData;
 };
 
@@ -140,7 +161,7 @@ private:
 
 
 
-  vector<regInfo> mRegInfo;
+  std::vector<regInfo> mRegInfo;
 
   // execution context
   float* mStack;
@@ -169,4 +190,8 @@ private:
   static uint32_t numFuncEntries;
 };
 
+#endif
+
+#ifdef PX_PLATFORM_MAC
+#pragma clang diagnostic pop
 #endif

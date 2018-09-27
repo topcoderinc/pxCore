@@ -1,24 +1,40 @@
-// pxCore CopyRight 2007-2015 John Robinson
+/*
+
+ pxCore Copyright 2005-2018 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // pxWayland.cpp
 
 #include "rtString.h"
-#ifdef ENABLE_PX_WAYLAND_RPC
-#include "rpc/rtRemoteConfig.h"
-#include "rpc/rtRemoteEnvironment.h"
-#endif //ENABLE_PX_WAYLAND_RPC
-#include "rtRefT.h"
+#include "rtRef.h"
 #include "pxCore.h"
 #include "pxKeycodes.h"
-#include "pxWindow.h"
+#include <sys/types.h>
+#include <signal.h>
+#if defined(RT_PLATFORM_LINUX) || defined(PX_PLATFORM_MAC)
+#include <unistd.h>
+#endif //RT_PLATFORM_LINUX || PX_PLATFORM_MAC
 
 #include "pxWayland.h"
 
 #include "pxContext.h"
 
-extern "C"
-{
-#include "utf8.h"
-}
+#ifdef ENABLE_RT_NODE
+#include "rtScript.h"
+#endif //ENABLE_RT_NODE
 
 #include <map>
 using namespace std;
@@ -30,17 +46,17 @@ extern pxContext context;
 #define TEST_REMOTE_OBJECT_NAME "waylandClient123" //TODO - update
 
 
-pxWayland::pxWayland()
+pxWayland::pxWayland(bool useFbo, pxScene2d* sceneContainer)
   :
     mRefCount(0),
-    mClientMonitorThreadId(0), 
+    mClientMonitorThreadId(0),
     mFindRemoteThreadId(0),
     mContainer(NULL),
     mReadyEmitted(false),
     mClientMonitorStarted(false),
     mWaitingForRemoteObject(false),
 #ifdef ENABLE_PX_WAYLAND_RPC
-    mUseDispatchThread(rtEnvironmentGetGlobal()->Config->server_use_dispatch_thread()),
+    mUseDispatchThread(false),
 #else
     mUseDispatchThread(true),
 #endif //ENABLE_PX_WAYLAND_RPC
@@ -48,6 +64,8 @@ pxWayland::pxWayland()
     mY(0),
     mWidth(0),
     mHeight(0),
+    mUseFbo(useFbo),
+    mSuspended(false),
     mEvents(0),
     mClientPID(0),
     mWCtx(0),
@@ -56,25 +74,35 @@ pxWayland::pxWayland()
 #ifdef ENABLE_PX_WAYLAND_RPC
     mRemoteObject(),
 #endif //ENABLE_PX_WAYLAND_RPC
-    mRemoteObjectMutex()
+    mRemoteObjectMutex(),
+    mSceneContainer(sceneContainer)
 {
-  mFillColor[0]= 0.0; 
-  mFillColor[1]= 0.0; 
-  mFillColor[2]= 0.0; 
-  mFillColor[3]= 0.0; 
+  mFillColor[0]= 0.0;
+  mFillColor[1]= 0.0;
+  mFillColor[2]= 0.0;
+  mFillColor[3]= 0.0;
+
+  mClearColor[0]= 0.0;
+  mClearColor[1]= 0.0;
+  mClearColor[2]= 0.0;
+  mClearColor[3]= 0.0;
 }
 
 pxWayland::~pxWayland()
-{ 
+{
+#ifdef ENABLE_PX_WAYLAND_RPC
+  rtRemoteUnregisterDisconnectedCallback(pxWayland::remoteDisconnectedCB, this);
+#endif //ENABLE_PX_WAYLAND_RPC
   if ( mWCtx )
   {
-     WstCompositorDestroy(mWCtx);
      terminateClient();
+     WstCompositorDestroy(mWCtx);
+     mWCtx = NULL;
   }
 }
 
 rtError pxWayland::displayName(rtString& s) const { s = mDisplayName; return RT_OK; }
-rtError pxWayland::setDisplayName(const char* s) 
+rtError pxWayland::setDisplayName(const char* s)
 {
   mDisplayName = s;
   return RT_OK;
@@ -92,9 +120,9 @@ void pxWayland::createDisplay(rtString displayName)
    const char* cmd= mCmd.cString();
 
    rtLogInfo("pxWayland::createDisplay: %s\n", (name ? name : "name not provided"));
-   
+
    mFBO= context.createFramebuffer( 0, 0 );
-   
+
    mWCtx= WstCompositorCreate();
    if ( mWCtx )
    {
@@ -103,34 +131,34 @@ void pxWayland::createDisplay(rtString displayName)
          error= true;
          goto exit;
       }
-      
+
       if ( !WstCompositorSetOutputSize( mWCtx, mWidth, mHeight ) )
       {
          error= true;
          goto exit;
       }
-      
+
       if ( !WstCompositorSetInvalidateCallback( mWCtx, invalidate, this ) )
       {
          error= true;
          goto exit;
       }
-      
+
       if ( !WstCompositorSetHidePointerCallback( mWCtx, hidePointer, this ) )
       {
          error= true;
          goto exit;
       }
-      
+
       if ( !WstCompositorSetClientStatusCallback( mWCtx, clientStatus, this ) )
       {
          error= true;
          goto exit;
       }
-      
+
       // If a display name was provided, use it.  Otherwise the
       // compositor will generate a unique display name to use.
-      int len= (name ? strlen(name) : 0);
+      int len= (name ? (int) strlen(name) : 0);
       if ( len > 0 )
       {
          if ( !WstCompositorSetDisplayName( mWCtx, name ) )
@@ -146,7 +174,7 @@ void pxWayland::createDisplay(rtString displayName)
           mRemoteObjectName = "wl-plgn-";
           mRemoteObjectName.append(mDisplayName.cString());
       }
-      
+
       if ( !WstCompositorStart( mWCtx ) )
       {
          error= true;
@@ -158,7 +186,7 @@ void pxWayland::createDisplay(rtString displayName)
         mReadyEmitted= true;
         mEvents->isReady( true );
       }
-      
+
       if ( strlen(cmd) > 0 )
       {
          setenv("WAYLAND_DISPLAY", mDisplayName.cString(), 1);
@@ -175,7 +203,7 @@ void pxWayland::createDisplay(rtString displayName)
          startRemoteObjectDetection();
       }
    }
-   
+
 exit:
    if ( error )
    {
@@ -231,10 +259,10 @@ bool pxWayland::onMouseMove(int32_t x, int32_t y)
    int objX, objY;
    int resW, resH;
    context.getSize( resW, resH );
-   
+
    objX= (int)(x+0.5f);
    objY= (int)(y+0.5f);
-   
+
    WstCompositorPointerMoveEvent( mWCtx, objX, objY );
    return false;
 }
@@ -258,8 +286,8 @@ bool pxWayland::onKeyDown(uint32_t keycode, uint32_t flags)
 
    modifiers= getModifiers(flags);
    linuxKeyCode= linuxFromPX( keycode );
-   
-   WstCompositorKeyEvent( mWCtx, linuxKeyCode, WstKeyboard_keyState_depressed, modifiers ); 
+
+   WstCompositorKeyEvent( mWCtx, linuxKeyCode, WstKeyboard_keyState_depressed, modifiers );
    return false;
 }
 
@@ -267,11 +295,11 @@ bool pxWayland::onKeyUp(uint32_t keycode, uint32_t flags)
 {
    int32_t linuxKeyCode;
    int32_t modifiers;
-   
+
    modifiers= getModifiers(flags);
    linuxKeyCode= linuxFromPX( keycode );
-   
-   WstCompositorKeyEvent( mWCtx, linuxKeyCode, WstKeyboard_keyState_released, modifiers ); 
+
+   WstCompositorKeyEvent( mWCtx, linuxKeyCode, WstKeyboard_keyState_released, modifiers );
    return false;
 }
 
@@ -289,6 +317,10 @@ void pxWayland::onUpdate(double t)
 
   if(!mReadyEmitted && mEvents && mWCtx && (!mUseDispatchThread || !mWaitingForRemoteObject) )
   {
+#ifdef ENABLE_RT_NODE
+    rtWrapperSceneUnlocker unlocker;
+#endif //ENABLE_RT_NODE
+
     mReadyEmitted= true;
     mEvents->isReady(true);
   }
@@ -297,25 +329,70 @@ void pxWayland::onUpdate(double t)
 void pxWayland::onDraw()
 {
   static pxTextureRef nullMaskRef;
-  
-  if ( (mFBO->width() != mWidth) ||
-       (mFBO->height() != mHeight) )
-  {     
-     context.updateFramebuffer( mFBO, mWidth, mHeight );
+
+  unsigned int outputWidth, outputHeight;
+
+  WstCompositorGetOutputSize( mWCtx, &outputWidth, &outputHeight );
+
+  if ( (mWidth != (int)outputWidth) ||
+       (mHeight != (int)outputHeight) )
+  {
      WstCompositorSetOutputSize( mWCtx, mWidth, mHeight );
   }
-  
-  int hints= 0;
-  if ( !isRotated() ) hints |= WstHints_noRotation;
-  
+
+  bool rotated= isRotated();
+  bool drawWithFBO= rotated || mUseFbo;
+  if ( drawWithFBO )
+  {
+     if ( (mFBO->width() != mWidth) ||
+          (mFBO->height() != mHeight) )
+     {
+        context.updateFramebuffer( mFBO, mWidth, mHeight );
+     }
+  }
+  else
+  {
+     if ( (mFBO->width() != 0) ||
+          (mFBO->height() != 0) )
+     {
+        context.updateFramebuffer( mFBO, 0, 0 );
+     }
+  }
+
+  int hints= WstHints_none;
+
   bool needHolePunch;
   std::vector<WstRect> rects;
+  pxContextFramebufferRef previousFrameBuffer;
   pxMatrix4f m= context.getMatrix();
+
+  if ( drawWithFBO )
+  {
+     hints |= WstHints_fboTarget;
+  }
+  else
+  {
+     hints |= WstHints_applyTransform;
+     hints |= WstHints_holePunch;
+  }
+  if ( !rotated ) hints |= WstHints_noRotation;
+  if ( memcmp( mLastMatrix.data(), m.data(), 16*sizeof(float) ) != 0 ) hints |= WstHints_animating;
+  mLastMatrix= m;
+
+  if ( mFillColor[3] != 0.0 )
+  {
+     context.drawRect(mWidth, mHeight, 0, mFillColor, NULL );
+  }
+
   context.pushState();
-  pxContextFramebufferRef previousFrameBuffer= context.getCurrentFramebuffer();
-  context.setFramebuffer( mFBO );
-  context.clear( mWidth, mHeight, mFillColor );
-  WstCompositorComposeEmbedded( mWCtx, 
+  if ( drawWithFBO )
+  {
+     previousFrameBuffer= context.getCurrentFramebuffer();
+     context.setFramebuffer( mFBO );
+     context.clear( mWidth, mHeight, mClearColor );
+  }
+
+  WstCompositorComposeEmbedded( mWCtx,
                                 mX,
                                 mY,
                                 mWidth,
@@ -325,15 +402,13 @@ void pxWayland::onDraw()
                                 hints,
                                 &needHolePunch,
                                 rects );
-  context.setFramebuffer( previousFrameBuffer );
-  context.popState();
-  
-  if ( needHolePunch )
+  if ( drawWithFBO )
   {
-     if ( mFillColor[3] != 0.0 )
-     {
-        context.drawImage(0, 0, mWidth, mHeight, mFBO->getTexture(), nullMaskRef);
-     }
+     context.setFramebuffer( previousFrameBuffer );
+  }
+
+  if ( drawWithFBO && needHolePunch )
+  {
      GLfloat priorColor[4];
      GLint priorBox[4];
      GLint viewport[4];
@@ -341,7 +416,7 @@ void pxWayland::onDraw()
      glGetIntegerv( GL_SCISSOR_BOX, priorBox );
      glGetFloatv( GL_COLOR_CLEAR_VALUE, priorColor );
      glGetIntegerv( GL_VIEWPORT, viewport );
-     
+
      glEnable( GL_SCISSOR_TEST );
      glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
      for( unsigned int i= 0; i < rects.size(); ++i )
@@ -353,7 +428,8 @@ void pxWayland::onDraw()
            glClear( GL_COLOR_BUFFER_BIT );
         }
      }
-     
+     glClearColor( priorColor[0], priorColor[1], priorColor[2], priorColor[3] );
+
      if ( wasEnabled )
      {
         glScissor( priorBox[0], priorBox[1], priorBox[2], priorBox[3] );
@@ -363,7 +439,12 @@ void pxWayland::onDraw()
         glDisable( GL_SCISSOR_TEST );
      }
   }
-  context.drawImage(0, 0, mWidth, mHeight, mFBO->getTexture(), nullMaskRef);
+  context.popState();
+
+  if ( drawWithFBO )
+  {
+     context.drawImage(0, 0, mWidth, mHeight, mFBO->getTexture(), nullMaskRef);
+  }
 }
 
 void pxWayland::handleInvalidate()
@@ -384,25 +465,26 @@ void pxWayland::handleHidePointer( bool hide )
 
 void pxWayland::handleClientStatus( int status, int pid, int detail )
 {
-   mClientPID = status == WstClient_stoppedAbnormal || status == WstClient_stoppedNormal ? -1 : pid;
+   if ( mClientPID <= 0 )
+      mClientPID = ( ( status == WstClient_stoppedAbnormal ) || ( status == WstClient_stoppedNormal ) ) ? -1 : pid;
    if ( mEvents )
    {
       switch ( status )
       {
          case WstClient_started:
-            mEvents->clientStarted( pid );   
+            mEvents->clientStarted( pid );
             break;
          case WstClient_stoppedNormal:
-            mEvents->clientStoppedNormal( pid, detail );   
+            mEvents->clientStoppedNormal( pid, detail );
             break;
          case WstClient_stoppedAbnormal:
-            mEvents->clientStoppedAbnormal( pid, detail );   
+            mEvents->clientStoppedAbnormal( pid, detail );
             break;
          case WstClient_connected:
-            mEvents->clientConnected( pid );   
+            mEvents->clientConnected( pid );
             break;
          case WstClient_disconnected:
-            mEvents->clientDisconnected( pid );   
+            mEvents->clientDisconnected( pid );
             break;
          default:
             rtLogError("unexpected wayland client status type");
@@ -414,22 +496,23 @@ void pxWayland::handleClientStatus( int status, int pid, int detail )
 uint32_t pxWayland::getModifiers( uint32_t flags )
 {
    uint32_t modifiers= 0;
-   
+
    if ( flags & PX_MOD_SHIFT )
       modifiers |= WstKeyboard_shift;
    if ( flags & PX_MOD_CONTROL )
       modifiers |= WstKeyboard_ctrl;
    if ( flags & PX_MOD_ALT )
       modifiers |= WstKeyboard_alt;
-      
+
    return modifiers;
 }
 
 bool pxWayland::isRotated()
 {
-   float *f= context.getMatrix().data();
+   pxMatrix4f matrix = context.getMatrix();
+   float *f = matrix.data(); 
    const float e= 1.0e-2;
-      
+
    if ( (fabsf(f[1]) > e) ||
         (fabsf(f[2]) > e) ||
         (fabsf(f[4]) > e) ||
@@ -439,19 +522,19 @@ bool pxWayland::isRotated()
    {
       return true;
    }
-   
+
    return false;
 }
 
 void pxWayland::launchClient()
 {
    int rc;
-   
+
    rc= pthread_create( &mClientMonitorThreadId, NULL, clientMonitorThread, this );
    if ( rc )
    {
      const char* cmd = mCmd.cString();
-     rtLogError("Failed to start client monitor thread: auto launch of (%s) failed", cmd);      
+     rtLogError("Failed to start client monitor thread: auto launch of (%s) failed", cmd);
    }
 }
 
@@ -478,10 +561,17 @@ void pxWayland::terminateClient()
    if ( mClientMonitorStarted )
    {
       mClientMonitorStarted= false;
-      
-      // Destroying compositor above should result in client 
-      // process ending
-      pthread_join( mClientMonitorThreadId, NULL );      
+
+      // Destroying compositor above should result in client
+      // process ending.  If it hasn't ended, kill it
+      if ( mClientPID >= 0 )
+      {
+          rtLogInfo("pxWayland::terminateClient: client pid %d still alive - killing...", mClientPID);
+          kill( mClientPID, SIGKILL);
+          rtLogInfo("pxWayland::terminateClient: client pid %d killed", mClientPID);
+          mClientPID= -1;
+      }
+      pthread_join( mClientMonitorThreadId, NULL );
    }
 
    if (mUseDispatchThread && mWaitingForRemoteObject)
@@ -495,16 +585,16 @@ void pxWayland::terminateClient()
 void* pxWayland::clientMonitorThread( void *data )
 {
    pxWayland *pxw= (pxWayland*)data;
-   
+
    pxw->launchAndMonitorClient();
-   
+
    return NULL;
 }
 
 void pxWayland::invalidate( WstCompositor *wctx, void *userData )
 {
    (void)wctx;
-   
+
    pxWayland *pxw= (pxWayland*)userData;
    pxw->handleInvalidate();
 }
@@ -520,7 +610,7 @@ void pxWayland::hidePointer( WstCompositor *wctx, bool hide, void *userData )
 void pxWayland::clientStatus( WstCompositor *wctx, int status, int pid, int detail, void *userData )
 {
    (void)wctx;
-   
+
    pxWayland *pxw= (pxWayland*)userData;
 
    pxw->handleClientStatus( status, pid, detail );
@@ -565,9 +655,7 @@ rtError pxWayland::startRemoteObjectLocator()
     rtLogError("pxWayland failed to initialize rtRemoteInit: %d", errorCode);
     if( mUseDispatchThread )
     {
-      mRemoteObjectMutex.lock();
       mWaitingForRemoteObject = false;
-      mRemoteObjectMutex.unlock();
     }
     return errorCode;
   }
@@ -584,7 +672,7 @@ rtError pxWayland::connectToRemoteObject()
 #ifdef ENABLE_PX_WAYLAND_RPC
   int findTime = 0;
 
-  while (findTime < MAX_FIND_REMOTE_TIMEOUT_IN_MS && mClientPID != -1)
+  while (findTime < MAX_FIND_REMOTE_TIMEOUT_IN_MS && mWaitingForRemoteObject)
   {
     findTime += FIND_REMOTE_ATTEMPT_TIMEOUT_IN_MS;
     rtLogInfo("Attempting to find remote object %s", mRemoteObjectName.cString());
@@ -607,6 +695,16 @@ rtError pxWayland::connectToRemoteObject()
     mRemoteObject.send("init");
     mRemoteObjectMutex.lock();
     mAPI = mRemoteObject;
+    if (mSceneContainer != NULL)
+    {
+      rtLogInfo("setting the scene container");
+      rtValue value = mSceneContainer;
+      mRemoteObject.set("sceneContainer", value);
+    }
+    else
+    {
+      rtLogInfo("unable to set the scene container because it is null");
+    }
     mRemoteObjectMutex.unlock();
 
     if(mEvents)
@@ -619,11 +717,29 @@ rtError pxWayland::connectToRemoteObject()
         mEvents->isRemoteReady(false);
   }
 
-  mRemoteObjectMutex.lock();
   mWaitingForRemoteObject = false;
-  mRemoteObjectMutex.unlock();
 #endif //ENABLE_PX_WAYLAND_RPC
   return errorCode;
+}
+
+rtError pxWayland::useDispatchThread(bool use)
+{
+  mUseDispatchThread = use;
+  return RT_OK;
+}
+
+rtError pxWayland::resume(const rtValue& v)
+{
+  mSuspended = false;
+  callMethod("resume", 1, &v);
+  return RT_OK;
+}
+
+rtError pxWayland::suspend(const rtValue& v)
+{
+  mSuspended = true;
+  callMethod("suspend", 1, &v);
+  return RT_OK;
 }
 
 rtError pxWayland::setProperty(const rtString &prop, const rtValue &val)
@@ -686,7 +802,8 @@ rtError pxWayland::connectToRemoteObject(unsigned int timeout_ms)
 
 #ifdef ENABLE_PX_WAYLAND_RPC
   rtLogInfo("Attempting to find remote object %s", mRemoteObjectName.cString());
-  errorCode = rtRemoteLocateObject(mRemoteObjectName.cString(), mRemoteObject, timeout_ms);
+  errorCode = rtRemoteLocateObject(mRemoteObjectName.cString(), mRemoteObject, timeout_ms,
+                                     pxWayland::remoteDisconnectedCB, this);
   if (errorCode != RT_OK)
   {
     rtLogError("XREBrowserPlugin failed to find object: %s errorCode %d\n",
@@ -701,11 +818,22 @@ rtError pxWayland::connectToRemoteObject(unsigned int timeout_ms)
   {
     mRemoteObject.send("init");
     mAPI = mRemoteObject;
+    if (mSceneContainer != NULL)
+    {
+      rtLogInfo("setting the scene container reference");
+      mRemoteObject.set("sceneContainer", mSceneContainer);
+    }
+    else
+    {
+      rtLogInfo("unable to set the scene container reference because it is null");
+    }
   }
   else
   {
     rtLogError("unable to connect to remote object");
   }
+#else
+  (void)timeout_ms;
 #endif //ENABLE_PX_WAYLAND_RPC
   return errorCode;
 }
@@ -818,12 +946,28 @@ rtError pxWayland::connectToRemoteObject(unsigned int timeout_ms)
 #define KEY_KPCOMMA             121
 #define KEY_LEFTMETA            125
 #define KEY_RIGHTMETA           126
+#ifndef KEY_YELLOW
+#define KEY_YELLOW              0x18e
+#endif
+#ifndef KEY_BLUE
+#define KEY_BLUE                0x18f
+#endif
+#define KEY_PLAYPAUSE           164
+#define KEY_REWIND              168
+#ifndef KEY_RED
+#define KEY_RED                 0x190
+#endif
+#ifndef KEY_GREEN
+#define KEY_GREEN               0x191
+#endif
+#define KEY_PLAY                207
+#define KEY_FASTFORWARD         208
 #define KEY_PRINT               210     /* AC Print */
 
 uint32_t pxWayland::linuxFromPX( uint32_t keyCode )
 {
    uint32_t  linuxKeyCode;
-   
+
    switch( keyCode )
    {
       case PX_KEY_BACKSPACE:
@@ -844,9 +988,6 @@ uint32_t pxWayland::linuxFromPX( uint32_t keyCode )
       case PX_KEY_ALT:
          linuxKeyCode= KEY_LEFTALT;
          break;
-      case PX_KEY_PAUSE:
-         linuxKeyCode= KEY_PAUSE;
-         break;
       case PX_KEY_CAPSLOCK:
          linuxKeyCode= KEY_CAPSLOCK;
          break;
@@ -860,7 +1001,7 @@ uint32_t pxWayland::linuxFromPX( uint32_t keyCode )
          linuxKeyCode= KEY_PAGEUP;
          break;
       case PX_KEY_PAGEDOWN:
-         linuxKeyCode= KEY_SPACE;
+         linuxKeyCode= KEY_PAGEDOWN;
          break;
       case PX_KEY_END:
          linuxKeyCode= KEY_END;
@@ -1117,10 +1258,37 @@ uint32_t pxWayland::linuxFromPX( uint32_t keyCode )
       case PX_KEY_DASH:
          linuxKeyCode= KEY_MINUS;
          break;
+      case PX_KEY_FASTFORWARD:
+         linuxKeyCode= KEY_FASTFORWARD;
+         break;
+      case PX_KEY_REWIND:
+         linuxKeyCode= KEY_REWIND;
+         break;
+      case PX_KEY_PAUSE:
+         linuxKeyCode= KEY_PAUSE;
+         break;
+      case PX_KEY_PLAY:
+         linuxKeyCode= KEY_PLAY;
+         break;
+      case PX_KEY_PLAYPAUSE:
+         linuxKeyCode= KEY_PLAYPAUSE;
+         break;
+      case PX_KEY_YELLOW:
+         linuxKeyCode = KEY_YELLOW;
+         break;
+      case PX_KEY_BLUE:
+         linuxKeyCode = KEY_BLUE;
+         break;
+      case PX_KEY_RED:
+         linuxKeyCode = KEY_RED;
+         break;
+      case PX_KEY_GREEN:
+         linuxKeyCode = KEY_GREEN;
+         break;
       default:
          linuxKeyCode= -1;
          break;
    }
-   
+
    return  linuxKeyCode;
 }

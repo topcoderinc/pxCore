@@ -1,5 +1,21 @@
-// pxCore CopyRight 2007-2009 John Robinson
-// Portable Framebuffer and Windowing Library
+/*
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
 // pxEventLoopNative.cpp
 
 #define PX_NATIVE
@@ -35,11 +51,15 @@ int CALLBACK WinMain(
 #ifdef UNDER_CE
     LPWSTR lpCmdLine,
 #else
+
     LPSTR lpCmdLine,
 #endif
   int       nCmdShow)
 {
-	pxMain();
+	//extern int __argc;          /* count of cmd line args */
+	//extern char ** __argv;      /* pointer to table of cmd line args */
+	//pxMain(__argc,__argv);
+	pxMain(0, NULL);
 	return 0;
 }
 
@@ -50,6 +70,11 @@ int wmain(int argc, wchar_t** argv)
 int main(int argc, char** argv)
 #endif
 {
-    pxMain();
-    return 0;
+	for (int i = 0; i < argc; i++) {
+		if (!strcmp(argv[i], "-hide-console")) {
+			ShowWindow(GetConsoleWindow(), SW_HIDE);
+		}
+	}
+  pxMain(argc,argv);
+  return 0;
 }

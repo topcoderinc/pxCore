@@ -1,5 +1,21 @@
-// pxCore CopyRight 2005-2006 John Robinson
-// Portable Framebuffer and Windowing Library
+/*
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
 // pxWindowNativeGlut.cpp
 
 #include "../pxCore.h"
@@ -7,6 +23,7 @@
 #include "pxWindowNative.h"
 #include "../pxTimer.h"
 #include "../pxWindowUtil.h"
+#include "pxKeycodes.h"
 
 #include "pxConfigNative.h"
 
@@ -32,6 +49,8 @@
 //#include <GL/glext.h>
 #endif //PX_PLATFORM_WAYLAND_EGL
 #endif
+
+using namespace std;
 
 #ifndef rtLogWarn
 #define rtLogWarn(...) (void)0
@@ -280,7 +299,10 @@ void pxWindowNative::onGlutClose()
 {
   pxWindowNative* w = getWindowFromGlutID(glutGetWindow());
   if (w)
+  {
+    unregisterWindow(w);
     w->onCloseRequest();
+  }
 }
 
 void pxWindowNative::onGlutTimer(int v)
@@ -294,7 +316,6 @@ void pxWindowNative::onGlutTimer(int v)
     glutTimerFunc(/*16*/ frame_ms, onGlutTimer, 0);
   }
 #else
-  
   vector<pxWindowNative*> windowVector = pxWindow::getNativeWindows();
   vector<pxWindowNative*>::iterator i;
   for (i = windowVector.begin(); i < windowVector.end(); i++)
@@ -557,7 +578,6 @@ bool exitFlag = false;
 
 pxWindowNative::~pxWindowNative()
 {
-  cleanupGlutWindow();
 }
 
 void pxWindowNative::createGlutWindow(int left, int top, int width, int height)
@@ -580,7 +600,7 @@ void pxWindowNative::createGlutWindow(int left, int top, int width, int height)
 
 void pxWindowNative::cleanupGlutWindow()
 {
-  glutDestroyWindow(mGlutWindowId);
+  // NOOP
 }
 
 pxError pxWindow::init(int left, int top, int width, int height)
@@ -607,7 +627,6 @@ pxError pxWindow::init(int left, int top, int width, int height)
     glutMotionFunc(onGlutMouseMotion);
     glutPassiveMotionFunc(onGlutMousePassiveMotion);
     glutKeyboardFunc(onGlutKeyboard);
-
 //#ifdef PX_USE_GLUT_ON_CLOSE
     glutWMCloseFunc(onGlutClose);
 //#endif
@@ -639,7 +658,6 @@ pxError pxWindow::init(int left, int top, int width, int height)
 
 pxError pxWindow::term()
 {
-  cleanupGlutWindow();
   return PX_OK;
 }
 
@@ -647,6 +665,7 @@ void pxWindow::invalidateRect(pxRect *r)
 {
   invalidateRectInternal(r);
 }
+
 
 // This can be improved by collecting the dirty regions and painting
 // when the event loop goes idle
@@ -722,6 +741,7 @@ static bool gTimerSet = false;
 void pxWindowNative::runEventLoop()
 {
 //glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+  glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
 
   exitFlag = false;
 

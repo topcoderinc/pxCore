@@ -1,0 +1,55 @@
+matrix:
+  include:
+  - os: linux
+    dist: trusty
+    sudo: required
+
+language: c++
+before_install:
+#  - if [ "$TRAVIS_EVENT_TYPE" != "pull_request" ]; then openssl aes-256-cbc -K $encrypted_8b763c087de9_key -iv $encrypted_8b763c087de9_iv -in pxscene-build.pem.enc -out /tmp/pxscene-build.pem -d; fi
+#  - if [ "$TRAVIS_EVENT_TYPE" != "pull_request" ]; then  eval "$(ssh-agent -s)"; fi
+#  - if [ "$TRAVIS_EVENT_TYPE" != "pull_request" ]; then  chmod 0600 /tmp/pxscene-build.pem; fi
+#  - if [ "$TRAVIS_EVENT_TYPE" != "pull_request" ]; then  ssh-add /tmp/pxscene-build.pem; fi
+  - if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then ./ci/auto_merge_coverity.sh; fi
+  - ./ci/before_install.sh
+  - if [ "$TRAVIS_EVENT_TYPE" != "cron" ] && {[ "$TRAVIS_EVENT_TYPE" = "push" ] || [ "$TRAVIS_EVENT_TYPE" = "pull_request" ]}; then export PATH=/usr/local/opt/ccache/libexec:$PATH; fi
+# NOTE THAT COVERITY IS COMPATIBLE WITH gcc 7; upload to coverity fails when using gcc 6 
+#  - if [ "$TRAVIS_EVENT_TYPE" != "cron" ] && [ "$TRAVIS_OS_NAME" = "linux" ]; then  export CC=/usr/bin/gcc-6; export CXX=/usr/bin/g++-6 ; sudo ln -s /usr/bin/gcc-6 /usr/local/bin/gcc ; sudo ln -s /usr/bin/g++-6 /usr/local/bin/g++ ; fi
+  - if [ "$TRAVIS_EVENT_TYPE" != "cron" ] && {[ "$TRAVIS_EVENT_TYPE" = "push" ] || [ "$TRAVIS_EVENT_TYPE" = "pull_request" ]}; then echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-; fi
+#  - gcc -v && g++ -v 
+
+
+install:
+  - if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./ci/install.sh; fi
+before_script:
+  - if [ "$TRAVIS_EVENT_TYPE" = "push" ] || [ "$TRAVIS_EVENT_TYPE" = "pull_request" ]; then ccache -s; fi
+  - if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./ci/before_script.sh; fi
+script:
+  - if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./ci/clean_coverity.sh; fi
+
+addons:
+  coverity_scan:
+    project:
+      name: "pxscene/pxCore"
+      description: "Build submitted via Travis CI"
+    notification_email: constance_fry@cable.comcast.com
+    build_command_prepend: "echo build prepend"
+    build_command:   "./ci/make_coverity.sh"
+    branch_pattern: coverity_scan
+#  apt:
+#    sources:
+#    - ubuntu-toolchain-r-test
+#    packages:
+#    - gcc-6
+#    - g++-6
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "nl5ZQRmc9g+nmv5zimVG3H39sqiwYSJWxlOni9sOeFSxs547SV/JVIHvlSjk3WH6bzqngjskWmtHeS9POsn/NNqj0QTc66tXQagrZod8EIpEWv3eDqBVURHATPlgXaNnuJB+xVcfaOvuEbpPhlXhJo3IBpUGH6mCx8eG+lT9O1vBRHYo4PFtLczBFH4JEBn+jGcgvomZy59x+c2iowXsQx6EZDPR3mLRFuGgvQjpZ/WioXzhYfSk8uJUnZElw0fiPbaAteWSwzRswD975CxA2+MOr12Re0CC9qUYcYr11hhtm4YiLzy+G0BJj3qF9mUnRxHOj45i8N/4crjhOPehgSgAH334JH3SuqdXgFigV3nWseeX89HICaRvzhnaOf5qs/ZMloa7aUqVBYwRpJB3ONXs0jgNqR32pW6zi2GvfV2zYEhkBJ/p5MesWZSOPHM8mi2qCpSAoyUIB2Vti0iKoyR5F6K11maElikrKSC9o6zxcD+CWeRi5eHFOgLIHU9M23rcPBIAmV1lvG7zHgMCrpyknvc8XU/bi1knymLMu/T0xfVTxI34/eavqsetWo2KBe182fJy+0LWldQLUYd9pLN+tvEaaI1ecL+HDOKyL+rDFmzNCw9nv5q995+7VqK1edqzPeDIuuhv17AZrrd1FY2Kg9O6RmabboVuG7Agsjg="
+
+notifications:
+  slack:
+    secure: gQ7GjheuN4j98co71p1gO0QaIAX3xHnDE2JRTT5UopsPbhczBC3A6RlVhXBrIc9mDyt2AO/pTBOl68BGtwtb4NVhZo2fqCcoq4wk2U2bAH3OnQu5KE9fJxm1KdJi0WiFVy1pURQql1fUH800YqF1LOWbc9m8aexgcvtD6ghDFLCDStgqfNgRzSEbZ8YBP98FjkEHj/jjeqwdUaH0Aezv0n82Laev99KDveCTVMoKXcbyfBQK0ty3OFAg6nBrMWPx0RVDVOVFPjjXDFgC5UfS9FLA57bxRDVmDr8SMnS/7m26YH0jnqY4oS1QnEmrdUtp6UWNex8D88KCt+wXoOpd6Ca1DVHNnaFuotEVpJ8B3WEG3uiK6xvacpkMrtEuoswUIbOv8E1VdfF3eOSmSAneb09Nbs15U8yiBfNq4PLE8TYc22or5jDsksTyGgmOgE1m8teH4DQz+k5qhMihd9f88CqaWzkjNgucavr/QzXG16xt13unMmMD0/bzA7wDU3hprne5hycR0LDxFRlL5z5xdv4w9yseuFTYBRcQ5Lk9zA6gJUMCGcbCtfA2rYQS7lOul575EMX7SfagHMmn663QY3tzm+vsxF93Dib+xfsAI3xSxSKGeBNZ5H9MxUPNUcu1yxhDZIZX8HujsDVLfIm/VK9OS2ultBTYeKizlyPBBsM=
+cache: ccache

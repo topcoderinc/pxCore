@@ -1,26 +1,36 @@
-// pxCore CopyRight 2007-2015 John Robinson
+/*
+
+ pxCore Copyright 2005-2018 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // pxImage.cpp
 
 #include "rtString.h"
-#include "rtRefT.h"
+#include "rtRef.h"
+#include "rtFileDownloader.h"
+
 #include "pxCore.h"
 #include "pxOffscreen.h"
 #include "pxUtil.h"
 #include "pxScene2d.h"
-#include "pxOffscreen.h"
 
+// TODO why does pxfont refer to pxImage.h
 #include "pxImage.h"
-
 #include "pxContext.h"
 
-#include "pxFileDownloader.h"
-
-extern "C"
-{
-#include "utf8.h"
-}
-
-//#include <map>
 using namespace std;
 
 extern pxContext context;
@@ -33,24 +43,27 @@ bool isPowerOfTwo(int64_t number)
 pxImage::~pxImage()
 {
   rtLogDebug("~pxImage()");
-  if (mListenerAdded)
-  {
-    if (getImageResource())
-    {
-      getImageResource()->removeListener(this);
-    }
-    mResource = NULL;
-    mListenerAdded = false;
-  }
+  removeResourceListener();
+  mResource = NULL;
 }
 
 void pxImage::onInit()
 {
   //rtLogDebug("pxImage::onInit() mUrl=%s\n",mUrl.cString());
   mInitialized = true;
-  //printf("pxImage::onInit for mUrl=\n");
-  //printf("%s\n",getImageResource()->getUrl().cString());
-  setUrl(getImageResource()->getUrl());
+  //rtLogDebug("pxImage::onInit for mUrl=\n");
+  //rtLogDebug("%s\n",getImageResource()->getUrl().cString());
+
+  rtImageResource *pRes = getImageResource();
+
+  if (pRes != NULL)
+  {
+    setUrl(pRes->getUrl());
+  }
+  else
+  {
+    setUrl("");
+  }
 }
 
 /**
@@ -58,7 +71,7 @@ void pxImage::onInit()
  * */
 rtError pxImage::setResource(rtObjectRef o) 
 { 
-  //printf("!!!!!!!!!!!!!!!!!!!!!pxImage setResource\n");
+  //rtLogDebug("!!!!!!!!!!!!!!!!!!!!!pxImage setResource\n");
   if(!o)
   { 
     setUrl("");
@@ -73,56 +86,88 @@ rtError pxImage::setResource(rtObjectRef o)
     rtString url;
     url = o.get<rtString>("url");
     // Only create new promise if url is different 
-    if( getImageResource()->getUrl().compare(o.get<rtString>("url")) )
+    if( getImageResource() != NULL && getImageResource()->getUrl().compare(o.get<rtString>("url")) )
     {
+      removeResourceListener();
       mResource = o; 
       imageLoaded = false;
       pxObject::createNewPromise();
       mListenerAdded = true;
       getImageResource()->addListener(this);
-      checkStretchX();
-      checkStretchY();
     }
     return RT_OK; 
   } 
   else 
   {
     rtLogError("Object passed as resource is not an imageResource!\n");
+    pxObject::onTextureReady();
+    mReady.send("reject",this);
     return RT_ERROR; 
   }
 
 }
 
-rtError pxImage::url(rtString& s) const { s = getImageResource()->getUrl(); return RT_OK; }
-rtError pxImage::setUrl(const char* s) 
-{ 
+rtError pxImage::url(rtString& s) const
+{
+  if (getImageResource() != NULL)
+  {
+    s = getImageResource()->getUrl();
+  }
+  else
+  {
+    s = "";
+  }
+  return RT_OK;
+}
+
+rtError pxImage::setUrl(const char* s)
+{
+#ifdef ENABLE_PERMISSIONS_CHECK
+  if (mScene != NULL && RT_OK != mScene->permissions()->allows(s, rtPermissions::DEFAULT))
+    return RT_ERROR_NOT_ALLOWED;
+#endif
+
   //rtLogInfo("pxImage::setUrl init=%d imageLoaded=%d \n", mInitialized, imageLoaded);
   //rtLogDebug("pxImage::setUrl for s=%s mUrl=%s\n", s, mUrl.cString());
   
   // we don't want to createNewPromise on the first time through when the 
   // url is initially being set because it's already created on construction
   // If mUrl is already set and loaded and s is different, create a new promise
-  rtImageResource* resourceObj = getImageResource();
-  if( resourceObj->getUrl().length() > 0 && resourceObj->getUrl().compare(s) && imageLoaded)
+  rtImageResource* pRes = getImageResource();
+  if( pRes != NULL && pRes->getUrl().length() > 0 && pRes->getUrl().compare(s))
   {
-    if(imageLoaded) 
+    // This could be an error case where the url was invalid and promise was rejected.
+    // If promise was already fulfilled/rejected, create a new one since the url is changing
+    if(imageLoaded || ((rtPromise*)mReady.getPtr())->status())
     {
       imageLoaded = false;
       //rtLogDebug("pxImage calling pxObject::createPromise for %s\n",resourceObj->getUrl().cString());
       pxObject::createNewPromise();
     }
-    //else 
-    //{
-      //// Stop listening for the old resource that this image was using
-      //resourceObj->removeListener(this);
-      //mReady.send("reject",this); // reject the original promise for old image
-    //}
+    // ToDo Need to cancel the download if url is reassigned before its done
+    /*else if(!imageLoaded)
+    {
+      // Stop listening for the old resource that this image was using
+      pRes->removeListener(this);
+      mReady.send("reject",this); // reject the original promise for old image
+    } */
   }
 
+  removeResourceListener();
 
-  mResource = pxImageManager::getImage(s);
+  if(pRes && !imageLoaded)
+  {
+    mResource = pxImageManager::getImage(s, NULL, mScene ? mScene->cors() : NULL,
+                                                  pRes->initW(),  pRes->initH(),
+                                                  pRes->initSX(), pRes->initSY(), mScene ? mScene->getArchive() : NULL );
+  }
+  else
+  {
+    mResource = pxImageManager::getImage(s, NULL, mScene ? mScene->cors() : NULL, 0, 0, 1.0f, 1.0f, mScene ? mScene->getArchive() : NULL);
+  }
 
-  if(getImageResource()->getUrl().length() > 0 && mInitialized && !imageLoaded) {
+  if(getImageResource() != NULL && getImageResource()->getUrl().length() > 0 && mInitialized && !imageLoaded)
+{
     mListenerAdded = true;
     getImageResource()->addListener(this);
   }
@@ -130,7 +175,7 @@ rtError pxImage::setUrl(const char* s)
   return RT_OK;
 }
 
-void pxImage::sendPromise() 
+void pxImage::sendPromise()
 { 
   if(mInitialized && imageLoaded && !((rtPromise*)mReady.getPtr())->status()) 
   {
@@ -139,9 +184,9 @@ void pxImage::sendPromise()
   }
 }
 
-float pxImage::getOnscreenWidth() 
-{ 
-  if(mw == -1 ) 
+float pxImage::getOnscreenWidth()
+{
+  if(mw == -1 || mStretchX == pxConstantsStretch::NONE)
   {
     return mResource.get<float>("w");
   }
@@ -151,37 +196,40 @@ float pxImage::getOnscreenWidth()
 }
 float pxImage::getOnscreenHeight() 
 { 
-  if(mh == -1) 
+  if(mh == -1 || mStretchY == pxConstantsStretch::NONE)
   {
     return mResource.get<float>("h");
   }
   else  
     return mh;  
- }
+}
       
 void pxImage::draw() {
   //rtLogDebug("pxImage::draw() mw=%f mh=%f\n", mw, mh);
   static pxTextureRef nullMaskRef;
-  context.drawImage(0, 0, 
-                    getOnscreenWidth(),
-                    getOnscreenHeight(), 
-                    getImageResource()->getTexture(), nullMaskRef, 
-                    false, NULL, mStretchX, mStretchY);
+  if (getImageResource() != NULL && getImageResource()->isInitialized() && !mSceneSuspended)
+  {
+    context.drawImage(0, 0,
+                      getOnscreenWidth(),
+                      getOnscreenHeight(),
+                      getImageResource()->getTexture(), nullMaskRef,
+                      false, NULL, mStretchX, mStretchY, mDownscaleSmooth, mMaskOp);
+  }
   // Raise the priority if we're still waiting on the image download    
 #if 0
-  if (!imageLoaded && getImageResource()->isDownloadInProgress())
+  if (!imageLoaded && getImageResource() != NULL && getImageResource()->isDownloadInProgress())
     getImageResource()->raiseDownloadPriority();
 #endif
 }
 void pxImage::resourceReady(rtString readyResolution)
 {
-  checkStretchX();
-  checkStretchY();
-  //printf("pxImage::resourceReady(%s) mInitialized=%d for \"%s\"\n",readyResolution.cString(),mInitialized,getImageResource()->getUrl().cString());
+  //rtLogDebug("pxImage::resourceReady(%s) mInitialized=%d for \"%s\"\n",readyResolution.cString(),mInitialized,getImageResource()->getUrl().cString());
   if( !readyResolution.compare("resolve"))
   {
     imageLoaded = true; 
     pxObject::onTextureReady();
+    checkStretchX();
+    checkStretchY();
     // Now that image is loaded, must force redraw;
     // dimensions could have changed.
     mScene->mDirty = true;
@@ -199,26 +247,35 @@ void pxImage::resourceReady(rtString readyResolution)
       pxObject::onTextureReady();
       mReady.send("reject",this);
   }
+
+  bool isSceneSuspended = false;
+  if (getScene())
+  {
+    getScene()->suspended(isSceneSuspended);
+  }
+  mSceneSuspended = isSceneSuspended;
+  if (isSceneSuspended && getImageResource())
+  {
+    getImageResource()->releaseData();
+  }
 }
 
-void pxImage::dispose()
+void pxImage::resourceDirty()
 {
-  if (mListenerAdded)
-  {
-    if (getImageResource())
-    {
-      getImageResource()->removeListener(this);
-    }
-    mResource = NULL;
-    mListenerAdded = false;
-  }
-  pxObject::dispose();
+  pxObject::onTextureReady();
+}
+
+void pxImage::dispose(bool pumpJavascript)
+{
+  removeResourceListener();
+  mResource = NULL;
+  pxObject::dispose(pumpJavascript);
 }
 
 void pxImage::checkStretchX()
 {
   rtImageResource* imageResource = getImageResource();
-  if (mStretchX == pxConstantsStretch::REPEAT && imageResource != NULL)
+  if (mStretchX == pxConstantsStretch::REPEAT && imageResource != NULL && imageResource->isInitialized())
   {
     pxTextureRef texture = imageResource->getTexture();
     if (texture.getPtr() != NULL && (!isPowerOfTwo(texture->width()) || !isPowerOfTwo(texture->height())))
@@ -231,7 +288,7 @@ void pxImage::checkStretchX()
 void pxImage::checkStretchY()
 {
   rtImageResource* imageResource = getImageResource();
-  if (mStretchY == pxConstantsStretch::REPEAT && imageResource != NULL)
+  if (mStretchY == pxConstantsStretch::REPEAT && imageResource != NULL && imageResource->isInitialized())
   {
     pxTextureRef texture = imageResource->getTexture();
     if (texture.getPtr() != NULL && (!isPowerOfTwo(texture->width()) || !isPowerOfTwo(texture->height())))
@@ -255,10 +312,70 @@ rtError pxImage::setStretchY(int32_t v)
   return RT_OK;
 }
 
+rtError pxImage::setMaskOp(int32_t v)
+{
+  mMaskOp = (pxConstantsMaskOperation::constants)v;
+  return RT_OK;
+}
+
+rtError pxImage::downscaleSmooth(bool& v) const
+{
+    v = mDownscaleSmooth;
+    return RT_OK;
+}
+
+rtError pxImage::setDownscaleSmooth(bool v)
+{
+    mDownscaleSmooth = v;
+    return RT_OK;
+}
+
+rtError pxImage::removeResourceListener()
+{
+  if (mListenerAdded)
+  {
+    if (getImageResource())
+    {
+      getImageResource()->removeListener(this);
+    }
+    mListenerAdded = false;
+  }
+  return RT_OK;
+}
+
+void pxImage::releaseData(bool sceneSuspended)
+{
+  if (getImageResource())
+  {
+    getImageResource()->releaseData();
+  }
+  pxObject::releaseData(sceneSuspended);
+}
+
+void pxImage::reloadData(bool sceneSuspended)
+{
+  if (getImageResource())
+  {
+    getImageResource()->reloadData();
+  }
+  pxObject::reloadData(sceneSuspended);
+}
+
+uint64_t pxImage::textureMemoryUsage()
+{
+  uint64_t textureMemory = 0;
+  if (getImageResource())
+  {
+    textureMemory += getImageResource()->textureMemoryUsage();
+  }
+  textureMemory += pxObject::textureMemoryUsage();
+  return textureMemory;
+}
+
 rtDefineObject(pxImage,pxObject);
-rtDefineProperty(pxImage,url);
+rtDefineProperty(pxImage, url);
 rtDefineProperty(pxImage, resource);
-rtDefineProperty(pxImage,stretchX);
-rtDefineProperty(pxImage,stretchY);
-
-
+rtDefineProperty(pxImage, stretchX);
+rtDefineProperty(pxImage, stretchY);
+rtDefineProperty(pxImage, maskOp);
+rtDefineProperty(pxImage, downscaleSmooth);

@@ -9,7 +9,6 @@ cd ..
 
 #--------- FT 
 cd ft
-./configure
 make clean -j3
 cd ..
 
@@ -25,11 +24,30 @@ cd ..
 
 #--------- ZLIB 
 cd zlib
-make clean -j3
+make distclean -j3
 cd ..
 
 #--------- LIBNODE 
-cd libnode-v6.9.0
+cd node
 make clean -j3
+rm -rf icu_* config.* out/
 cd ..
 
+#--------- LIBJPEG-TURBO
+if [ "$(uname)" != "Darwin" ]
+then
+cd libjpeg-turbo
+make clean -j3
+cd ..
+fi
+
+#--------- BREAKPAD (Non -macOS)
+if [ "$(uname)" != "Darwin" ] 
+then
+cd breakpad
+make clean -j3
+cd ..
+fi
+
+#--------- dukluv
+rm -rf dukluv/build

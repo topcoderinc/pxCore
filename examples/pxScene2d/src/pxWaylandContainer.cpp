@@ -1,24 +1,38 @@
-// pxCore CopyRight 2007-2015 John Robinson
+/*
+
+ pxCore Copyright 2005-2018 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // pxWaylandContainer.cpp
 
+#include <stdlib.h>
+#include <unistd.h>
 #include "rtString.h"
-#include "rtRefT.h"
+#include "rtRef.h"
 #include "pxCore.h"
 #include "pxKeycodes.h"
-#include "pxWindow.h"
 
 #include "pxWaylandContainer.h"
 
 #include "pxContext.h"
 
-extern "C"
-{
-#include "utf8.h"
-}
-
 #include <map>
 using namespace std;
 
+extern map<string, string> gWaylandAppsMap;
 // // TODO: move this to pxOffscreenNative.{cpp,mm} files
 // int __pxMain(int , char*[]) {return 0;}
 // int pxMain(int , char*[]) __attribute__ ((weak, alias ("_Z8__pxMainiPPc")));
@@ -30,7 +44,7 @@ using namespace std;
 // #define UNUSED_PARAM(x) ((void)x)
 
 pxWaylandContainer::pxWaylandContainer(pxScene2d* scene)
-   : pxViewContainer(scene), mWayland(NULL)
+   : pxViewContainer(scene), mWayland(NULL),mClientPID(0),mFillColor(0),mHasApi(false),mBinary()
 {
   addListener("onClientStarted", get<rtFunctionRef>("onClientStarted"));
   addListener("onClientStopped", get<rtFunctionRef>("onClientStopped"));
@@ -41,9 +55,18 @@ pxWaylandContainer::pxWaylandContainer(pxScene2d* scene)
 
 pxWaylandContainer::~pxWaylandContainer()
 {
-  mWayland->setEvents(NULL);
+  if ( mWayland )
+  {
+     mWayland->setEvents(NULL);
+  }
   mRemoteReady = NULL;
   mWayland = NULL;
+}
+
+void pxWaylandContainer::dispose(bool pumpJavascript)
+{
+   setView(NULL);
+   pxObject::dispose(pumpJavascript);
 }
 
 void pxWaylandContainer::invalidate( pxRect* r )
@@ -141,11 +164,68 @@ rtError pxWaylandContainer::setDisplayName(const char* s)
 
 rtError pxWaylandContainer::setCmd(const char* s)
 {
+  size_t regcmdlen;
+  const char *regcmd;
+  const char *p= strpbrk( s, " ");
+  std::map<string, string>::iterator it= gWaylandAppsMap.end();
+  rtString binary;
   mCmd = s;
+  if ( !p )
+  {
+    // Requested cmd has no args - use it as registry key
+    it  = gWaylandAppsMap.find(s);
+    if (it != gWaylandAppsMap.end())
+    {
+      regcmd= it->second.c_str();
+      regcmdlen= strlen(regcmd);
+      if ( regcmd[regcmdlen-1] == '%' )
+      {
+         // If matched registry item is marked as allowing args
+         // remove the '%' suffix.
+         regcmdlen -= 1;
+      }
+      if ( regcmdlen > 0 )
+      {
+         binary = rtString(regcmd, (uint32_t) regcmdlen);
+      }
+    }
+  }
+  else
+  {
+    // Requested cmd has args - use the cmd without args as a registry key
+    const char *cmd= strndup( s, (p-s) );
+    if ( cmd )
+    {
+       it  = gWaylandAppsMap.find(cmd);
+       if (it != gWaylandAppsMap.end())
+       {
+          // If the registry entry permits arguments (has a '%' suffix) then form
+          // the actual command to use from the registry entry and
+          // the supplied arguments.
+          const char *args= p;
+          regcmd= it->second.c_str();
+          regcmdlen= strlen(regcmd);
+          if ( (strlen( args ) > 0) &&
+               (regcmdlen > 1) &&
+               (regcmd[regcmdlen-1] == '%'))
+          {
+             binary = rtString(regcmd, (uint32_t) (regcmdlen-1) );
+             binary.append( args );
+          }
+       }
+       free( (void*)cmd );
+    }
+  }
+  if (it == gWaylandAppsMap.end())
+  {
+    rtLogError("Unrecognised wayland app \"%s\". please verify the app name or add entry in waylandregistry.conf \n",s);
+    return RT_ERROR;
+  }
   if ( mWayland )
   {
-     mWayland->setCmd(s);
+     mWayland->setCmd(binary);
   }
+  mBinary = binary;
   return RT_OK;
 }
 
@@ -228,8 +308,74 @@ void pxWaylandContainer::isRemoteReady(bool ready)
 {
   if (NULL != mRemoteReady)
   {
-      mRemoteReady->send(ready?"resolve":"reject",this);
+      rtPromise* remoteReady = (rtPromise*) mRemoteReady.getPtr();
+      if (NULL != remoteReady)
+        remoteReady->send(ready?"resolve":"reject",this);
   }
+}
+
+void pxWaylandContainer::sendPromise()
+{
+  if(mInitialized && !((rtPromise*)mReady.getPtr())->status())
+  {
+    int32_t processNameIndex = mBinary.find(0, ' ');
+    rtString processName;
+    if (processNameIndex > 0)
+    {
+      processName = mBinary.substring(0, processNameIndex);
+    }
+    else
+    {
+      processName = mBinary;
+    }
+    rtLogInfo("process name: %s orig: %s", processName.cString(), mBinary.cString());
+    if (access( processName.cString(), F_OK ) != -1)
+    {
+      rtLogDebug("sending resolve promise");
+      mReady.send("resolve",this);
+    }
+    else
+    {
+      rtLogDebug("sending reject promise");
+      mReady.send("reject",this);
+    }
+  }
+}
+
+rtError pxWaylandContainer::suspend(const rtValue &v, bool& b)
+{
+  b = false;
+  if ( mWayland )
+  {
+    mWayland->suspend(v);
+    b = true;
+  }
+  return RT_OK;
+}
+
+rtError pxWaylandContainer::resume(const rtValue& v, bool& b)
+{
+  b = false;
+  if ( mWayland )
+  {
+    mWayland->resume(v);
+    b = true;
+  }
+  return RT_OK;
+}
+
+rtError pxWaylandContainer::destroy(bool& b)
+{
+  b = false;
+  if ( mWayland )
+  {
+    mWayland->setEvents(NULL);
+    setView(NULL);
+    b = true;
+  }
+  mRemoteReady = NULL;
+  mWayland = NULL;
+  return RT_OK;
 }
 
 void pxWaylandContainer::onInit()
@@ -237,7 +383,14 @@ void pxWaylandContainer::onInit()
   if ( mWayland )
   {
     mWayland->setPos( mx, my );
+    mWayland->useDispatchThread( true );
     mWayland->onInit();
+
+    rtString name;
+    if ( RT_OK == mWayland->displayName( name ) )
+    {
+       mDisplayName = name;
+    }
   }
 }
 
@@ -249,3 +402,7 @@ rtDefineProperty(pxWaylandContainer,fillColor);
 rtDefineProperty(pxWaylandContainer,api);
 rtDefineProperty(pxWaylandContainer,remoteReady);
 rtDefineProperty(pxWaylandContainer,server);
+rtDefineProperty(pxWaylandContainer,hasApi);
+rtDefineMethod(pxWaylandContainer, suspend);
+rtDefineMethod(pxWaylandContainer, resume);
+rtDefineMethod(pxWaylandContainer, destroy);

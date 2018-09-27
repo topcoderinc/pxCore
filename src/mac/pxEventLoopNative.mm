@@ -3,6 +3,9 @@
 // pxEventLoopNative.cpp
 
 #include "pxEventLoop.h"
+#include <pxWindow.h>
+#include "pxWindowNative.h"
+#include <unistd.h>
 
 #import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>
@@ -66,7 +69,9 @@
     [appMenu addItemWithTitle: [NSString stringWithFormat:@"Quit %@", appName]
                        action: @selector(terminate:)
                 keyEquivalent: @"q"];
-    
+  
+    [appMenu release];
+  
     // FILE ---------------------------------------------------------------------------------
     
     NSMenuItem *fileMenuItem =
@@ -91,7 +96,8 @@
                         action: @selector(arrangeInFront:)
                  keyEquivalent: @""];
 
-    
+    [fileMenu release];
+  
     // EDIT ---------------------------------------------------------------------------------
     
     NSMenuItem *editMenuItem =
@@ -115,6 +121,35 @@
                  keyEquivalent: @"v"];
     
     [editMenu addItem:[NSMenuItem separatorItem]]; // -----------
+  
+    [editMenu release];
+  
+    
+    // VIEW ---------------------------------------------------------------------------------
+    
+    NSMenuItem *viewMenuItem =
+    [bar addItemWithTitle:@"" action:NULL keyEquivalent:@""];
+    
+    NSMenu *viewMenu = [[NSMenu alloc] initWithTitle:@"View"];
+    
+    [NSApp    setWindowsMenu: viewMenu];
+    [viewMenuItem setSubmenu: viewMenu];
+    
+    [[viewMenu addItemWithTitle: @"Toggle Address Bar"
+                         action: @selector(toggleAddressBar:)
+                  keyEquivalent: @"f"]
+     setKeyEquivalentModifierMask:NSControlKeyMask | NSAlternateKeyMask];
+  
+
+    [viewMenu addItem:[NSMenuItem separatorItem]]; // -----------
+
+  
+    [[viewMenu addItemWithTitle: @"Enter Full Screen"
+                        action: @selector(toggleFullScreen:)
+                 keyEquivalent: @"f"]
+       setKeyEquivalentModifierMask:NSControlKeyMask | NSCommandKeyMask];
+        
+    [viewMenu release];
     
     // WINDOW ---------------------------------------------------------------------------------
     
@@ -140,13 +175,24 @@
                           action:@selector(arrangeInFront:)
                    keyEquivalent:@""];
 
+    [windowMenu release];
+  
     // ---------------------------------------------------------------------------------
-    
+  
+    [bar release];
 }
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification
 {
   // Insert code here to tear down your application
+  pxWindowNative::closeAllWindows();
+  //sleep for few seconds to detect leak
+  char const* s = getenv("ENABLE_MEMLEAK_CHECK");
+  if (s && (strcmp(s,"1") == 0))
+  {
+    NSLog(@"   willTerminate  sleep so, valgrind can take memory report");
+    sleep(30);
+  }
 }
 
 @end
@@ -164,6 +210,9 @@ void pxEventLoop::run()
   AppDelegate *appDelegate = [[AppDelegate alloc] init];
   [NSApp setDelegate:appDelegate];
   [NSApp run];
+  
+  [appDelegate release];
+  
   [pool release];
 }
 
@@ -180,6 +229,8 @@ void pxEventLoop::runOnce()
     AppDelegate *appDelegate = [[AppDelegate alloc] init];
     [NSApp setDelegate:appDelegate];
     
+    [appDelegate release];
+
 #if 1
     ProcessSerialNumber psn = { 0, kCurrentProcess };
     /*OSStatus returnCode = */TransformProcessType(& psn, kProcessTransformToForegroundApplication);

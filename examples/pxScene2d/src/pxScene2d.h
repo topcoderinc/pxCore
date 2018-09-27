@@ -1,4 +1,21 @@
-// pxCore CopyRight 2007-2015 John Robinson
+/*
+
+ pxCore Copyright 2005-2018 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // pxScene2d.h
 
 #ifndef PX_SCENE2D_H
@@ -8,7 +25,6 @@
 
 #include <vector>
 #include <list>
-using namespace std;
 
 #ifndef finline
 #ifdef WIN32
@@ -18,13 +34,10 @@ using namespace std;
 #endif
 #endif
 
-#include "rtRefT.h"
+#include "rtRef.h"
 #include "rtString.h"
 
-// TODO rtDefs vs rtCore.h
-#include "rtDefs.h"
 #include "rtCore.h"
-#include "rtError.h"
 #include "rtValue.h"
 #include "rtObject.h"
 #include "rtObjectMacros.h"
@@ -41,16 +54,23 @@ using namespace std;
 #include "pxMatrix4T.h"
 #include "pxInterpolators.h"
 #include "pxTexture.h"
-//#include "pxTextureCacheObject.h"
 #include "pxContextFramebuffer.h"
 
 #include "pxArchive.h"
-
+#include "pxAnimate.h"
 #include "testView.h"
 
 #ifdef ENABLE_RT_NODE
-#include "rtNode.h"
+#include "rtScript.h"
 #endif //ENABLE_RT_NODE
+
+#ifdef ENABLE_PERMISSIONS_CHECK
+#include "rtPermissions.h"
+#endif
+#include "rtCORS.h"
+
+#include "rtServiceProvider.h"
+#include "rtSettings.h"
 
 #ifdef RUNINMAIN
 #define ENTERSCENELOCK()
@@ -66,12 +86,13 @@ class AsyncScriptInfo {
 };
 #endif
 
+#define MAX_URL_SIZE 8000
 
 //Uncomment to enable display of pointer by pxScene
 //#define USE_SCENE_POINTER
 
 // TODO Move this to pxEventLoop
-extern rtThreadQueue gUIThreadQueue;
+extern rtThreadQueue* gUIThreadQueue;
 
 // TODO Finish
 //#include "pxTransform.h"
@@ -79,9 +100,6 @@ extern rtThreadQueue gUIThreadQueue;
 
 // Constants
 static pxConstants CONSTANTS;
-
-
-static int pxObjectCount = 0;
 
 #if 0
 typedef rtError (*objectFactory)(void* context, const char* t, rtObjectRef& o);
@@ -100,30 +118,38 @@ struct pxAnimationTarget
 struct animation 
 {
   bool cancelled;
+  bool flip;
+  bool reversing;
+
   rtString prop;
+
   float from;
   float to;
-  bool flip;
+
   double start;
   double duration;
-  pxConstantsAnimation::animationOptions at;
-  pxInterp interp;
+
+  pxConstantsAnimation::animationOptions  options;
+  
+  pxInterp interpFunc;
+
   int32_t count;
   float actualCount;
-  bool reversing;
+
   rtFunctionRef ended;
   rtObjectRef promise;
+  rtObjectRef animateObj;
 };
 
 struct pxPoint2f 
 {
-  pxPoint2f() {}
+  pxPoint2f():x(0),y(0) {}
   pxPoint2f(float _x, float _y) { x = _x; y = _y; } 
   float x, y;
 };
 
 
-class pxFileDownloadRequest;
+class rtFileDownloadRequest;
 
 class pxScene2d;
 class pxScriptView;
@@ -138,6 +164,8 @@ public:
   rtProperty(y, y, setY, float);
   rtProperty(w, w, setW, float);
   rtProperty(h, h, setH, float);
+  rtProperty(px, px, setPX, float);
+  rtProperty(py, py, setPY, float);
   rtProperty(cx, cx, setCX, float);
   rtProperty(cy, cy, setCY, float);
   rtProperty(sx, sx, setSX, float);
@@ -160,16 +188,21 @@ public:
   rtReadOnlyProperty(ready, ready, rtObjectRef);
 
   rtReadOnlyProperty(numChildren, numChildren, int32_t);
-  rtMethod1ArgAndReturn("getChild", getChild, int32_t, rtObjectRef);
+  rtMethod1ArgAndReturn("getChild", getChild, uint32_t, rtObjectRef);
   rtReadOnlyProperty(children, children, rtObjectRef);
 
   rtMethodNoArgAndNoReturn("remove", remove);
   rtMethodNoArgAndNoReturn("removeAll", removeAll);
   rtMethodNoArgAndNoReturn("moveToFront", moveToFront);
+  rtMethodNoArgAndNoReturn("moveToBack", moveToBack);
+  rtMethodNoArgAndNoReturn("moveForward", moveForward);
+  rtMethodNoArgAndNoReturn("moveBackward", moveBackward);
 
   rtMethod5ArgAndReturn("animateTo", animateToP2, rtObjectRef, double,
                         uint32_t, uint32_t, int32_t, rtObjectRef);
 
+  rtMethod5ArgAndReturn("animate", animateToObj, rtObjectRef, double,
+                        uint32_t, uint32_t, int32_t, rtObjectRef);
   rtMethod2ArgAndNoReturn("on", addListener, rtString, rtFunctionRef);
   rtMethod2ArgAndNoReturn("delListener", delListener, rtString, rtFunctionRef);
   rtMethodNoArgAndNoReturn("dispose",releaseResources);
@@ -196,72 +229,43 @@ public:
   rtProperty(m44,m44,setM44,float);
   rtProperty(useMatrix,useMatrix,setUseMatrix,bool);
 
-pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my(0), ma(1.0), mr(0),
-#ifdef ANIMATION_ROTATE_XYZ  
-    mrx(0), mry(0), mrz(1.0), 
-#endif //ANIMATION_ROTATE_XYZ
-    msx(1), msy(1), mw(0), mh(0),
-    mInteractive(true),
-    mSnapshotRef(), mPainting(true), mClip(false), mMask(false), mDraw(true), mHitTest(true), mReady(), 
-    mFocus(false),mClipSnapshotRef(),mCancelInSet(true),mUseMatrix(false), mRepaint(true)
-#ifdef PX_DIRTY_RECTANGLES
-    , mIsDirty(false), mLastRenderMatrix(), mScreenCoordinates()
-#endif //PX_DIRTY_RECTANGLES
-    ,mDrawableSnapshotForMask(), mMaskSnapshot()
-  {
-    pxObjectCount++;
-    mScene = scene;
-    mReady = new rtPromise;
-    mEmit = new rtEmit;
-  }
-
+  pxObject(pxScene2d* scene);
   virtual unsigned long Release()
   {
     rtString d;
     // Why is this bad
     //sendReturns<rtString>("description",d);
-    rtString d2 = getMap()->className;
+    //rtString d2 = getMap()->className;
     unsigned long c =  rtObject::Release();
     #if 0
     if (c == 0)
-      printf("pxObject %s  %ld: %s\n", (c==0)?" *********** Destroyed":"Released",c, d2.cString());
+      rtLogDebug("pxObject %s  %ld: %s\n", (c==0)?" *********** Destroyed":"Released",c, d2.cString());
     #endif
     return c;
   }
 
-  virtual ~pxObject() 
-  { 
-//    rtString d;
-    // TODO... why is this bad
-//    sendReturns<rtString>("description",d);
-//    printf("**************** pxObject destroyed: %s\n",getMap()->className); 
-    pxObjectCount--;
-    rtValue nullValue; 
-    mReady.send("reject",nullValue); 
-    deleteSnapshot(mSnapshotRef); 
-    deleteSnapshot(mClipSnapshotRef);
-    deleteSnapshot(mDrawableSnapshotForMask);
-    deleteSnapshot(mMaskSnapshot);
-    mSnapshotRef = NULL;
-    mClipSnapshotRef = NULL;
-    mDrawableSnapshotForMask = NULL;
-    mMaskSnapshot = NULL;
-  }
+  virtual ~pxObject() ;
 
   
 
   // TODO missing conversions in rtValue between uint32_t and int32_t
-  uint32_t numChildren() const { return mChildren.size(); }
+  size_t numChildren() const { return mChildren.size(); }
   rtError numChildren(int32_t& v) const 
   {
-    v = mChildren.size();
+    v = (int32_t) mChildren.size();
     return RT_OK;
   }
 
-  virtual rtError Set(const char* name, const rtValue* value);
+  virtual rtError Set(uint32_t i, const rtValue* value) override;
+  virtual rtError Set(const char* name, const rtValue* value) override;
 
-  rtError getChild(int32_t i, rtObjectRef& r) const 
+  rtError getChild(uint32_t i, rtObjectRef& r) const
   {
+    if(i >= mChildren.size())
+    {
+      return RT_ERROR_INVALID_ARG;
+    }
+    
     r = mChildren[i];
     return RT_OK;
   }
@@ -269,7 +273,7 @@ pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my
   rtError children(rtObjectRef& v) const;
 
   // TODO clean this up
-  void setParent(rtRefT<pxObject>& parent);
+  void setParent(rtRef<pxObject>& parent);
   pxObject* parent() const
   {
     return mParent;
@@ -283,7 +287,7 @@ pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my
 
   rtError setParent(rtObjectRef parent) 
   {
-    rtRefT<pxObject> p;
+    rtRef<pxObject> p;
 
     if (parent)
       p = (pxObject*)parent.get<voidPtr>("_pxObject");
@@ -315,6 +319,12 @@ pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my
   float h()             const { return mh; }
   rtError h(float& v)   const { v = mh; return RT_OK;   }
   virtual rtError setH(float v)       { cancelAnimation("h"); createNewPromise();mh = v; return RT_OK;   }
+  float px()            const { return mpx;}
+  rtError px(float& v)  const { v = mpx; return RT_OK;  }
+  rtError setPX(float v)      { cancelAnimation("px"); createNewPromise();mpx = (v > 1) ? 1 : (v < 0) ? 0 : v; return RT_OK;  }
+  float py()            const { return mpy;}
+  rtError py(float& v)  const { v = mpy; return RT_OK;  }
+  rtError setPY(float v)      { cancelAnimation("py"); createNewPromise();mpy = (v > 1) ? 1 : (v < 0) ? 0 : v; return RT_OK;  }
   float cx()            const { return mcx;}
   rtError cx(float& v)  const { v = mcx; return RT_OK;  }
   rtError setCX(float v)      { cancelAnimation("cx"); createNewPromise();mcx = v; return RT_OK;  }
@@ -346,20 +356,7 @@ pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my
 #endif // ANIMATION_ROTATE_XYZ
   bool painting()            const { return mPainting;}
   rtError painting(bool& v)  const { v = mPainting; return RT_OK;  }
-  rtError setPainting(bool v)
-  { 
-      mPainting = v; 
-      if (!mPainting)
-      {
-        //rtLogInfo("in setPainting and calling createSnapshot mw=%f mh=%f\n", mw, mh);
-        createSnapshot(mSnapshotRef);
-      }
-      else
-      {
-        deleteSnapshot(mSnapshotRef);
-      }
-      return RT_OK;
-  }
+  rtError setPainting(bool v);
 
   bool clip()            const { return mClip;}
   rtError clip(bool& v)  const { v = mClip; return RT_OK;  }
@@ -387,36 +384,40 @@ pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my
     return RT_OK;
   }
 
+  rtError moveForward();
+  rtError moveBackward();
   rtError moveToFront();
-  void moveToBack();
-  void moveForward();
-  void moveBackward();
+  rtError moveToBack();
 
-  virtual void dispose();
+  virtual void dispose(bool pumpJavascript);
 
   void drawInternal(bool maskPass=false);
   virtual void draw() {}
   virtual void sendPromise();
   virtual void createNewPromise();
 
-  bool hitTestInternal(pxMatrix4f m, pxPoint2f& pt, rtRefT<pxObject>& hit, pxPoint2f& hitPt);
+  bool hitTestInternal(pxMatrix4f m, pxPoint2f& pt, rtRef<pxObject>& hit, pxPoint2f& hitPt);
   virtual bool hitTest(pxPoint2f& pt);
 
   void setFocusInternal(bool focus) { mFocus = focus; }
   
   rtError animateTo(const char* prop, double to, double duration,
-                     uint32_t interp, uint32_t animationType, 
+                     uint32_t interp, uint32_t options,
                      int32_t count, rtObjectRef promise);
 
   rtError animateToP2(rtObjectRef props, double duration, 
-                      uint32_t interp, uint32_t animationType,
+                      uint32_t interp, uint32_t options,
+                      int32_t count, rtObjectRef& promise);
+
+  rtError animateToObj(rtObjectRef props, double duration,
+                      uint32_t interp, uint32_t options,
                       int32_t count, rtObjectRef& promise);
 
   void animateToInternal(const char* prop, double to, double duration,
-                 pxInterp interp, pxConstantsAnimation::animationOptions,
-                 int32_t count, rtObjectRef promise);
+                 pxInterp interp, pxConstantsAnimation::animationOptions options,
+                 int32_t count, rtObjectRef promise, rtObjectRef animateObj);
 
-  void cancelAnimation(const char* prop, bool fastforward = false, bool rewind = false, bool resolve = false);
+  void cancelAnimation(const char* prop, bool fastforward = false, bool rewind = false);
 
   rtError addListener(rtString eventName, const rtFunctionRef& f)
   {
@@ -442,12 +443,15 @@ pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my
   //}
 
   virtual void update(double t);
+  virtual void releaseData(bool sceneSuspended);
+  virtual void reloadData(bool sceneSuspended);
+  virtual uint64_t textureMemoryUsage();
 
   // non-destructive applies transform on top of of provided matrix
   virtual void applyMatrix(pxMatrix4f& m)
   {
 #if 0
-    rtRefT<pxTransform> t = new pxTransform;
+    rtRef<pxTransform> t = new pxTransform;
     rtObjectRef i = new rtMapObject();
     i.set("x",0);
     i.set("y",0);
@@ -461,7 +465,7 @@ pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my
     i.set("ry",0);
     i.set("rz",1);
 #endif //ANIMATION_ROTATE_XYZ
-    printf("before initTransform\n");
+    rtLogDebug("before initTransform\n");
     t->initTransform(i, 
       "x cx + y cy + translateXY "
 #ifdef ANIMATION_ROTATE_XYZ
@@ -472,7 +476,7 @@ pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my
       "sx sy scaleXY "
       "cx -1 * cy -1 * translateXY "
       );
-    printf("after initTransform\n");
+    rtLogDebug("after initTransform\n");
     pxTransformData* d = t->newData();
     if (d)
     {
@@ -486,13 +490,13 @@ pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my
       d->get("x", v);
       d->get("cx", v);
       
-      printf("Before applyMatrix\n");    
+      rtLogDebug("Before applyMatrix\n");    
       d->applyMatrix(m);
-      printf("After applyMatrix\n");    
+      rtLogDebug("After applyMatrix\n");    
      
 #endif 
       t->deleteData(d);
-      printf("After deleteData\n");
+      rtLogDebug("After deleteData\n");
     }
     else
       rtLogError("Could not allocate pxTransformData");
@@ -500,9 +504,18 @@ pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my
     if (!mUseMatrix)
     {
 #if 1
+      float dx = -(mpx * mw);
+      float dy = -(mpy * mh);
+      
       // translate based on xy rotate/scale based on cx, cy
-      m.translate((int)mx+(int)mcx, (int)my+(int)mcy);
-      if (mr) {
+      bool doTransToOrig = msx != 1.0 || msy != 1.0 || mr;
+      if (doTransToOrig)
+        m.translate(mx + mcx + dx, my + mcy + dy);
+      else
+        m.translate(mx + dx, my + dy);
+        
+      if (mr)
+      {
         m.rotateInDegrees(mr
 #ifdef ANIMATION_ROTATE_XYZ
         , mrx, mry, mrz
@@ -522,7 +535,8 @@ pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my
         );
       }
       if (msx != 1.0 || msy != 1.0) m.scale(msx, msy);
-      m.translate(-mcx, -mcy);
+      if (doTransToOrig)
+        m.translate(-mcx, -mcy);
 #endif
     }
     else
@@ -567,17 +581,17 @@ pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my
 #if 0
     m.identity();
     
-    vector<rtRefT<pxObject> > v;
-    rtRefT<pxObject> t = o;
+    vector<rtRef<pxObject> > v;
+    rtRef<pxObject> t = o;
     
     while(t) {
       v.push_back(t);
       t = t->mParent;
     }
     
-    for(vector<rtRefT<pxObject> >::reverse_iterator it = v.rbegin(); it != v.rend(); ++it) 
+    for(vector<rtRef<pxObject> >::reverse_iterator it = v.rbegin(); it != v.rend(); ++it) 
     {
-      rtRefT<pxObject>& j = *it;;
+      rtRef<pxObject>& j = *it;;
       pxMatrix4f m2;
       m2.translate(j->mx+j->mcx, j->my+j->mcy);
       if (j->mr) {
@@ -630,11 +644,16 @@ pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my
   
   static pxObject* getObjectById(const char* id, pxObject* from)
   {
+    if(id == NULL || from == NULL)
+    {
+      return NULL; // bad args
+    }
+    
     // TODO fix rtString empty check
     if (from->mId.cString() && !strcmp(id, from->mId.cString()))
       return from;
     
-    for(vector<rtRefT<pxObject> >::iterator it = from->mChildren.begin(); it != from->mChildren.end(); ++it)
+    for(std::vector<rtRef<pxObject> >::iterator it = from->mChildren.begin(); it != from->mChildren.end(); ++it)
     {
       pxObject* o = getObjectById(id, (*it).getPtr());
       if (o)
@@ -699,20 +718,23 @@ pxObject(pxScene2d* scene): rtObject(), mParent(NULL), mcx(0), mcy(0), mx(0), my
 
   rtError releaseResources()
   {
-     dispose();
+     dispose(true);
      return RT_OK;
   }
+
+  pxScene2d* getScene() { return mScene; }
+  void createSnapshot(pxContextFramebufferRef& fbo, bool separateContext=false, bool antiAliasing=false);
 
 public:
   rtEmitRef mEmit;
 
 protected:
   // TODO getting freaking huge... 
-//  rtRefT<pxObject> mParent;
+//  rtRef<pxObject> mParent;
   pxObject* mParent;
-  vector<rtRefT<pxObject> > mChildren;
+  std::vector<rtRef<pxObject> > mChildren;
 //  vector<animation> mAnimations;
-  float mcx, mcy, mx, my, ma, mr;
+  float mpx, mpy, mcx, mcy, mx, my, ma, mr;
 #ifdef ANIMATION_ROTATE_XYZ
   float mrx, mry, mrz;
 #endif // ANIMATION_ROTATE_XYZ
@@ -734,29 +756,33 @@ protected:
   bool mRepaint;
   #ifdef PX_DIRTY_RECTANGLES
   bool mIsDirty;
-  pxMatrix4f mLastRenderMatrix;
+  pxMatrix4f mRenderMatrix;
   pxRect mScreenCoordinates;
+  pxRect mDirtyRect;
   #endif //PX_DIRTY_RECTANGLES
 
-  void createSnapshot(pxContextFramebufferRef& fbo);
   void createSnapshotOfChildren();
-  void deleteSnapshot(pxContextFramebufferRef fbo);
+  void clearSnapshot(pxContextFramebufferRef fbo);
   #ifdef PX_DIRTY_RECTANGLES
+  void setDirtyRect(pxRect* r);
   pxRect getBoundingRectInScreenCoordinates();
   pxRect convertToScreenCoordinates(pxRect* r);
   #endif //PX_DIRTY_RECTANGLES
 
   pxScene2d* mScene;
 
-  vector<animation> mAnimations;  
+  std::vector<animation> mAnimations;  
   pxContextFramebufferRef mDrawableSnapshotForMask;
   pxContextFramebufferRef mMaskSnapshot;
+  bool mIsDisposed;
+  bool mSceneSuspended;
 
  private:
   rtError _pxObject(voidPtr& v) const {
     v = (void*)this;
     return RT_OK;
   }
+  void repaintParents();
 };
 
 class pxRoot: public pxObject
@@ -798,7 +824,7 @@ public:
     addListener("onChar", get<rtFunctionRef>("onChar"));
   }
 
-  virtual ~pxViewContainer() { /*printf("#################~pxViewContainer\n");*/}
+  virtual ~pxViewContainer() { /*rtLogDebug("#################~pxViewContainer\n");*/}
 
   rtError setView(pxIView* v)
   {
@@ -810,12 +836,17 @@ public:
     if (mView)
     {
       mView->setViewContainer(this);
-      mView->onSize(mw,mh);
+      mView->onSize(static_cast<int32_t>(mw),static_cast<int32_t>(mh));
     }
     return RT_OK;
   }
 
   void invalidateRect(pxRect* r);
+
+  virtual void* getInterface(const char* /*name*/)
+  {
+    return NULL;
+  }  
 
 #if 0
   rtError url(rtString& v) const { v = mUri; return RT_OK; }
@@ -827,7 +858,7 @@ public:
   { 
     mw = v; 
     if (mView)
-      mView->onSize(mw,mh); 
+      mView->onSize(static_cast<int32_t>(mw),static_cast<int32_t>(mh)); 
     return RT_OK; 
   }
   
@@ -836,7 +867,7 @@ public:
   { 
     mh = v; 
     if (mView)
-      mView->onSize(mw,mh); 
+      mView->onSize(static_cast<int32_t>(mw),static_cast<int32_t>(mh)); 
     return RT_OK; 
   }
 
@@ -848,7 +879,7 @@ public:
       float x = o.get<float>("x");
       float y = o.get<float>("y");
       uint32_t flags = o.get<uint32_t>("flags");
-      mView->onMouseDown(x,y,flags);
+      mView->onMouseDown(static_cast<int32_t>(x),static_cast<int32_t>(y),flags);
     }
     return RT_OK;
   }
@@ -861,7 +892,7 @@ public:
       float x = o.get<float>("x");
       float y = o.get<float>("y");
       uint32_t flags = o.get<uint32_t>("flags");
-      mView->onMouseUp(x,y,flags);
+      mView->onMouseUp(static_cast<int32_t>(x),static_cast<int32_t>(y),flags);
     }
     return RT_OK;
   }
@@ -873,7 +904,7 @@ public:
     {
       float x = o.get<float>("x");
       float y = o.get<float>("y");
-      mView->onMouseMove(x,y);
+      mView->onMouseMove(static_cast<int32_t>(x),static_cast<int32_t>(y));
     }
     return RT_OK;
   }
@@ -910,7 +941,7 @@ public:
   {
     if (mView)
     {
-      printf("pxViewContainer::onKeyDown enter\n");
+      rtLogDebug("pxViewContainer::onKeyDown enter\n");
       uint32_t keyCode = e.get<uint32_t>("keyCode");
       uint32_t flags = e.get<uint32_t>("flags");
       bool consumed = mView->onKeyDown(keyCode, flags);
@@ -989,27 +1020,28 @@ class pxSceneContainer: public pxViewContainer
 public:
   rtDeclareObject(pxSceneContainer, pxViewContainer);
   rtProperty(url, url, setUrl, rtString);
+#ifdef ENABLE_PERMISSIONS_CHECK
+  // permissions can be set to either scene or to its container
+  rtProperty(permissions, permissions, setPermissions, rtObjectRef);
+#endif
+  rtReadOnlyProperty(cors, cors, rtObjectRef);
   rtReadOnlyProperty(api, api, rtValue);
   rtReadOnlyProperty(ready, ready, rtObjectRef);
+  rtProperty(serviceContext, serviceContext, setServiceContext, rtObjectRef);
 
 //  rtMethod1ArgAndNoReturn("makeReady", makeReady, bool);  // DEPRECATED ?
   
-  pxSceneContainer(pxScene2d* scene):pxViewContainer(scene){  pxSceneContainerCount++;printf("###############pxSceneContainerCount=%d\n",pxSceneContainerCount);}
-  virtual ~pxSceneContainer() {printf("###############~pxSceneContainer\n");pxSceneContainerCount--;printf("###############pxSceneContainerCount=%d\n",pxSceneContainerCount);}
+  pxSceneContainer(pxScene2d* scene):pxViewContainer(scene){  pxSceneContainerCount++;}
+  virtual ~pxSceneContainer() {rtLogDebug("###############~pxSceneContainer\n");pxSceneContainerCount--;}
 
   virtual unsigned long Release()
   {
     unsigned long c = pxViewContainer::Release();
-//    printf("pxSceneContainer::Release(): %ld\n", c);
+//    rtLogDebug("pxSceneContainer::Release(): %ld\n", c);
     return c;
   }
 
-  void dispose()
-  {
-     rtLogInfo(__FUNCTION__);
-     setScriptView(NULL);
-     pxObject::dispose();
-  }
+  virtual void dispose(bool pumpJavascript);
   rtError url(rtString& v) const { v = mUrl; return RT_OK; }
   rtError setUrl(rtString v);
 
@@ -1017,22 +1049,37 @@ public:
 
   rtError api(rtValue& v) const;
   rtError ready(rtObjectRef& o) const;
+  
+  rtError serviceContext(rtObjectRef& o) const { o = mServiceContext; return RT_OK;}
+  rtError setServiceContext(rtObjectRef o);
+
+#ifdef ENABLE_PERMISSIONS_CHECK
+  rtError permissions(rtObjectRef& v) const;
+  rtError setPermissions(const rtObjectRef& v);
+#endif
+  rtError cors(rtObjectRef& v) const;
 
 //  rtError makeReady(bool ready);  // DEPRECATED ?
 
   // in the case of pxSceneContainer, the makeReady should be the  
   // catalyst for ready to fire, so override sendPromise and 
   // createNewPromise to prevent firing from update() 
-  virtual void sendPromise() { rtLogDebug("pxSceneContainer ignoring sendPromise\n"); }
+  virtual void sendPromise() { /*rtLogDebug("pxSceneContainer ignoring sendPromise\n");*/ }
   virtual void createNewPromise(){ rtLogDebug("pxSceneContainer ignoring createNewPromise\n"); }
+
+  virtual void* getInterface(const char* name);
+  virtual void releaseData(bool sceneSuspended);
+  virtual void reloadData(bool sceneSuspended);
+  virtual uint64_t textureMemoryUsage();
   
 private:
-  rtRefT<pxScriptView> mScriptView;
+  rtRef<pxScriptView> mScriptView;
   rtString mUrl;
+  rtObjectRef mServiceContext;
 };
+typedef rtRef<pxSceneContainer> pxSceneContainerRef;
 
-
-typedef rtRefT<pxObject> pxObjectRef;
+typedef rtRef<pxObject> pxObjectRef;
 
 // Important that this have a separate lifetime from scene object
 // and to not hold direct references to this objects from the script context
@@ -1040,31 +1087,39 @@ typedef rtRefT<pxObject> pxObjectRef;
 class pxScriptView: public pxIView
 {
 public:
-  pxScriptView(const char* url, const char* /*lang*/);
+  pxScriptView(const char* url, const char* /*lang*/, pxIViewContainer* container=NULL);
 #ifndef RUNINMAIN
   void runScript(); // Run the script
 #endif
   virtual ~pxScriptView()
   {
     rtLogInfo(__FUNCTION__);
-    printf("~pxScriptView for mUrl=%s\n",mUrl.cString());
+    rtLogDebug("~pxScriptView for mUrl=%s\n",mUrl.cString());
     // Clear out these references since the script context
     // can outlive this view
 #ifdef ENABLE_RT_NODE
-    if(mCtx) {
+    if(mCtx)
+    {
+      mGetScene->clearContext();
+      mMakeReady->clearContext();
+      mGetContextID->clearContext();
+
+      // TODO Given that the context is being cleared we likely don't need to zero these out
       mCtx->add("getScene", 0);
       mCtx->add("makeReady", 0);
-
       mCtx->add("getContextID", 0);
     }
 #endif //ENABLE_RT_NODE
-    
-    if (mView)
-      setViewContainer(NULL);
 
+    if (mView)
+      mView->setViewContainer(NULL);
+
+    // TODO JRJR Do we have GC tests yet
     // Hack to try and reduce leaks until garbage collection can
     // be cleaned up
-    
+    if(mScene)
+      mEmit.send("onSceneRemoved", mScene);
+
     if (mScene)
       mScene.send("dispose");
 
@@ -1082,7 +1137,7 @@ public:
   {
     //rtLogInfo(__FUNCTION__);
     long l = rtAtomicDec(&mRefCount);
-    //  printf("pxScene2d release %ld\n",l);
+    //  rtLogDebug("pxScene2d release %ld\n",l);
     if (l == 0)
       delete this;
     return l;
@@ -1105,13 +1160,37 @@ public:
     o = mReady;
     return RT_OK;
   }
+
+  rtString getUrl() const { return mUrl; }
+
+#ifdef ENABLE_PERMISSIONS_CHECK
+  rtError permissions(rtObjectRef& v) const { return mScene.get("permissions", v); }
+  rtError setPermissions(const rtObjectRef& v) { return mScene.set("permissions", v); }
+#endif
+  rtError cors(rtObjectRef& v) const { return mScene.get("cors", v); }
+
+  static rtError addListener(rtString  eventName, const rtFunctionRef& f)
+  {
+    return mEmit->addListener(eventName, f);
+  }
+
+  static rtError delListener(rtString  eventName, const rtFunctionRef& f)
+  {
+    return mEmit->delListener(eventName, f);
+  }
+
+  rtError suspend(const rtValue& v, bool& b);
+  rtError resume(const rtValue& v, bool& b);
+  rtError textureMemoryUsage(rtValue& v);
   
 protected:
+
+  static rtError printFunc(int /*numArgs*/, const rtValue* /*args*/, rtValue* result, void* ctx);
 
   static rtError getScene(int /*numArgs*/, const rtValue* /*args*/, rtValue* result, void* ctx);
   static rtError makeReady(int /*numArgs*/, const rtValue* /*args*/, rtValue* result, void* ctx);
 
-  static rtError getContextID(int numArgs, const rtValue* args, rtValue* result, void* ctx);
+  static rtError getContextID(int /*numArgs*/, const rtValue* /*args*/, rtValue* result, void* /*ctx*/);
 
   virtual void onSize(int32_t w, int32_t h)
   {
@@ -1123,7 +1202,7 @@ protected:
 
   virtual void onCloseRequest()
   {
-    printf("pxScriptView::onCloseRequest()\n");
+    rtLogDebug("pxScriptView::onCloseRequest()\n");
     mScene.send("dispose");
     mScene = NULL;
     mView = NULL;
@@ -1223,9 +1302,14 @@ protected:
   rtObjectRef mApi;
   rtObjectRef mReady;
   rtObjectRef mScene;
-  rtRefT<pxIView> mView;
+  rtRef<pxIView> mView;
+  rtRef<rtFunctionCallback> mPrintFunc;
+  rtRef<rtFunctionCallback> mGetScene;
+  rtRef<rtFunctionCallback> mMakeReady;
+  rtRef<rtFunctionCallback> mGetContextID;
+
 #ifdef ENABLE_RT_NODE
-  rtNodeContextRef mCtx;
+  rtScriptContextRef mCtx;
 #endif //ENABLE_RT_NODE
   pxIViewContainer* mViewContainer;
   unsigned long mRefCount;
@@ -1233,9 +1317,10 @@ protected:
 #ifndef RUNINMAIN
   rtString mLang;
 #endif
+  static rtEmitRef mEmit;
 };
 
-class pxScene2d: public rtObject, public pxIView 
+class pxScene2d: public rtObject, public pxIView, public rtIServiceProvider
 {
 public:
   rtDeclareObject(pxScene2d, rtObject);
@@ -1244,9 +1329,18 @@ public:
   rtReadOnlyProperty(h, h, int32_t);
   rtProperty(showOutlines, showOutlines, setShowOutlines, bool);
   rtProperty(showDirtyRect, showDirtyRect, setShowDirtyRect, bool);
+  rtProperty(customAnimator, customAnimator, setCustomAnimator, rtFunctionRef);
   rtMethod1ArgAndReturn("loadArchive",loadArchive,rtString,rtObjectRef); 
   rtMethod1ArgAndReturn("create", create, rtObjectRef, rtObjectRef);
-  rtMethodNoArgAndReturn("clock", clock, uint64_t);
+  rtMethodNoArgAndReturn("clock", clock, double);
+  rtMethodNoArgAndNoReturn("logDebugMetrics", logDebugMetrics);
+  rtMethodNoArgAndNoReturn("collectGarbage", collectGarbage);
+  rtReadOnlyProperty(info, info, rtObjectRef);
+  rtReadOnlyProperty(capabilities, capabilities, rtObjectRef);
+  rtMethod1ArgAndReturn("suspend", suspend, rtValue, bool);
+  rtMethod1ArgAndReturn("resume", resume, rtValue, bool);
+  rtMethodNoArgAndReturn("suspended", suspended, bool);
+  rtMethodNoArgAndReturn("textureMemoryUsage", textureMemoryUsage, rtValue);
 /*
   rtMethod1ArgAndReturn("createExternal", createExternal, rtObjectRef,
                         rtObjectRef);
@@ -1268,6 +1362,10 @@ public:
 
   rtMethod1ArgAndReturn("clipboardGet", clipboardGet, rtString, rtString);
   rtMethod2ArgAndNoReturn("clipboardSet", clipboardSet, rtString, rtString);
+
+  rtMethod1ArgAndReturn("getService", getService, rtString, rtObjectRef);
+
+  rtMethodNoArgAndReturn("getAvailableApplications", getAvailableApplications, rtString);
     
     
   rtProperty(ctx, ctx, setCtx, rtValue);
@@ -1276,20 +1374,35 @@ public:
   // Properties for returning various CONSTANTS
   rtReadOnlyProperty(animation,animation,rtObjectRef);
   rtReadOnlyProperty(stretch,stretch,rtObjectRef);
+  rtReadOnlyProperty(maskOp,maskOp,rtObjectRef);
   rtReadOnlyProperty(alignVertical,alignVertical,rtObjectRef);
   rtReadOnlyProperty(alignHorizontal,alignHorizontal,rtObjectRef);
   rtReadOnlyProperty(truncation,truncation,rtObjectRef);
+  rtMethod1ArgAndReturn("sparkSetting", sparkSetting, rtString, rtValue);
 
   rtMethodNoArgAndNoReturn("dispose",dispose);
 
-  pxScene2d(bool top = true);
-  virtual ~pxScene2d() 
+  rtMethod1ArgAndNoReturn("addServiceProvider", addServiceProvider, rtFunctionRef);
+  rtMethod1ArgAndNoReturn("removeServiceProvider", removeServiceProvider, rtFunctionRef);
+
+#ifdef ENABLE_PERMISSIONS_CHECK
+  // permissions can be set to either scene or to its container
+  rtProperty(permissions, permissions, setPermissions, rtObjectRef);
+#endif
+  rtReadOnlyProperty(cors, cors, rtObjectRef);
+
+  pxScene2d(bool top = true, pxScriptView* scriptView = NULL);
+  virtual ~pxScene2d()
   {
-     printf("***** deleting pxScene2d\n");
+     rtLogDebug("***** deleting pxScene2d\n");
     if (mTestView != NULL)
     {
        //delete mTestView; // HACK: Only used in testing... 'delete' causes unknown crash.
        mTestView = NULL;
+    }
+    if (mArchive != NULL)
+    {
+       mArchive = NULL;
     }
   }
   
@@ -1301,10 +1414,33 @@ public:
   virtual unsigned long Release() 
   {
     long l = rtAtomicDec(&mRefCount);
-    //  printf("pxScene2d release %ld\n",l);
+    //  rtLogDebug("pxScene2d release %ld\n",l);
     if (l == 0)
       delete this;
     return l;
+  }
+
+  rtError addServiceProvider(const rtFunctionRef& p)
+  {
+    if (p)
+      mServiceProviders.push_back(p);
+    return RT_OK;
+  }
+
+  rtError removeServiceProvider(const rtFunctionRef& p)
+  {
+    if (p)
+    {
+      for(std::vector<rtFunctionRef>::iterator i = mServiceProviders.begin(); i != mServiceProviders.end(); i++)
+      {
+        if (*i == p)
+        {
+          mServiceProviders.erase(i);
+          break;
+        }
+      }
+    }
+    return RT_OK;
   }
 
 //  void init();
@@ -1321,6 +1457,9 @@ public:
   rtError showDirtyRect(bool& v) const;
   rtError setShowDirtyRect(bool v);
 
+  rtError customAnimator(rtFunctionRef& f) const;
+  rtError setCustomAnimator(const rtFunctionRef& f);
+
   rtError create(rtObjectRef p, rtObjectRef& o);
 
   rtError createObject(rtObjectRef p, rtObjectRef& o);
@@ -1328,14 +1467,24 @@ public:
   rtError createText(rtObjectRef p, rtObjectRef& o);
   rtError createTextBox(rtObjectRef p, rtObjectRef& o);
   rtError createImage(rtObjectRef p, rtObjectRef& o);
+  rtError createPath(rtObjectRef p, rtObjectRef& o);
   rtError createImage9(rtObjectRef p, rtObjectRef& o);
-  rtError createImageResource(rtObjectRef p, rtObjectRef& o); 
+  rtError createImageA(rtObjectRef p, rtObjectRef& o);
+  rtError createImage9Border(rtObjectRef p, rtObjectRef& o);
+  rtError createImageResource(rtObjectRef p, rtObjectRef& o);
+  rtError createImageAResource(rtObjectRef p, rtObjectRef& o);
   rtError createFontResource(rtObjectRef p, rtObjectRef& o);  
   rtError createScene(rtObjectRef p,rtObjectRef& o);
   rtError createExternal(rtObjectRef p, rtObjectRef& o);
   rtError createWayland(rtObjectRef p, rtObjectRef& o);
 
-  rtError clock(uint64_t & time);
+  rtError clock(double & time);
+  rtError logDebugMetrics();
+  rtError collectGarbage();
+  rtError suspend(const rtValue& v, bool& b);
+  rtError resume(const rtValue& v, bool& b);
+  rtError suspended(bool &b);
+  rtError textureMemoryUsage(rtValue &v);
 
   rtError addListener(rtString eventName, const rtFunctionRef& f)
   {
@@ -1358,7 +1507,7 @@ public:
 #if 0
   rtError stopPropagation()
   {
-    printf("stopPropagation()\n");
+    rtLogDebug("stopPropagation()\n");
     mStopPropagation = true;
     return RT_OK;
   }
@@ -1373,12 +1522,23 @@ public:
   rtError emit(rtFunctionRef& v) const { v = mEmit; return RT_OK; }
   
   rtError animation(rtObjectRef& v) const {v = CONSTANTS.animationConstants; return RT_OK;}
-  rtError stretch(rtObjectRef& v) const {v = CONSTANTS.stretchConstants; return RT_OK;}
-  rtError alignVertical(rtObjectRef& v) const {v = CONSTANTS.alignVerticalConstants; return RT_OK;}
+  rtError stretch(rtObjectRef& v)   const {v = CONSTANTS.stretchConstants;   return RT_OK;}
+  rtError maskOp(rtObjectRef& v)    const {v = CONSTANTS.maskOpConstants;    return RT_OK;}  
+  
+  rtError alignVertical(rtObjectRef& v)   const {v = CONSTANTS.alignVerticalConstants;   return RT_OK;}
   rtError alignHorizontal(rtObjectRef& v) const {v = CONSTANTS.alignHorizontalConstants; return RT_OK;}
-  rtError truncation(rtObjectRef& v) const {v = CONSTANTS.truncationConstants; return RT_OK;}
+  rtError truncation(rtObjectRef& v)      const {v = CONSTANTS.truncationConstants;      return RT_OK;}
 
-  void setMouseEntered(rtRefT<pxObject> o);//setMouseEntered(pxObject* o);
+#ifdef ENABLE_PERMISSIONS_CHECK
+  rtPermissionsRef permissions() const { return mPermissions; }
+  rtError permissions(rtObjectRef& v) const { v = mPermissions; return RT_OK; }
+  rtError setPermissions(const rtObjectRef& v) { return mPermissions->set(v); }
+#endif
+  rtCORSRef cors() const { return mCORS; }
+  rtError cors(rtObjectRef& v) const { v = mCORS; return RT_OK; }
+  rtError sparkSetting(const rtString& setting, rtValue& value) const;
+
+  void setMouseEntered(rtRef<pxObject> o);//setMouseEntered(pxObject* o);
 
   // The following methods are delegated to the view
   virtual void onSize(int32_t w, int32_t h);
@@ -1400,11 +1560,8 @@ public:
   virtual void onDraw();
   virtual void onComplete();
 
-  virtual void setViewContainer(pxIViewContainer* l) 
-  {
-    mContainer = l;
-  }
-
+  virtual void setViewContainer(pxIViewContainer* l);
+  pxIViewContainer* viewContainer();
   void invalidateRect(pxRect* r);
   
   void getMatrixFromObjectToScene(pxObject* o, pxMatrix4f& m);
@@ -1416,7 +1573,7 @@ public:
   void transformPointFromObjectToObject(pxObject* fromObject, pxObject* toObject,
 					pxPoint2f& from, pxPoint2f& to);
   
-  void hitTest(pxPoint2f p, vector<rtRefT<pxObject> > hitList);
+  void hitTest(pxPoint2f p, std::vector<rtRef<pxObject> > hitList);
   
   pxObject* getRoot() const;
   rtError root(rtObjectRef& v) const 
@@ -1424,46 +1581,109 @@ public:
     v = getRoot();
     return RT_OK;
   }
+ 
+  rtObjectRef  getInfo() const;
+  rtError info(rtObjectRef& v) const
+  {
+    v = getInfo();
+    return RT_OK;
+  }
+
+  rtObjectRef  getCapabilities() const;
+  rtError capabilities(rtObjectRef& v) const
+  {
+    v = getCapabilities();
+    return RT_OK;
+  }
 
   rtError loadArchive(const rtString& url, rtObjectRef& archive)
   {
+#ifdef ENABLE_PERMISSIONS_CHECK
+    if (RT_OK != mPermissions->allows(url, rtPermissions::DEFAULT))
+      return RT_ERROR_NOT_ALLOWED;
+#endif
+
     rtError e = RT_FAIL;
-    rtRefT<pxArchive> a = new pxArchive;
-    if (a->initFromUrl(url) == RT_OK)
+    rtRef<pxArchive> a = new pxArchive;
+    pxIViewContainer* view = viewContainer();
+    pxSceneContainer* sceneContainer = (pxSceneContainer*)view;
+    rtObjectRef parentArchive = NULL;
+    if (NULL != sceneContainer)
+    {
+      pxScene2d* scene = sceneContainer->getScene();
+      if (NULL != scene)
+      {
+        parentArchive = scene->getArchive();
+      }
+    }
+    if (a->initFromUrl(url, mCORS, parentArchive) == RT_OK)
     {
       archive = a;
       e = RT_OK;
     }
+
+    pxArchive* myArchive = (pxArchive*) a.getPtr();
+    /* decide whether further file access from this scene need to to taken from,
+       parent -> if this scene is created from archive
+       itself -> if this file itself is archive
+    */
+    if ((parentArchive != NULL ) && (((pxArchive*)parentArchive.getPtr())->isFile() == false))
+    {
+      if ((myArchive != NULL ) && (myArchive->isFile() == false))
+      {
+        mArchive = a;
+      }
+      else
+      {
+        mArchive = parentArchive;
+      }
+    }
+    else
+      mArchive = a;
     return e;
   }
-  
+
+  void innerpxObjectDisposed(rtObjectRef ref);
+
+  // Note: Only type currently supported is "image/png;base64"
+  rtError screenshot(rtString type, rtString& pngData);
+  rtError clipboardGet(rtString type, rtString& retString);
+  rtError clipboardSet(rtString type, rtString clipString);
+  rtError getService(rtString name, rtObjectRef& returnObject);
+  rtError getService(const char* name, const rtObjectRef& ctx, rtObjectRef& service);
+  rtError getAvailableApplications(rtString& availableApplications);
+  rtObjectRef getArchive()
+  {
+    return mArchive;
+  }
+
 private:
-  bool bubbleEvent(rtObjectRef e, rtRefT<pxObject> t, 
+  bool bubbleEvent(rtObjectRef e, rtRef<pxObject> t, 
                    const char* preEvent, const char* event) ;
+  
+  bool bubbleEventOnBlur(rtObjectRef e, rtRef<pxObject> t, rtRef<pxObject> o);
 
   void draw();
   // Does not draw updates scene to time t
   // t is assumed to be monotonically increasing
   void update(double t);
 
-  // Note: Only type currently supported is "image/png;base64"
-  rtError screenshot(rtString type, rtString& pngData);
-  rtError clipboardGet(rtString type, rtString& retString);
-  rtError clipboardSet(rtString type, rtString clipString);
-  
-    
-  rtRefT<pxObject> mRoot;
+
+  rtRef<pxObject> mRoot;
+  rtObjectRef mInfo;
+  rtObjectRef mCapabilityVersions;
   rtObjectRef mFocusObj;
   double start, sigma_draw, sigma_update, end2;
 
   int frameCount;
   int mWidth;
   int mHeight;
+
   rtEmitRef mEmit;
 
 // TODO Top level scene only
-  rtRefT<pxObject> mMouseEntered;
-  rtRefT<pxObject> mMouseDown;
+  rtRef<pxObject> mMouseEntered;
+  rtRef<pxObject> mMouseDown;
   pxPoint2f mMouseDownPt;
   rtValue mContext;
   rtValue mAPI;
@@ -1471,6 +1691,7 @@ private:
   bool mStopPropagation;
   int mTag;
   pxIViewContainer *mContainer;
+  pxScriptView *mScriptView;
   bool mShowDirtyRectangle;
   #ifdef USE_SCENE_POINTER
   pxTextureRef mNullTexture;
@@ -1484,20 +1705,31 @@ private:
   int32_t mPointerHotSpotY;
   #endif
   bool mPointerHidden;
+  std::vector<rtObjectRef> mInnerpxObjects;
+  rtFunctionRef mCustomAnimator;
+#ifdef ENABLE_PERMISSIONS_CHECK
+  rtPermissionsRef mPermissions;
+#endif
+  bool mSuspended;
+  rtCORSRef mCORS;
+  rtObjectRef mArchive;
 public:
   void hidePointer( bool hide )
   {
      mPointerHidden= hide;
   }
-  bool mDirty;
   #ifdef PX_DIRTY_RECTANGLES
   pxRect mDirtyRect;
+  pxRect mLastFrameDirtyRect;
   #endif //PX_DIRTY_RECTANGLES
+  bool mDirty;
   testView* mTestView;
+  bool mDisposed;
+  std::vector<rtFunctionRef> mServiceProviders;
 };
 
 // TODO do we need this anymore?
-class pxScene2dRef: public rtRefT<pxScene2d>, public rtObjectBase
+class pxScene2dRef: public rtRef<pxScene2d>, public rtObjectBase
 {
  public:
   pxScene2dRef() {}
@@ -1507,10 +1739,10 @@ class pxScene2dRef: public rtRefT<pxScene2d>, public rtObjectBase
   pxScene2dRef& operator=(pxScene2d* s) { asn(s); return *this; }
   
  private:
-  virtual rtError Get(const char* name, rtValue* value) const;
-  virtual rtError Get(uint32_t i, rtValue* value) const;
-  virtual rtError Set(const char* name, const rtValue* value);
-  virtual rtError Set(uint32_t i, const rtValue* value);
+  virtual rtError Get(const char* name, rtValue* value) const override;
+  virtual rtError Get(uint32_t i, rtValue* value) const override;
+  virtual rtError Set(const char* name, const rtValue* value) override;
+  virtual rtError Set(uint32_t i, const rtValue* value) override;
 };
 
 

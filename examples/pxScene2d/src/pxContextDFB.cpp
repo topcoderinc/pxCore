@@ -1,12 +1,37 @@
-#include "rtDefs.h"
+/*
+
+ pxCore Copyright 2005-2018 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
+// pxContextDFB.cpp
+
+#include "rtCore.h"
 #include "rtLog.h"
-#include "pxContext.h"
-#include "rtNode.h"
-#include "pxUtil.h"
 #include "rtThreadTask.h"
 #include "rtThreadPool.h"
 #include "rtThreadQueue.h"
 #include "rtMutex.h"
+#include "rtScript.h"
+#include "rtSettings.h"
+
+#include "pxContext.h"
+#include "pxUtil.h"
+#include <algorithm>
+#include <ctime>
+#include <cstdlib>
 
 #include <directfb.h>
 
@@ -54,7 +79,7 @@
   #define TRACK_FBO_CALLS()
 #endif
 
-rtThreadQueue gUIThreadQueue;
+rtThreadQueue* gUIThreadQueue = new rtThreadQueue();
 
 ////////////////////////////////////////////////////////////////
 
@@ -87,7 +112,7 @@ extern bool needsFlip;
 #endif //ENABLE_DFB_GENERIC
 
 #ifdef RUNINMAIN
-extern rtNode                   script;
+extern rtScript                   script;
 #else
 extern uv_async_t 				gcTrigger;
 #endif
@@ -136,7 +161,105 @@ pxContextFramebufferRef currentFramebuffer = defaultFramebuffer;
 static int gResW, gResH;
 static pxMatrix4f gMatrix;
 static float gAlpha = 1.0;
+uint32_t gRenderTick = 0;
+std::vector<pxTexture*> textureList;
+#ifdef ENABLE_BACKGROUND_TEXTURE_CREATION
+rtMutex contextLock;
+#endif //ENABLE_BACKGROUND_TEXTURE_CREATION
 
+pxError lockContext()
+{
+#ifdef ENABLE_BACKGROUND_TEXTURE_CREATION
+  contextLock.lock();
+#endif //ENABLE_BACKGROUND_TEXTURE_CREATION
+  return PX_OK;
+}
+
+pxError unlockContext()
+{
+#ifdef ENABLE_BACKGROUND_TEXTURE_CREATION
+  contextLock.unlock();
+#endif //ENABLE_BACKGROUND_TEXTURE_CREATION
+  return PX_OK;
+}
+
+pxError addToTextureList(pxTexture* texture)
+{
+  if(texture == NULL)
+  {
+    //rtLogError("addToTextureList() - Passed NULL - ignoring.");
+    return PX_OK; // skip
+  }
+
+  textureList.push_back(texture);
+  return PX_OK;
+}
+
+pxError removeFromTextureList(pxTexture* texture)
+{
+  for(std::vector<pxTexture*>::iterator it = textureList.begin(); it != textureList.end(); ++it)
+  {
+    if ((*it) == texture)
+    {
+      textureList.erase(it);
+      return PX_OK;
+    }
+  }
+  return PX_OK;
+}
+
+pxError ejectNotRecentlyUsedTextureMemory(int64_t bytesNeeded, uint32_t maxAge=5)
+{
+  rtLogDebug("attempting to eject %d bytes of texture memory with max age %u", bytesNeeded, maxAge);
+#if !defined(DISABLE_TEXTURE_EJECTION)
+  int numberEjected = 0;
+  int64_t beforeTextureMemoryUsage = context.currentTextureMemoryUsageInBytes();
+
+  std::random_shuffle(textureList.begin(), textureList.end());
+  for(std::vector<pxTexture*>::iterator it = textureList.begin(); it != textureList.end(); ++it)
+  {
+    pxTexture* texture = (*it);
+    uint32_t lastRenderTickAge = gRenderTick - texture->lastRenderTick();
+    if (lastRenderTickAge >= maxAge)
+    {
+      numberEjected++;
+      texture->unloadTextureData();
+      int64_t currentTextureMemory = context.currentTextureMemoryUsageInBytes();
+      if ((beforeTextureMemoryUsage - currentTextureMemory) > bytesNeeded)
+      {
+        break;
+      }
+    }
+  }
+
+  if (numberEjected > 0)
+  {
+    int64_t afterTextureMemoryUsage = context.currentTextureMemoryUsageInBytes();
+    rtLogWarn("%d textures have been ejected and %d bytes of texture memory has been freed",
+        numberEjected, (beforeTextureMemoryUsage - afterTextureMemoryUsage));
+  }
+#endif //!DISABLE_TEXTURE_EJECTION
+  return PX_OK;
+}
+
+
+int64_t getSurfaceByteSize(IDirectFBSurface* surf)
+{
+  if(surf)
+  {
+     int w = 0, h = 0;
+     surf->GetSize(surf, &w, &h);
+
+     DFBSurfacePixelFormat	 fmt;
+     surf->GetPixelFormat(surf, &fmt);
+     
+     int bytesPerPixel = (fmt == DSPF_A8) ? 1 : 4; // Either DSPF_A8 / DSPF_ABGR / DSPF_ARGB
+     
+     return (w * h * bytesPerPixel);
+  }
+  
+  return 0;
+}
 
 static inline void applyMatrix(IDirectFBSurface  *surface, const float *mm);
 
@@ -187,7 +310,8 @@ public:
     mWidth  = w;
     mHeight = h;
 
-    context.adjustCurrentTextureMemorySize(mWidth*mHeight*4);
+    int64_t bytes = getSurfaceByteSize(mTexture);
+    context.adjustCurrentTextureMemorySize(bytes);  // CREATE: pxFBOTexture
 
     mOffscreen.init(mWidth, mHeight);
 
@@ -243,9 +367,11 @@ public:
       //   boundTexture = NULL;
       // }
 
+      int64_t bytes = getSurfaceByteSize(mTexture);
+      context.adjustCurrentTextureMemorySize(-1 * bytes);
+
       mTexture->Release(mTexture);
       mTexture = NULL;
-      context.adjustCurrentTextureMemorySize(-1*mWidth*mHeight*4);
     }
 
     return PX_OK;
@@ -310,7 +436,7 @@ public:
 
 //   void                    setSurface(IDirectFBSurface* s)     { mTexture  = s; };
 
-//   IDirectFBSurface*       getSurface()     { return mTexture; };
+   void*       getSurface()     { return (void*)mTexture; };
 //   DFBVertex*              getVetricies()   { return &v[0];   };
 //   DFBSurfaceDescription   getDescription() { return dsc;     };
 
@@ -332,6 +458,13 @@ private:
 
   pxError createSurface(pxOffscreen& o)
   {
+    if(mTexture)
+    {
+        //rtLogError("###    NOT EMPTY !!!   >>>     pxFBOTexture::createSurface()  ");
+
+        deleteTexture();
+    }
+    
     mWidth  = o.width();
     mHeight = o.height();
 
@@ -408,114 +541,47 @@ public:
 //====================================================================================================================================================================================
 
 class pxTextureOffscreen;
+typedef rtRef<pxTextureOffscreen> pxTextureOffscreenRef;
 
 struct DecodeImageData
 {
-    DecodeImageData(pxTextureRef t, pxOffscreen* o) : textureOffscreen(t), offscreen(o)
-    {
-    }
-    pxTextureRef textureOffscreen;
-    pxOffscreen* offscreen;
+  DecodeImageData(pxTextureOffscreenRef t) : textureOffscreen(t)
+  {
+  }
+  pxTextureOffscreenRef textureOffscreen;
 
 };
 
-void onDecodeComplete(void* context, void* data)
-{
-  DecodeImageData* imageData = (DecodeImageData*)context;
-  pxOffscreen* decodedOffscreen = (pxOffscreen*)data;
-  if (imageData != NULL && decodedOffscreen != NULL)
-  {
-    pxTextureRef texture = imageData->textureOffscreen;
-    if (texture.getPtr() != NULL)
-    {
-      texture->createTexture(*decodedOffscreen);
-    }
-  }
-
-  if (decodedOffscreen != NULL)
-  {
-    delete decodedOffscreen;
-    decodedOffscreen = NULL;
-    data = NULL;
-  }
-
-  if (imageData != NULL)
-  {
-    delete imageData;
-    imageData = NULL;
-  }
-}
-
-void decodeTextureData(void* data)
-{
-  if (data != NULL)
-  {
-    DecodeImageData* imageData = (DecodeImageData*)data;
-    pxOffscreen* offscreen = imageData->offscreen;
-    if (offscreen != NULL)
-    {
-      char *compressedImageData = NULL;
-      size_t compressedImageDataSize = 0;
-      offscreen->compressedDataWeakReference(compressedImageData, compressedImageDataSize);
-      pxOffscreen *decodedOffscreen = new pxOffscreen();
-      pxLoadImage(compressedImageData, compressedImageDataSize, *decodedOffscreen);
-      gUIThreadQueue.addTask(onDecodeComplete, data, decodedOffscreen);
-    }
-    else
-    {
-      gUIThreadQueue.addTask(onDecodeComplete, data, NULL);
-    }
-  }
-}
-
-void onOffscreenCleanupComplete(void* context, void*)
-{
-  DecodeImageData* imageData = (DecodeImageData*)context;
-  if (imageData != NULL)
-  {
-    delete imageData;
-    imageData = NULL;
-  }
-}
-
-void cleanupOffscreen(void* data)
-{
-  if (data != NULL)
-  {
-    DecodeImageData* imageData = (DecodeImageData*)data;
-    if (data != NULL && imageData->textureOffscreen.getPtr() != NULL)
-    {
-      imageData->textureOffscreen->freeOffscreenData();
-      gUIThreadQueue.addTask(onOffscreenCleanupComplete, data, NULL);
-    }
-    else
-    {
-      gUIThreadQueue.addTask(onOffscreenCleanupComplete, data, NULL);
-    }
-  }
-}
+void onDecodeComplete(void* context, void* data);
+void decodeTextureData(void* data);
+void onOffscreenCleanupComplete(void* context, void*);
+void cleanupOffscreen(void* data);
 
 class pxTextureOffscreen : public pxTexture
 {
 public:
   pxTextureOffscreen() : mOffscreen(), mInitialized(false), mWidth(0), mHeight(0),
-                         mTextureUploaded(false),
+                         mTextureUploaded(false), mTexture(NULL),
                          mTextureDataAvailable(false), mLoadTextureRequested(false), mOffscreenMutex(),
-                         mFreeOffscreenDataRequested(false)
+                         mFreeOffscreenDataRequested(false), mCompressedData(NULL), mCompressedDataSize(0)
   {
     mTextureType = PX_TEXTURE_OFFSCREEN;
+    addToTextureList(this);
   }
 
-  pxTextureOffscreen(pxOffscreen& o) : mOffscreen(), mInitialized(false), mWidth(0), mHeight(0),
-                                       mTextureUploaded(false),
+  pxTextureOffscreen(pxOffscreen& o, const char *compressedData = NULL, size_t compressedDataSize = 0) 
+                                     : mOffscreen(), mInitialized(false), mWidth(0), mHeight(0),
+                                       mTextureUploaded(false),  mTexture(NULL),
                                        mTextureDataAvailable(false), mLoadTextureRequested(false), mOffscreenMutex(),
-                                       mFreeOffscreenDataRequested(false)
+                                       mFreeOffscreenDataRequested(false), mCompressedData(NULL), mCompressedDataSize(0)
   {
     mTextureType = PX_TEXTURE_OFFSCREEN;
+    setCompressedData(compressedData, compressedDataSize);
     createTexture(o);
+    addToTextureList(this);
   }
 
-~pxTextureOffscreen() { deleteTexture(); };
+~pxTextureOffscreen() { deleteTexture(); removeFromTextureList(this);};
 
   virtual pxError createTexture(pxOffscreen& o)
   {
@@ -543,16 +609,14 @@ public:
     }
 #endif
 
-    mWidth = mOffscreen.width();
+    mWidth  = mOffscreen.width();
     mHeight = mOffscreen.height();
 
     createSurface(o);
 
-    mOffscreen.transferCompressedDataFrom(o);
     mFreeOffscreenDataRequested = false;
     mOffscreenMutex.unlock();
 
-    mTextureDataAvailable = true;
     mLoadTextureRequested = false;
     mInitialized = true;
 
@@ -565,9 +629,7 @@ public:
 
     unloadTextureData();
 
-    mOffscreen.freeCompressedData();
-
-    mTextureDataAvailable = false;
+    freeCompressedData();
     mInitialized = false;
     return PX_OK;
   }
@@ -576,9 +638,11 @@ public:
   {
     if (!mLoadTextureRequested && mTextureDataAvailable)
     {
-      rtThreadPool *mainThreadPool = rtThreadPool::globalInstance();
-      DecodeImageData *decodeImageData = new DecodeImageData(this, &mOffscreen);
-      rtThreadTask *task = new rtThreadTask(decodeTextureData, decodeImageData, "");
+      rtThreadPool     *mainThreadPool = rtThreadPool::globalInstance();
+
+      DecodeImageData *decodeImageData = new DecodeImageData(this);
+      rtThreadTask               *task = new rtThreadTask(decodeTextureData, decodeImageData, "");
+      
       mainThreadPool->executeTask(task);
       mLoadTextureRequested = true;
     }
@@ -592,11 +656,11 @@ public:
     {
       if (mTexture)
       {
+        int64_t bytes = getSurfaceByteSize(mTexture);
+        context.adjustCurrentTextureMemorySize(-1 * bytes);
+
         mTexture->Release(mTexture);
         mTexture = NULL;
-
-        int WxH = mWidth * mHeight; // Size? Bytes ?
-        context.adjustCurrentTextureMemorySize(-1 * WxH * 4);
       }
 
       mOffscreenMutex.lock();
@@ -626,6 +690,7 @@ public:
   {
    if (!mInitialized)
     {
+      loadTextureData();
       return PX_NOTINITIALIZED;
     }
 
@@ -640,12 +705,21 @@ public:
     {
       if (!context.isTextureSpaceAvailable(this))
       {
-        rtLogError("not enough texture memory remaining to create texture");
-        unloadTextureData();
-        return PX_FAIL;
+        //attempt to free texture memory
+        int64_t textureMemoryNeeded = context.textureMemoryOverflow(this);
+        context.ejectTextureMemory(textureMemoryNeeded);
+        
+        if (!context.isTextureSpaceAvailable(this))
+        {
+          rtLogError("not enough texture memory remaining to create texture");
+          unloadTextureData();
+          return PX_FAIL;
+        }
+        else if (!mInitialized)
+        {
+          return PX_NOTINITIALIZED;
+        }
       }
-
-      context.adjustCurrentTextureMemorySize(mOffscreen.width()*mOffscreen.height()*4);
 
       createSurface(mOffscreen);
 
@@ -667,6 +741,7 @@ public:
   {
     if (!mInitialized)
     {
+      loadTextureData();
       return PX_NOTINITIALIZED;
     }
 
@@ -680,16 +755,25 @@ public:
     {
       if (!context.isTextureSpaceAvailable(this))
       {
-        rtLogError("not enough texture memory remaining to create texture");
-        unloadTextureData();
-        return PX_FAIL;
+        //attempt to free texture memory
+        int64_t textureMemoryNeeded = context.textureMemoryOverflow(this);
+        context.ejectTextureMemory(textureMemoryNeeded);
+        if (!context.isTextureSpaceAvailable(this))
+        {
+          rtLogError("not enough texture memory remaining to create texture");
+          unloadTextureData();
+          return PX_FAIL;
+        }
+        else if (!mInitialized)
+        {
+          return PX_NOTINITIALIZED;
+        }
       }
 
-      createSurface(mOffscreen); // JUNK
+      createSurface(mOffscreen);
 
       boundTextureMask = mTexture;   TRACK_TEX_CALLS();
       mTextureUploaded = true;
-      context.adjustCurrentTextureMemorySize(mOffscreen.width()*mOffscreen.height()*4);
       
       //free up unneeded offscreen memory
       freeOffscreenDataInBackground();
@@ -709,12 +793,9 @@ public:
       return PX_NOTINITIALIZED;
     }
 
-    char* compressedImageData = NULL;
-    size_t compressedImageDataSize = 0;
-    mOffscreen.compressedDataWeakReference(compressedImageData, compressedImageDataSize);
-    if (compressedImageData != NULL)
+    if (mCompressedData != NULL)
     {
-      pxLoadImage(compressedImageData, compressedImageDataSize, o);
+      pxLoadImage(mCompressedData, mCompressedDataSize, o);
     }
 
     return PX_OK;
@@ -723,6 +804,13 @@ public:
   virtual int width()  { return mWidth;  }
   virtual int height() { return mHeight; }
 
+  pxError compressedDataWeakReference(char*& data, size_t& dataSize)
+  {
+    data = mCompressedData;
+    dataSize = mCompressedDataSize;
+    return PX_OK;
+  }
+
 private:
 
   void freeOffscreenDataInBackground()
@@ -730,23 +818,59 @@ private:
     mOffscreenMutex.lock();
     mFreeOffscreenDataRequested = true;
     mOffscreenMutex.unlock();
+
     rtLogDebug("request to free offscreen data");
     rtThreadPool *mainThreadPool = rtThreadPool::globalInstance();
-    DecodeImageData *imageData = new DecodeImageData(this, NULL);
-    rtThreadTask *task = new rtThreadTask(cleanupOffscreen, imageData, "");
+    
+    DecodeImageData *imageData = new DecodeImageData(this);
+    rtThreadTask         *task = new rtThreadTask(cleanupOffscreen, imageData, "");
+    
     mainThreadPool->executeTask(task);
+  }
+
+  void setCompressedData(const char* data, const size_t dataSize)
+  {
+    freeCompressedData();
+    if (data == NULL)
+    {
+      mCompressedData = NULL;
+      mCompressedDataSize = 0;
+    }
+    else
+    {
+      mCompressedData = new char[dataSize];
+      mCompressedDataSize = dataSize;
+      memcpy(mCompressedData, data, mCompressedDataSize);
+      mTextureDataAvailable = true;
+    }
+  }
+
+  pxError freeCompressedData()
+  {
+    if (mCompressedData != NULL)
+    {
+      delete [] mCompressedData;
+      mCompressedData = NULL;
+    }
+    mCompressedDataSize = 0;
+    mTextureDataAvailable = false;
+    return PX_OK;
   }
 
   pxOffscreen mOffscreen;
   bool        mInitialized;
-  int mWidth;
-  int mHeight;
+
+  int         mWidth;
+  int         mHeight;
 
   bool        mTextureUploaded;
   bool        mTextureDataAvailable;
   bool        mLoadTextureRequested;
-  rtMutex mOffscreenMutex;
-  bool mFreeOffscreenDataRequested;
+  bool        mFreeOffscreenDataRequested;
+
+  rtMutex     mOffscreenMutex;
+  char*       mCompressedData;
+  size_t      mCompressedDataSize;
 
   IDirectFBSurface       *mTexture;
   DFBSurfaceDescription   dsc;
@@ -755,6 +879,16 @@ private:
 
   pxError createSurface(pxOffscreen& o)
   {
+    if(mTexture)
+    {
+      //rtLogError("###    NOT EMPTY !!!   >>>     pxTextureOffscreen::createSurface()  ");
+      
+      int64_t bytes = getSurfaceByteSize(mTexture);
+      context.adjustCurrentTextureMemorySize( -1 * bytes ); // RELEASE: pxTextureOffscreen (non-empty)
+      
+      mTexture->Release(mTexture);
+    }
+  
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     dsc.width                 = o.width();
@@ -772,8 +906,13 @@ private:
 
     DFB_CHECK(dfb->CreateSurface( dfb, &dsc, &tmp ) );
 
+    int64_t bytes = getSurfaceByteSize(tmp);
+    context.adjustCurrentTextureMemorySize( bytes ); // CREATE: pxTextureOffscreen (tmp)
+
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+//TODO: The creation of 'tmp' is merely to have a DFB surface as Source to Blit to a Destination surface in VIDEO memory.  IF used !
+ 
     dsc.width                 = o.width();
     dsc.height                = o.height();
     dsc.caps                  = PREFERRED_MEMORY;  // Use Video Memory  //   DSCAPS_PREMULTIPLIED
@@ -781,6 +920,9 @@ private:
     dsc.pixelformat           = dfbPixelformat;
 
     DFB_CHECK(dfb->CreateSurface( dfb, &dsc, &mTexture ) );
+
+    /*int64_t*/ bytes = getSurfaceByteSize(mTexture);
+    context.adjustCurrentTextureMemorySize( bytes ); // CREATE: pxTextureOffscreen
 
     mTexture->Clear(mTexture, 0, 0, 0, 0); // Transparent
 
@@ -793,6 +935,9 @@ private:
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    /*int64_t*/ bytes = getSurfaceByteSize(tmp);
+    context.adjustCurrentTextureMemorySize( -1 * bytes ); // RELEASE: pxTextureOffscreen (tmp)
+  
     tmp->Release(tmp);
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -801,6 +946,280 @@ private:
   }
 
 }; // CLASS - pxTextureOffscreen
+
+
+class pxSwTexture: public pxTextureOffscreen
+{
+public:
+  pxSwTexture()  : mOffscreen(), /*mTextureName(0),*/ mRasterTextureCreated(false),  mInitialized(false)
+  {
+    //ctor
+  };
+  
+  ~pxSwTexture()
+  {
+    deleteTexture();
+    mOffscreen.term();
+  };
+  
+  void init(int w, int h)
+  {
+    if(!mInitialized)
+    {
+      mWidth  = w;
+      mHeight = h;
+      
+      mOffscreen.init(w,h);
+      
+      mOffscreen.setUpsideDown(true);
+      
+      mInitialized = true;
+    }
+  }
+
+  void clear(const pxRect& r)
+  {
+    mOffscreen.fill(r, pxClear);
+  }
+  
+  void clear()
+  {
+    mOffscreen.fill(pxClear);
+  }
+  
+  pxError copy(int src_x, int src_y, int dst_x, int dst_y, float w, float h, pxOffscreen &o)
+  {
+#if 0
+    // PSEUDO COLOR - SOURCE BUFFER ... fails
+    float sw = 100, sh = 100;                           // HACK
+    pxRect bFILL(src_x, src_y, src_x + sw, src_y + sh); // HACK
+    o.fill(bFILL, pxBlue);                              // HACK
+#endif
+    
+    o.blit(mOffscreen, dst_x, dst_y, w, h, src_x, src_y); // copy RASTER >> to >> RENDER offscreen
+    
+#if 0
+    // PSEUDO COLOR - DESTINATION BUFFER ... works
+    
+    float dw = 100, dh = 100;                           // HACK
+    pxRect rFILL(dst_x, dst_y, dst_x + dw, dst_y + dh); // HACK
+    mOffscreen.fill(rFILL, pxGreen);                    // HACK
+#endif
+
+#if 0
+#ifdef PX_PLATFORM_MAC
+    // HACK
+    // HACK
+    // HACK
+    static int frame = 20;
+    if(frame-- == 0)
+    {
+      void *img_raster = makeNSImage(o.base(), o.width(), o.height(), 4);
+      void *img_render = makeNSImage(mOffscreen.base(), mOffscreen.width(), mOffscreen.height(), 4);
+      
+      frame = -1;
+    }
+    // HACK
+    // HACK
+    // HACK
+#endif
+#endif
+
+/*
+    if (mTextureName != 0)
+    {
+      glBindTexture(GL_TEXTURE_2D, mTextureName);   TRACK_TEX_CALLS();
+ 
+      // Upload (CRAWL) entire RENTER offscreen to TEXTURE on GPU
+      glTexSubImage2D(GL_TEXTURE_2D, 0, dst_x, dst_y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, mOffscreen.base());
+      
+//      glBindTexture(GL_TEXTURE_2D, GL_NONE); // unbind
+    }
+    
+    TODO:  DFB "blit" equivalent.  Maybe just drawImage() ?
+*/
+    return PX_OK;
+  };
+
+/*
+  // baggage
+  virtual inline int width()                        { return mWidth;  };
+  virtual inline int height()                       { return mHeight; };
+  virtual pxError getOffscreen(pxOffscreen& / *o* /)  { return PX_FAIL; };
+  virtual pxError bindGLTextureAsMask(int / *mLoc* /) { return PX_FAIL; };
+
+  virtual pxError deleteTexture()
+  {
+    if (mTextureName != 0)
+    {
+      glDeleteTextures(1, &mTextureName);
+      mTextureName = 0;
+      mRasterTextureCreated = false;
+      context.adjustCurrentTextureMemorySize(-1 * mWidth * mHeight * 4); // FREE
+    }
+    mInitialized = false;
+    return PX_OK;
+  }
+  
+  virtual pxError bindGLTexture(int tLoc)
+  {
+    glActiveTexture(GL_TEXTURE1);
+    
+    if (!mRasterTextureCreated)
+    {
+      if (!context.isTextureSpaceAvailable(this))
+      {
+        //attempt to free texture memory
+        int64_t textureMemoryNeeded = context.textureMemoryOverflow(this);
+        context.ejectTextureMemory(textureMemoryNeeded);
+        
+        if (!context.isTextureSpaceAvailable(this))
+        {
+          rtLogError("not enough texture memory remaining to create raster texture");
+          mInitialized = false;
+          return PX_FAIL;
+        }
+        else if (!mInitialized)
+        {
+          return PX_NOTINITIALIZED;
+        }
+      }
+      
+      glGenTextures(1, &mTextureName);
+      glBindTexture(GL_TEXTURE_2D, mTextureName);   TRACK_TEX_CALLS();
+      
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, PX_TEXTURE_MIN_FILTER);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, PX_TEXTURE_MAG_FILTER);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+      
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mWidth, mHeight, 0, GL_RGBA,
+                   GL_UNSIGNED_BYTE, mOffscreen.base());
+      
+      context.adjustCurrentTextureMemorySize(mWidth * mHeight * 4); // USE
+      mRasterTextureCreated = true;
+      
+      printf("\n SW TEXTURE >>  glGetError() = %d   >>  mWidth: %d   mHeight: %d\n", glGetError(), mWidth, mHeight);
+    }
+    else
+    {
+      glBindTexture(GL_TEXTURE_2D, mTextureName);   TRACK_TEX_CALLS();
+    }
+    
+    mInitialized = true;
+    
+    glUniform1i(tLoc, 1);
+    return PX_OK;
+  }
+*/
+
+private:
+  int mWidth;
+  int mHeight;
+  
+  pxOffscreen mOffscreen;
+  //GLuint mTextureName;
+  bool mRasterTextureCreated;
+  bool mInitialized;
+}; // CLASS - pxSwTexture
+
+typedef rtRef<pxSwTexture> pxSwTextureRef;
+static pxSwTextureRef  swRasterTexture; // aka "fullScreenTextureSoftware"
+void onDecodeComplete(void* context, void* data)
+{
+  DecodeImageData* imageData = (DecodeImageData*)context;
+  pxOffscreen* decodedOffscreen = (pxOffscreen*)data;
+  
+  if (imageData != NULL && decodedOffscreen != NULL)
+  {
+    // Populate 'textureOffscreen' with decoded image data.
+    //
+    pxTextureOffscreenRef texture = imageData->textureOffscreen;
+    if (texture.getPtr() != NULL)
+    {
+      texture->createTexture(*decodedOffscreen);
+    }
+  }
+
+  if (decodedOffscreen != NULL)
+  {
+    delete decodedOffscreen;
+    decodedOffscreen = NULL;
+    data = NULL;
+  }
+
+  if (imageData != NULL)
+  {
+    delete imageData;
+    imageData = NULL;
+  }
+}
+
+void decodeTextureData(void* data)
+{
+  if (data != NULL)
+  {
+    DecodeImageData* imageData = (DecodeImageData*)data;
+    
+    if(imageData == NULL)
+    {
+      rtLogError(" decodeTextureData() - imageData == NULL ... unexepcted");
+      return;
+    }
+    
+    char *compressedImageData = NULL;
+    size_t compressedImageDataSize = 0;
+    
+    imageData->textureOffscreen->compressedDataWeakReference(compressedImageData, compressedImageDataSize);
+    
+    if (compressedImageData != NULL)
+    {
+      pxOffscreen *decodedOffscreen = new pxOffscreen();
+
+      pxLoadImage(compressedImageData, compressedImageDataSize, *decodedOffscreen); // background image decode
+      if (gUIThreadQueue)
+      {
+        gUIThreadQueue->addTask(onDecodeComplete, data, decodedOffscreen);
+      }             // queue image onto UI thread. Task will 'delete' data.
+    }
+    else
+    {
+      if (gUIThreadQueue)
+      {
+        gUIThreadQueue->addTask(onDecodeComplete, data, NULL); // Just clean up !
+      }
+    }
+  }
+}
+
+void onOffscreenCleanupComplete(void* context, void*)
+{
+  DecodeImageData* imageData = (DecodeImageData*)context;
+  if (imageData != NULL)
+  {
+    delete imageData;
+    imageData = NULL;
+  }
+}
+
+void cleanupOffscreen(void* data)
+{
+  if (data != NULL)
+  {
+    DecodeImageData* imageData = (DecodeImageData*)data;
+
+    if (imageData->textureOffscreen.getPtr() != NULL)
+    {
+      imageData->textureOffscreen->freeOffscreenData();
+    }
+
+    if (gUIThreadQueue)
+    {
+      gUIThreadQueue->addTask(onOffscreenCleanupComplete, data, NULL);
+    }
+  }
+}
 
 //====================================================================================================================================================================================
 
@@ -843,19 +1262,6 @@ public:
     }
 #endif
 
-      // TODO Moved this to bindTexture because of more pain from JS thread calls
-//      createTexture(w, h, iw, ih);
-
-//      //JUNK
-//       if(mTexture)
-//       {
-//          boundTexture = mTexture;
-
-//          mTexture->Dump(mTexture,
-//                        "/home/hfitzpatrick/projects/xre2/image_dumps",
-//                        "image_alpha_");
-//       }
-//      //JUNK
   }
 
   ~pxTextureAlpha()
@@ -906,7 +1312,8 @@ public:
     DFB_CHECK(mTexture->SetRenderOptions(mTexture,
             DFBSurfaceRenderOptions(DSRO_MATRIX /*| DSRO_ANTIALIAS*/) ));
 
-    context.adjustCurrentTextureMemorySize(iw*ih);
+    int64_t bytes = getSurfaceByteSize(mTexture);
+    context.adjustCurrentTextureMemorySize( bytes );
 
     mInitialized = true;
   }
@@ -917,9 +1324,11 @@ public:
 
     if (mTexture != NULL)
     {
+      int64_t bytes = getSurfaceByteSize(mTexture);
+      context.adjustCurrentTextureMemorySize( -1 * bytes ); // RELEASE: pxTextureAlpha (ALPHA)
+
       mTexture->Release(mTexture);
       mTexture = NULL;
-      context.adjustCurrentTextureMemorySize(-1*mImageWidth*mImageHeight);
     }
     mInitialized = false;
     return PX_OK;
@@ -1001,19 +1410,17 @@ inline pxError draw_SOLID(int resW, int resH, float* matrix, float alpha,
   // TRANSPARENT
   if(!color || color[3] == 0.0 || alpha == 0.0)
   {
-    return;
+    return PX_OK;
   }
 
   // Switch to COLORIZE for Glyphs...
   DFB_CHECK(boundFramebuffer->SetBlittingFlags(boundFramebuffer,
-        DFBSurfaceBlittingFlags( DSBLIT_BLEND_ALPHACHANNEL | DSBLIT_COLORIZE ) )); // | DSBLIT_BLEND_COLORALPHA | DSDRAW_SRC_PREMULTIPLY
-
-   boundFramebuffer->SetDrawingFlags(boundFramebuffer, DSDRAW_BLEND);
+        DFBSurfaceBlittingFlags( DSBLIT_BLEND_ALPHACHANNEL | DSBLIT_COLORIZE | DSBLIT_BLEND_COLORALPHA | DSDRAW_SRC_PREMULTIPLY) ));
 
   DFB_CHECK(boundFramebuffer->SetColor( boundFramebuffer, color[0] * 255.0, // RGBA
                                                           color[1] * 255.0,
                                                           color[2] * 255.0,
-                                                          color[3] * 255.0 * alpha));
+                                               /*color[3] */ alpha * 255.0 ));
 #ifndef DEBUG_SKIP_BLIT
   DFB_CHECK(boundFramebuffer->Blit(boundFramebuffer, boundTexture, NULL, dst.x , dst.y));
 #else
@@ -1063,9 +1470,11 @@ inline pxError draw_TEXTURE(int resW, int resH, float* matrix, float alpha,
 // MASK
 inline pxError draw_MASK(int resW, int resH, float* matrix, float alpha,
                       DFBRectangle /*&src*/, DFBRectangle /*&dst*/,
-                      pxTextureRef texture, pxTextureRef mask)
+                      pxTextureRef texture, pxTextureRef mask,
+                      pxConstantsMaskOperation::constants maskOp /*= pxConstantsMaskOperation::NORMAL*/)
 {
   (void) resW; (void) resH; (void) matrix; (void) alpha; (void) texture;
+  (void) maskOp; // prevent warning
 
   if (mask->bindGLTextureAsMask(0) != PX_OK)  // SETS >> 'boundTextureMask'
   {
@@ -1129,6 +1538,9 @@ inline pxError draw_MASK(int resW, int resH, float* matrix, float alpha,
 
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Output....
+
+     // TODO:  maskOp will affect the blending functions here.
+
       DFB_CHECK(boundFramebuffer->SetBlittingFlags(boundFramebuffer,
             DFBSurfaceBlittingFlags( DSBLIT_BLEND_ALPHACHANNEL) ));
 
@@ -1293,9 +1705,11 @@ static void drawRectOutline(float x, float y, float w, float h, float lw, const 
 static void drawImageTexture(float x, float y, float w, float h, pxTextureRef texture,
                              pxTextureRef mask, bool useTextureDimsAlways, float* color, // default: "color = BLACK"
                              pxConstantsStretch::constants xStretch,
-                             pxConstantsStretch::constants yStretch)
+                             pxConstantsStretch::constants yStretch,
+                             pxConstantsMaskOperation::constants maskOp /*= pxConstantsMaskOperation::constants::NORMAL*/)
 {
   // args are tested at call site...
+  (void) maskOp; // prevent warning
 
   if (boundFramebuffer == NULL)
   {
@@ -1340,7 +1754,7 @@ static void drawImageTexture(float x, float y, float w, float h, pxTextureRef te
   float tw;
   switch(xStretch) {
   case pxConstantsStretch::NONE:
-    tw = iw/w;
+    tw = w/iw;
     break;
   case pxConstantsStretch::STRETCH:
     tw = 1.0;
@@ -1350,17 +1764,16 @@ static void drawImageTexture(float x, float y, float w, float h, pxTextureRef te
     break;
   }
 
-  float tb = 0;
   float th;
   switch(yStretch) {
   case pxConstantsStretch::NONE:
-    th = ih/h;
+    th = h/ih;
     break;
   case pxConstantsStretch::STRETCH:
     th = 1.0;
     break;
   case pxConstantsStretch::REPEAT:
-#if 0 // PX_TEXTURE_ANCHOR_BOTTOM
+#if 1 // PX_TEXTURE_ANCHOR_BOTTOM
     th = h/ih;
 #else
 
@@ -1414,6 +1827,9 @@ static void drawImageTexture(float x, float y, float w, float h, pxTextureRef te
   // Enable OPACITY ??
   if( (gAlpha * color[3]) < 0.99)
   {
+    boundFramebuffer->SetDrawingFlags(boundFramebuffer, DSDRAW_BLEND);
+    boundFramebuffer->SetColor( boundFramebuffer, 255,255,255, gAlpha * 255 ); // RGBA
+
     boundFramebuffer->SetBlittingFlags(boundFramebuffer,
          DFBSurfaceBlittingFlags( DSBLIT_BLEND_ALPHACHANNEL |  DSBLIT_BLEND_COLORALPHA) );
   }
@@ -1428,52 +1844,39 @@ static void drawImageTexture(float x, float y, float w, float h, pxTextureRef te
   boundFramebuffer->SetDstBlendFunction(boundFramebuffer, DSBF_INVSRCALPHA);
 #endif
 
-  // Opacity ?
-  if(gAlpha < 0.99)
-  {
-    boundFramebuffer->SetDrawingFlags(boundFramebuffer, DSDRAW_BLEND);
-    boundFramebuffer->SetColor( boundFramebuffer, 255,255,255, gAlpha * 255 ); // RGBA
-  }
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   static float blackColor[4] = {0.0, 0.0, 0.0, 1.0};
 
   if (mask.getPtr() != NULL)
   {
-      if (textureBindFailure || draw_MASK(gResW, gResH, gMatrix.data(), gAlpha, src, dst, texture, mask) != PX_OK)
+      if (textureBindFailure || draw_MASK(gResW, gResH, gMatrix.data(), gAlpha, src, dst, texture, mask, maskOp) != PX_OK)
       {
         drawRect2(0, 0, iw, ih, blackColor);
       }
   }
   else
+  if (texture->getType() != PX_TEXTURE_ALPHA)
   {
-    if (texture->getType() != PX_TEXTURE_ALPHA)
+    if (textureBindFailure || draw_TEXTURE(gResW, gResH, gMatrix.data(), gAlpha, src, dst, texture, xStretch, yStretch) != PX_OK)
     {
-      if (textureBindFailure || draw_TEXTURE(gResW, gResH, gMatrix.data(), gAlpha, src, dst, texture, xStretch, yStretch) != PX_OK)
-      {
-        drawRect2(0, 0, iw, ih, blackColor);
-      }
+      drawRect2(0, 0, iw, ih, blackColor);
     }
-    else if (textureBindFailure || texture->getType() == PX_TEXTURE_ALPHA)
-    {
-      float colorPM[4];
-      premultiply(colorPM, color);
+  }
+  else // PX_TEXTURE_ALPHA
+  {
+    float colorPM[4];
+    premultiply(colorPM, color);
 
-      if (draw_SOLID(gResW, gResH, gMatrix.data(), gAlpha, src, dst, texture, color) != PX_OK) // colorPM
-      {
-        drawRect2(0, 0, iw, ih, blackColor);
-      }
-    }
-    else
+    if (draw_SOLID(gResW, gResH, gMatrix.data(), gAlpha, src, dst, texture, colorPM) != PX_OK)
     {
-      rtLogError("Unhandled case");
+      drawRect2(0, 0, iw, ih, blackColor);
     }
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Disable OPACITY ??
-  if(gAlpha < 0.99)
+  if( (gAlpha * color[3]) < 0.99)
   {
     boundFramebuffer->SetDrawingFlags(boundFramebuffer, DSDRAW_NOFX);
 
@@ -1693,9 +2096,25 @@ void pxContext::init()
   DFB_CHECK(boundFramebuffer->SetRenderOptions(boundFramebuffer,
           DFBSurfaceRenderOptions(DSRO_MATRIX /*| DSRO_ANTIALIAS*/) ));
 
-  setTextureMemoryLimit(PXSCENE_DEFAULT_TEXTURE_MEMORY_LIMIT_IN_BYTES );
+  rtValue val;
+  if (RT_OK == rtSettings::instance()->value("enableTextureMemoryMonitoring", val))
+  {
+    mEnableTextureMemoryMonitoring = val.toString().compare("true") == 0;
+  }
+  if (RT_OK == rtSettings::instance()->value("textureMemoryLimitInMb", val))
+  {
+    setTextureMemoryLimit((int64_t)val.toInt32() * (int64_t)1024 * (int64_t)1024);
+  }
 
   rtLogSetLevel(RT_LOG_INFO); // LOG LEVEL
+
+  std::srand(unsigned (std::time(0)));
+}
+
+
+void pxContext::term()  // clean up statics 
+{
+  swRasterTexture = NULL;
 }
 
 void pxContext::setSize(int w, int h)
@@ -1756,20 +2175,25 @@ void pxContext::clear(int /*w*/, int /*h*/, float* fillColor )
 
 void pxContext::clear(int left, int top, int right, int bottom)
 {
-  // TODO - use FillRect(WxH, rgbClear) instead ?   Allow for a WxH clear... versus whole surface
-  //
-#ifndef DEBUG_SKIP_CLEAR
-  DFB_CHECK( boundFramebuffer->Clear( boundFramebuffer, 0x00, 0x00, 0x00, 0x00 ) ); // TRANSPARENT
-#else
-  DFB_CHECK( boundFramebuffer->Clear( boundFramebuffer, 0x00, 0x00, 0x8F, 0xFF ) );  //  CLEAR_BLUE   << JUNK
+#ifdef PX_DIRTY_RECTANGLES
+  currentFramebuffer->setDirtyRectangle(left, top, right+left, bottom+top);
+  currentFramebuffer->enableDirtyRectangles(true);
 #endif
 
-  currentFramebuffer->setDirtyRectangle(left, gResH-top-bottom, right, bottom);
-  currentFramebuffer->enableDirtyRectangles(true);
+  right = right+left;
+  bottom = bottom+top;
+  left = left<0 ? 0 : left;
+  top = top < 0 ? 0 : top;
+  right = right > gResW ? gResW : right;
+  bottom = bottom > gResH ? gResH : bottom;
+  
+  DFBRegion clip= { left, top, right, bottom };
+  boundFramebuffer->SetClip( boundFramebuffer, &clip );
+}
 
-  //map form screen to window coordinates
-//  glScissor(left, gResH-top-bottom, right, bottom);
-  //glClear(GL_COLOR_BUFFER_BIT);
+void pxContext::enableClipping(bool)
+{
+  //not needed for DFB
 }
 
 
@@ -1904,7 +2328,7 @@ float pxContext::getAlpha()
   return gAlpha;
 }
 
-pxContextFramebufferRef pxContext::createFramebuffer(int width, int height)
+pxContextFramebufferRef pxContext::createFramebuffer(int width, int height, bool /*antiAliasing*/)
 {
   pxContextFramebuffer *fbo     = new pxContextFramebuffer();
   pxFBOTexture         *texture = new pxFBOTexture();
@@ -1955,13 +2379,14 @@ pxError pxContext::setFramebuffer(pxContextFramebufferRef fbo)
 #ifdef PX_DIRTY_RECTANGLES
     if (currentFramebuffer->isDirtyRectanglesEnabled())
     {
-//      glEnable(GL_SCISSOR_TEST);
       pxRect dirtyRect = currentFramebuffer->dirtyRectangle();
-//      glScissor(dirtyRect.left(), dirtyRect.top(), dirtyRect.right(), dirtyRect.bottom());
+      DFBRegion clip= { dirtyRect.left(), dirtyRect.top(), dirtyRect.right(), dirtyRect.bottom() };
+      boundFramebuffer->SetClip( boundFramebuffer, &clip );
     }
     else
     {
-//      glDisable(GL_SCISSOR_TEST);
+      DFBRegion clip= { 0, 0, gResW, gResH };
+      boundFramebuffer->SetClip( boundFramebuffer, &clip );
     }
 #endif //PX_DIRTY_RECTANGLES
     return PX_OK;
@@ -1976,13 +2401,14 @@ pxError pxContext::setFramebuffer(pxContextFramebufferRef fbo)
 #ifdef PX_DIRTY_RECTANGLES
   if (currentFramebuffer->isDirtyRectanglesEnabled())
   {
-//    glEnable(GL_SCISSOR_TEST);
     pxRect dirtyRect = currentFramebuffer->dirtyRectangle();
-//    glScissor(dirtyRect.left(), dirtyRect.top(), dirtyRect.right(), dirtyRect.bottom());
+    DFBRegion clip= { dirtyRect.left(), dirtyRect.top(), dirtyRect.right(), dirtyRect.bottom() };
+    boundFramebuffer->SetClip( boundFramebuffer, &clip );
   }
   else
   {
-//    glDisable(GL_SCISSOR_TEST);
+     DFBRegion clip= { 0, 0, gResW, gResH };
+     boundFramebuffer->SetClip( boundFramebuffer, &clip );
   }
 #endif //PX_DIRTY_RECTANGLES
 
@@ -2005,13 +2431,14 @@ void pxContext::enableDirtyRectangles(bool enable)
   currentFramebuffer->enableDirtyRectangles(enable);
   if (enable)
   {
-//    glEnable(GL_SCISSOR_TEST);
-//    pxRect dirtyRect = currentFramebuffer->dirtyRectangle();
-//    glScissor(dirtyRect.left(), dirtyRect.top(), dirtyRect.right(), dirtyRect.bottom());
+    pxRect dirtyRect = currentFramebuffer->dirtyRectangle();
+    DFBRegion clip= { dirtyRect.left(), dirtyRect.top(), dirtyRect.right(), dirtyRect.bottom() };
+    boundFramebuffer->SetClip( boundFramebuffer, &clip );
   }
   else
   {
-//    glDisable(GL_SCISSOR_TEST);
+    DFBRegion clip= { 0, 0, gResW, gResH };
+    boundFramebuffer->SetClip( boundFramebuffer, &clip );
   }
 }
 
@@ -2077,14 +2504,56 @@ void pxContext::drawImage9(float w, float h, float x1, float y1,
     return;
   }
 
+  texture->setLastRenderTick(gRenderTick);
+
   drawImage92(0, 0, w, h, x1, y1, x2, y2, texture);
 }
+
+void pxContext::drawImage9Border(float w, float h, 
+                  float /*bx1*/, float /*by1*/, float /*bx2*/, float /*by2*/,
+                  float ix1, float iy1, float ix2, float iy2,
+                  bool drawCenter, float* color,
+                  pxTextureRef texture)
+{
+  // TRANSPARENT / DIMENSIONLESS
+  if(gAlpha == 0.0 || w <= 0.0 || h <= 0.0)
+  {
+    return;
+  }
+
+  // TEXTURELESS
+  if (texture.getPtr() == NULL)
+  {
+    return;
+  }
+
+  texture->setLastRenderTick(gRenderTick);
+
+  //TODO - add drawImage9Border2 method
+  drawImage92(0, 0, w, h, ix1, iy1, ix2, iy2, texture);
+}
+
+// convenience method
+void pxContext::drawImageMasked(float x, float y, float w, float h,
+                                pxConstantsMaskOperation::constants maskOp,
+                                pxTextureRef t, pxTextureRef mask)
+{
+  this->drawImage(x, y, w, h, t , mask,
+                    /* useTextureDimsAlways = */ true, /*color = */ NULL,      // DEFAULT
+                    /*             stretchX = */ pxConstantsStretch::STRETCH,  // DEFAULT
+                    /*             stretchY = */ pxConstantsStretch::STRETCH,  // DEFAULT
+                    /*      downscaleSmooth = */ false,                        // DEFAULT
+                                                 maskOp                        // PARAMETER
+                    );
+};
 
 void pxContext::drawImage(float x, float y, float w, float h,
                         pxTextureRef t, pxTextureRef mask,
                         bool useTextureDimsAlways, float* color,
                         pxConstantsStretch::constants stretchX,
-                        pxConstantsStretch::constants stretchY)
+                        pxConstantsStretch::constants stretchY,
+                        bool downscaleSmooth,
+                        pxConstantsMaskOperation::constants maskOp     /* = pxConstantsMaskOperation::NORMAL */ )
 {
 #ifdef DEBUG_SKIP_IMAGE
 #warning "DEBUG_SKIP_IMAGE enabled ... Skipping "
@@ -2103,9 +2572,26 @@ void pxContext::drawImage(float x, float y, float w, float h,
     return;
   }
 
+  t->setLastRenderTick(gRenderTick);
+
+  if (mask.getPtr() != NULL)
+  {
+    mask->setLastRenderTick(gRenderTick);
+  }
+
+  if (stretchX < pxConstantsStretch::NONE || stretchX > pxConstantsStretch::REPEAT)
+  {
+    stretchX = pxConstantsStretch::NONE;
+  }
+
+  if (stretchY < pxConstantsStretch::NONE || stretchY > pxConstantsStretch::REPEAT)
+  {
+    stretchY = pxConstantsStretch::NONE;
+  }
+
   float black[4] = {0,0,0,1};
   drawImageTexture(x, y, w, h, t, mask, useTextureDimsAlways,
-                  color? color : black, stretchX, stretchY);
+                  color? color : black, stretchX, stretchY, maskOp);
 }
 
 void pxContext::drawDiagRect(float x, float y, float w, float h, float* color)
@@ -2163,6 +2649,46 @@ void pxContext::drawDiagRect(float x, float y, float w, float h, float* color)
   DFB_CHECK (boundFramebuffer->DrawRectangle(boundFramebuffer, x, y, w, h));
 }
 
+void pxContext::drawOffscreen(float src_x, float src_y,
+                              float dst_x, float dst_y,
+                              float w,     float h,
+                              pxOffscreen  &offscreen)
+{
+  // TRANSPARENT / DIMENSIONLESS
+  if(gAlpha == 0.0 || w <= 0.0 || h <= 0.0)
+  {
+    return;
+  }
+  
+  // BACKING
+  if (swRasterTexture.getPtr() == NULL)
+  {
+    // Lazy init...
+    swRasterTexture = pxSwTextureRef(new pxSwTexture());
+    swRasterTexture->init(1280, 720); // HACK - hard coded for now.
+
+   // return;
+  }
+  
+  swRasterTexture->copy(src_x, src_y,
+                        dst_x, dst_y, w, h, offscreen);
+  
+  pxTextureRef nullMask;
+  float clear[4] = {0,0,0,0};
+
+  pxTextureRef texture( (pxTexture *) swRasterTexture.getPtr());
+  
+  drawImage(dst_x, dst_y, w, h, texture, nullMask, true, clear,
+            pxConstantsStretch::NONE, pxConstantsStretch::NONE);
+  
+  ///// CRAWL approach only
+//  pxRect rect(src_x, src_y, src_x + w, src_y + h);
+  pxRect rect(0,0,1280,720);
+  
+  swRasterTexture->clear(rect);
+  offscreen.fill(pxClear);
+}
+
 void pxContext::drawDiagLine(float x1, float y1, float x2, float y2, float* color)
 {
 #ifdef DEBUG_SKIP_DIAG_LINE
@@ -2215,6 +2741,12 @@ void pxContext::drawDiagLine(float x1, float y1, float x2, float y2, float* colo
 pxTextureRef pxContext::createTexture(pxOffscreen& o)
 {
   pxTextureOffscreen* offscreenTexture = new pxTextureOffscreen(o);
+  return offscreenTexture;
+}
+
+pxTextureRef pxContext::createTexture(pxOffscreen& o, const char *compressedData, size_t compressedDataSize)
+{
+  pxTextureOffscreen* offscreenTexture = new pxTextureOffscreen(o, compressedData, compressedDataSize);
   return offscreenTexture;
 }
 
@@ -2336,7 +2868,7 @@ bool pxContext::isObjectOnScreen(float /*x*/, float /*y*/, float /*width*/, floa
 #endif
 }
 
-void pxContext::adjustCurrentTextureMemorySize(int64_t changeInBytes)
+void pxContext::adjustCurrentTextureMemorySize(int64_t changeInBytes, bool allowGarbageCollect)
 {
   if (changeInBytes == 0)
   {
@@ -2354,15 +2886,17 @@ void pxContext::adjustCurrentTextureMemorySize(int64_t changeInBytes)
   {
      // Update Percentage
      pc = ((float) mCurrentTextureMemorySizeInBytes /
-           (float) mTextureMemoryLimitInBytes       ) * 100.0;
+           (float) mTextureMemoryLimitInBytes       ) * 100.0f;
+  
+    // rtLogError("###  Texture Memory: %3.1f%%   (Used:  %lld bytes)  adj:  %lld bytes ", 
+    //    pc, mCurrentTextureMemorySizeInBytes, changeInBytes);
   }
-
-#ifdef ENABLE_PX_SCENE_TEXTURE_USAGE_MONITORING
-  if (pc >= 100.0f)
+  //rtLogDebug("the current texture size: %" PRId64 ".", mCurrentTextureMemorySizeInBytes);
+  if (mEnableTextureMemoryMonitoring && allowGarbageCollect && pc >= 100.0f)
   {
-    rtLogDebug("\n ###  Texture Memory: %3.2f %%  <<<   GARBAGE COLLECT", pc);
+    rtLogDebug("\n ###  Texture Memory: %3.1f %%  <<<   GARBAGE COLLECT", pc);
 #ifdef RUNINMAIN
-    script.garbageCollect();
+    script.collectGarbage();
 #else
     uv_async_send(&gcTrigger);
 #endif
@@ -2371,7 +2905,6 @@ void pxContext::adjustCurrentTextureMemorySize(int64_t changeInBytes)
   // {
   //     rtLogDebug("\n ###  Texture Memory: %3.2f %% ", pc);
   // }
-#endif // ENABLE_PX_SCENE_TEXTURE_USAGE_MONITORING
 }
 
 void pxContext::setTextureMemoryLimit(int64_t textureMemoryLimitInBytes)
@@ -2379,21 +2912,71 @@ void pxContext::setTextureMemoryLimit(int64_t textureMemoryLimitInBytes)
   mTextureMemoryLimitInBytes = textureMemoryLimitInBytes;
 }
 
-bool pxContext::isTextureSpaceAvailable(pxTextureRef texture)
+bool pxContext::isTextureSpaceAvailable(pxTextureRef texture, bool allowGarbageCollect)
 {
-#ifdef ENABLE_PX_SCENE_TEXTURE_USAGE_MONITORING
+  if (!mEnableTextureMemoryMonitoring)
+    return true;
+
   int textureSize = (texture->width()*texture->height()*4);
   if ((textureSize + mCurrentTextureMemorySizeInBytes) >
-             (mTextureMemoryLimitInBytes + PXSCENE_DEFAULT_TEXTURE_MEMORY_LIMIT_THRESHOLD_PADDING_IN_BYTES))
+             (mTextureMemoryLimitInBytes + mTextureMemoryLimitThresholdPaddingInBytes))
   {
+    if (allowGarbageCollect)
+    {
+      #ifdef RUNINMAIN
+          script.collectGarbage();
+      #else
+          uv_async_send(&gcTrigger);
+      #endif
+    }
     return false;
+  }
+  return true;
+}
+
+int64_t pxContext::currentTextureMemoryUsageInBytes()
+{
+  return mCurrentTextureMemorySizeInBytes;
+}
+
+int64_t pxContext::textureMemoryOverflow(pxTextureRef texture)
+{
+  int64_t textureSize = (texture->width()*texture->height()*4);
+  int64_t availableBytes = mTextureMemoryLimitInBytes - mCurrentTextureMemorySizeInBytes;
+  if (textureSize > availableBytes)
+  {
+    return (textureSize - availableBytes);
+  }
+  return 0;
+}
+
+int64_t pxContext::ejectTextureMemory(int64_t bytesRequested, bool forceEject)
+{
+  if (!mEnableTextureMemoryMonitoring)
+    return 0;
+
+  int64_t beforeTextureMemoryUsage = context.currentTextureMemoryUsageInBytes();
+  if (!forceEject)
+  {
+    ejectNotRecentlyUsedTextureMemory(bytesRequested, mEjectTextureAge);
   }
   else
   {
-    return true;
+    ejectNotRecentlyUsedTextureMemory(bytesRequested, 0);
   }
-#endif //ENABLE_PX_SCENE_TEXTURE_USAGE_MONITORING
-  return true;
+  int64_t afterTextureMemoryUsage = context.currentTextureMemoryUsageInBytes();
+  return (beforeTextureMemoryUsage-afterTextureMemoryUsage);
+}
+
+pxError pxContext::setEjectTextureAge(uint32_t age)
+{
+  mEjectTextureAge = age;
+  return PX_OK;
+}
+
+pxError pxContext::enableInternalContext(bool)
+{
+  return PX_OK;
 }
 
 //====================================================================================================================================================================================
@@ -2407,19 +2990,19 @@ static void ReportSurfaceInfo(char* desc, IDirectFBSurface* surf)
      DFBSurfacePixelFormat   fmt = 0;
      DFBSurfaceCapabilities caps = 0;
 
-     printf("\n-------------------------------------------------------------\n");
-     printf("Surface info for '%s': %p\n", desc ? desc:"(no name)", surf);
+     rtLogWarn("\n-------------------------------------------------------------\n");
+     rtLogWarn("Surface info for '%s': %p\n", desc ? desc:"(no name)", surf);
 
      surf->GetSize(surf, &w, &h);
-     printf("  WxH: %d x %d\n", w, h);
+     rtLogWarn("  WxH: %d x %d\n", w, h);
 
      surf->GetPixelFormat(surf, &fmt);
-     printf("  fmt: %d (0x%x) = %s\n", fmt, fmt, pix2str(fmt) );
+     rtLogWarn("  fmt: %d (0x%x) = %s\n", fmt, fmt, pix2str(fmt) );
 
      surf->GetCapabilities(surf, &caps);
-     printf(" caps: %d (0x%x) = %s\n", caps, caps, caps2str(caps) );
+     rtLogWarn(" caps: %d (0x%x) = %s\n", caps, caps, caps2str(caps) );
 
-     printf("\n");
+     rtLogWarn("\n");
 }
 
 //====================================================================================================================================================================================
@@ -2548,7 +3131,7 @@ static std::string DFBAccelerationMask2str(DFBAccelerationMask m)
 
 static void DFBAccelerationTest(IDirectFBSurface  *dst, IDirectFBSurface  *src)
 {
-  printf("\n #############  Enter DFBAccelerationTest()\n"); fflush(stdout);
+  rtLogDebug("\n #############  Enter DFBAccelerationTest()\n"); fflush(stdout);
 
   // DFBAccelerationMask ... see directfb.h
 
@@ -2563,15 +3146,15 @@ static void DFBAccelerationTest(IDirectFBSurface  *dst, IDirectFBSurface  *src)
   int k = 0;
   do
   {
-    printf("\n ## HW:   %20s - %6s ... H/W Accelerated",
+    rtLogDebug("\n ## HW:   %20s - %6s ... H/W Accelerated",
         DFBAccelerationMask2str(keys[k]).c_str(),
         ((mask & keys[k]) == keys[k]) ? "IS" : "IS NOT");
   }
   while(keys[k++] != DFXL_ALL_BLIT);
 
-  printf("\n\n");
+  rtLogDebug("\n\n");
 
-  printf("\n #############  Exit DFBAccelerationTest()\n"); fflush(stdout);
+  rtLogDebug("\n #############  Exit DFBAccelerationTest()\n"); fflush(stdout);
 }
 #endif
 

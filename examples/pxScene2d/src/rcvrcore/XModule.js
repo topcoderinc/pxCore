@@ -1,3 +1,21 @@
+/*
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
 "use strict";
 
 var hasExtension = require('rcvrcore/utils/FileUtils').hasExtension;
@@ -5,7 +23,7 @@ var hasExtension = require('rcvrcore/utils/FileUtils').hasExtension;
 var Logger = require('rcvrcore/Logger').Logger;
 var log = new Logger('XModule');
 
-function XModule(name, appSceneContext, fromJarFile, basePath) {
+function XModule(name, appSceneContext, basePath, jarName) {
   log.message(5, "Create new XModule for " + name);
   this.name = name;
   this.appSandbox = null;
@@ -18,44 +36,75 @@ function XModule(name, appSceneContext, fromJarFile, basePath) {
   this.appSceneContext = appSceneContext;
   this.imports = {};
   this.log = null;
-  this.fromJarFile = fromJarFile;
   this.basePath = basePath;
+  this.jarName = jarName;
   this.importReplacementMap = {};
 }
 
 XModule.prototype.load = function(uri) {
   global.exports = self.exports;
   global.module = self;
-}
+};
 
 XModule.prototype.freeResources = function() {
+  this.name = null;
   this.appSandbox = null;
   this.moduleReadyPromise = null;
+  for(var key in this.exports) {
+    this.exports[key] = null;
+    delete this.exports[key];
+  }
   this.exports = null;
+  for(var key in this.pendingIncludes) {
+    this.pendingIncludes[key] = null;
+    delete this.pendingIncludes[key];
+  }
   this.pendingIncludes = null;
+  if ((undefined != this.moduleNameList) && (null != this.moduleNameList))
+  {
+    var nmodules = this.moduleNameList.length;
+    for (var i=0; i<nmodules; i++)
+    {
+      this.moduleNameList.pop();
+    }
+  }
   this.moduleNameList = null;
+  if ((undefined != this.promises) && (null != this.promises))
+  {
+    var npromises = this.promises.length;
+    for (var i=0; i<npromises; i++)
+    {
+      this.promises.pop();
+    }
+  }
   this.promises = null;
   this.moduleData = null;
   this.appSceneContext = null;
   this.imports = null;
   this.log = null;
   this.importReplacementMap = null;
-}
+  this.basePath = null;
+  this.jarName = null;
+};
 
 XModule.prototype.getBasePath = function() {
   return this.basePath;
-}
+};
+
+XModule.prototype.getJarName = function() {
+  return this.jarName;
+};
 
 XModule.prototype.initSandbox = function(otherSandbox) {
   this.appSandbox = otherSandbox;
   this.log = new Logger(this.name);
-}
+};
 
 XModule.prototype.include = function(filePath) {
   var rtnPromise = this.appSceneContext.include(filePath, this);
   this.pendingIncludes[filePath] = rtnPromise;
   return rtnPromise;
-}
+};
 
 function importModule(requiredModuleSet, params) {
   return this.importModule(requiredModuleSet, params);
@@ -69,14 +118,14 @@ XModule.prototype.importModule = function(requiredModuleSet, params) {
     }) ,
       function failureCallback(error) {
         reject(error);
-      }
+      };
   } );
-}
+};
 
 XModule.prototype._importModule = function(requiredModuleSet, readyCallBack, failedCallback, params) {
   var isSingleStringImportType = false;
 
-  if( readyCallBack == 'undefined' ) {
+  if( readyCallBack === undefined ) {
     console.trace("WARNING: " + 'prepareModule was did not have resolutionCallback parameter: USAGE: prepareModule(requiredModules, readyCallback, [failedCallback])');
   }
 
@@ -100,9 +149,9 @@ XModule.prototype._importModule = function(requiredModuleSet, readyCallBack, fai
 
   }
 
-  if( requiredModules.length == 0 ) {
+  if( requiredModules.length === 0 ) {
     log.message(5, "XModule:  No includes are required for " + this.name);
-    if( readyCallBack != null && readyCallBack != 'undefined' ) {
+    if( readyCallBack !== null && readyCallBack !== undefined ) {
       readyCallBack();
     }
     this.moduleReadyPromise = null;
@@ -129,7 +178,7 @@ XModule.prototype._importModule = function(requiredModuleSet, readyCallBack, fai
 
     if( this.appSandbox.importTracking.hasOwnProperty(requiredModules[k]) ) {
       var reqArr = this.appSandbox.importTracking[requiredModules[k]];
-      if( reqArr.length != 0) {
+      if( reqArr.length !== 0) {
         for(var j = 0; j < reqArr.length; ++j) {
           if( bPath === reqArr[j]) {
             console.trace("Found circular dependency: " + bPath + " requires " + requiredModules[k] + " which requires " + bPath);
@@ -145,7 +194,7 @@ XModule.prototype._importModule = function(requiredModuleSet, readyCallBack, fai
 
   // Create a promise that will be fulfilled when all includes/imports have been completed
   var promise = new Promise(function(moduleBuildResolve, moduleBuildReject) {
-    if (requiredModules != 'undefined') {
+    if (requiredModules !== undefined) {
       for (var k = 0; k < requiredModules.length; ++k) {
         var ipromise = _this.include(requiredModules[k]);
         _this.moduleNameList[k] = requiredModules[k];
@@ -164,14 +213,39 @@ XModule.prototype._importModule = function(requiredModuleSet, readyCallBack, fai
       } else {
         for (var k = 0; k < _this.moduleNameList.length; ++k) {
           ///_this.appSandbox[pathToNameMap[exports[k][1]]] = exports[k][0];
-          _this.moduleData[_this.moduleNameList[k]] = exports[k][0];
-          exportsArr[k] = exports[k][0];
+          // commented below because, these variables are not used anymore
+          // And these variables holds complete imported JS module data, taking more memory
+          //_this.moduleData[_this.moduleNameList[k]] = exports[k][0];
+          //exportsArr[k] = exports[k][0];
           exportsMap[pathToNameMap[exports[k][1]]] = exports[k][0];
+          //since include file is received, remove it from pendingincludes list
+          _this.pendingIncludes[exports[k][1]] = null;
+          delete _this.pendingIncludes[exports[k][1]];
+
           //console.log("TJC: " + _this.name + " gets: module[" + _this.moduleNameList[k] + "]: " + exports[k][0]);
         }
       }
+      //remove the array of modules added for tracking in sandbox
+      var bPath;
+      if( hasExtension(_this.name, '.js') ) {
+        bPath = _this.name.substring(0, _this.name.lastIndexOf('.js'));
+      } else {
+        bPath = _this.name;
+      }
+
+      var imports = _this.appSandbox.importTracking[bPath];
+
+      if(imports !== undefined && imports !== null && imports.length !== undefined) {
+        var nmodules = _this.appSandbox.importTracking[bPath].length;
+        for (var modindex=0; modindex<nmodules; modindex++)
+        {
+          _this.appSandbox.importTracking[bPath].pop();
+        }
+        delete _this.appSandbox.importTracking[bPath];
+      }
+
       log.message(7, "XMODULE ABOUT TO NOTIFY [" + _this.name + "] that all its imports are Ready");
-      if( readyCallBack != null && readyCallBack != 'undefined' ) {
+      if( readyCallBack !== null && readyCallBack !== undefined ) {
         readyCallBack(exportsMap);
       }
       moduleBuildResolve();
@@ -179,7 +253,7 @@ XModule.prototype._importModule = function(requiredModuleSet, readyCallBack, fai
     }).catch(function (error) {
       console.error("Error - failed to get Remote modules for: " + _this.name + ", error=" + error);
       // notify that the promise can't be kept
-      if( failedCallback != null && failedCallback != 'undefined' ) {
+      if( failedCallback !== null && failedCallback !== undefined ) {
         failedCallback();
       }
       moduleBuildReject(error);
@@ -188,12 +262,12 @@ XModule.prototype._importModule = function(requiredModuleSet, readyCallBack, fai
 
   this.moduleReadyPromise = promise;
   return this.getInstance;
-}
+};
 
 
 XModule.prototype.configImport = function(replacementMap) {
   this.importReplacementMap = replacementMap;
-}
+};
 
 XModule.prototype.findImportReplacementMatch = function(path) {
   if( this.importReplacementMap === null ) {
@@ -210,7 +284,7 @@ XModule.prototype.findImportReplacementMatch = function(path) {
   }
 
   return null;
-}
+};
 
 function getFile(filePath) {
   this.getFile(filePath);
@@ -218,7 +292,7 @@ function getFile(filePath) {
 
 XModule.prototype.getFile = function(filePath) {
   return this.appSceneContext.getModuleFile(filePath, this);
-}
+};
 
 function resolveFilePath(filePath) {
   this.getFile(filePath);
@@ -226,7 +300,7 @@ function resolveFilePath(filePath) {
 
 XModule.prototype.resolveFilePath = function(filePath) {
   return this.appSceneContext.resolveModulePath(filePath, this);
-}
+};
 
 module.exports = {
   importModule: importModule,

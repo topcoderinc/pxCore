@@ -1,5 +1,21 @@
-// pxCore CopyRight 2007-2015 John Robinson
-// Portable Framebuffer and Windowing Library
+/*
+
+ pxCore Copyright 2005-2018 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // pxIView.h
 
 #ifndef PXIVIEW_H
@@ -8,7 +24,7 @@
 #include "pxCore.h"
 #include "pxRect.h"
 
-#include "rtRefPtr.h"
+#include "rtRef.h"
 
 // A pxIViewContainer must unregister itself
 // upon being destroyed
@@ -18,6 +34,7 @@ public:
   // In view coordinates on pixel boundaries
   // NULL means invalidate everything
   virtual void RT_STDCALL invalidateRect(pxRect* r) = 0;
+  virtual void* RT_STDCALL getInterface(const char* t) = 0;
 };
 
 // TODO no way to have a scene draw to an arbitrary rectangle
@@ -59,7 +76,7 @@ public:
 #endif
 };
 
-typedef rtRefPtr<pxIView> pxViewRef;
+typedef rtRef<pxIView> pxViewRef;
 
 #if 0
 

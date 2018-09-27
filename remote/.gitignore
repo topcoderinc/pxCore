@@ -1,0 +1,12 @@
+obj/
+rpcSampleApp
+rtRemoteConfig.h
+rtRemoteConfigBuilder.cpp
+rtremote.conf
+rtremote.conf.gen
+*.a
+*.client.log
+*.driver.log
+rpcSampleApp_s
+rtSampleClient
+rtSampleServer

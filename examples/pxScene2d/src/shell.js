@@ -1,36 +1,101 @@
+/*
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
+var isDuk=(typeof Duktape != "undefined")?true:false;
+var isV8 = (typeof _isV8 != "undefined")?true:false;
+
 px.import({ scene: 'px:scene.1.js',
-             keys: 'px:tools.keys.js'
+             keys: 'px:tools.keys.js',
 }).then( function ready(imports)
 {
   var scene = imports.scene;
   var keys  = imports.keys;
 
+  function uncaughtException(err) {
+    if (!isDuk && !isV8) {
+      console.log("Received uncaught exception " + err.stack);
+    }
+  }
+  function unhandledRejection(err) {
+    if (!isDuk && !isV8) {
+      console.log("Received uncaught rejection.... " + err);
+    }
+  }
+  if (!isDuk && !isV8) {
+    process.on('uncaughtException', uncaughtException);
+    process.on('unhandledRejection', unhandledRejection);
+  }
 
+
+  /**
+   * This is helper method which resolves resource URL for scene
+   * - it resolves various shortcuts using prepareUrl() method
+   * also
+   * - for .js files it returns URL as it is
+   * - for other files (MIME files) it returns the URL of wrapper scene which
+   *   will draw provided URL with the mimeRenderer
+   *
+   * @param {String} url url
+   *
+   * @returns {String} URL for a scene
+   */
+  function resolveSceneUrl(url) {
+    if (url && url.toLowerCase().indexOf('.js?') > 0) { // this is a js file with query params
+      return url;
+    }
+    if (url && !url.match(/\.js$/)) {
+      url = 'mimeScene.js?url=' + url;
+    }
+    return url;
+  }
+  
   // JRJR TODO had to add more modules
   var url = queryStringModule.parse(urlModule.parse(module.appSceneContext.packageUrl).query).url;
-  var originalURL = (!url || url=="") ? "browser.js":url;
+  url = resolveSceneUrl(url)
+  var originalURL = (!url || url==="") ? "browser.js":url;
   console.log("url:",originalURL);
 
-  var    blackBg = scene.create({t:"rect", fillColor:0x000000ff,lineColor:0xffff0080,lineWidth:0,x:0,y:0,w:1280,h:720,a:1,parent:scene.root});
-  var childScene = scene.create({t:"scene", url:originalURL,parent:scene.root});
+  var    blackBg = scene.create({t:"rect", fillColor:0x000000ff,x:0,y:0,w:1280,h:720,a:0,parent:scene.root});
+  var childScene = scene.create({t:"scene", url: originalURL, parent:scene.root});
   childScene.focus = true;
 
   var showFPS = false;
-  var fpsBg      = scene.create({t:"rect", fillColor:0x00000080,lineColor:0xffff0080,lineWidth:3,x:10,y:10,a:showFPS?1:0,parent:scene.root});
+  var fpsBg      = scene.create({t:"rect",     fillColor:0x00000080,lineColor:0xffff0080,lineWidth:3,x:10,y:10,a:showFPS?1:0,parent:scene.root});
   var fpsCounter = scene.create({t:"text", x:5,textColor:0xffffffff,pixelSize:24,text:"0fps",parent:fpsBg});
   fpsBg.w = fpsCounter.w+16;
   fpsBg.h = fpsCounter.h;
 
-  function updateSize(w, h) {
+  // Prevent interaction with scenes...
+  fpsBg.interactive      = false;
+  fpsCounter.interactive = false;
+
+  function updateSize(w, h)
+  {
     childScene.w = w;
     childScene.h = h;
-    blackBg.w = w;
-    blackBg.h = h;
+    blackBg.w    = w;
+    blackBg.h    = h;
   }
 
   // TODO if I log out event object e... there is extra stuff??
   scene.on("onResize", function(e) { updateSize(e.w, e.h);});
-  updateSize(scene.w, scene.h);
+
+  // updateSize(scene.w, scene.h);
 
   scene.on("onFPS", function(e) {
     if(showFPS) {
@@ -54,17 +119,22 @@ if (false)
                                interactive:false});
 
     scene.on("onMouseMove", function(e) {
-	    cursor.x = e.x-23;
-	    cursor.y = e.y-10;
+      cursor.x = e.x-23;
+      cursor.y = e.y-10;
     });
   }
 }
-
+////
   scene.root.on("onPreKeyDown", function(e) {
-	  var code  = e.keyCode;
+    var code  = e.keyCode;
     var flags = e.flags;
 
-    console.log("SHELL: onPreKeyDown:", code, " key: ", keys.name(code), ", ", flags);
+    var loggingDisabled = process.env.PXSCENE_KEY_LOGGING_DISABLED;
+    if (loggingDisabled && loggingDisabled === '1'){
+      console.log("onPreKeyDown value hidden");
+    } else {
+      console.log("SHELL: onPreKeyDown:", code, " key: ", keys.name(code), ", ", flags);
+    }
 
     if( keys.is_CTRL_ALT( flags ) )
     {
@@ -72,7 +142,7 @@ if (false)
       {
 //        console.log("SHELL: onPreKeyDown: FPS !!!  ############# ");
 
-        showFPS = !showFPS
+        showFPS = !showFPS;
         fpsBg.a = (showFPS)?1.0:0;
         e.stopPropagation();
       }
@@ -87,6 +157,7 @@ if (false)
       else
       if (code == keys.S)  // ctrl-alt-s
       {
+        if (!isDuk && !isV8) {
         // This returns a data URI string with the image data
         var dataURI = scene.screenshot('image/png;base64');
 
@@ -102,7 +173,7 @@ if (false)
           else
             console.log("Created screenshot.png");
         });
-
+      }
         e.stopPropagation();
       }
       else
@@ -135,16 +206,30 @@ if (false)
         childScene.url = homeURL;
         e.stopPropagation();
       }
+      else
+      if(code == keys.D)  // ctrl-alt-shft-d
+      {
+        scene.logDebugMetrics();
+      }
     }// ctrl-alt-shift
   });
 
   scene.root.on("onPreKeyUp", function(e)
   {
-    console.log("in onPreKeyUp", e.keyCode, e.flags);
-	  var code  = e.keyCode;
+    var loggingDisabled = process.env.PXSCENE_KEY_LOGGING_DISABLED;
+    if (loggingDisabled && loggingDisabled === '1'){
+      console.log("onPreKeyUp value hidden");
+    } else {
+      console.log("in onPreKeyUp", e.keyCode, e.flags);
+    }
+    var code  = e.keyCode;
     var flags = e.flags;
 
-    console.log("onKeyUp:", code, ", ", flags);
+    if (loggingDisabled && loggingDisabled === '1'){
+      console.log("onKeyUp value hidden");
+    } else {
+      console.log("onKeyUp:", code, ", ", flags);
+    }
 
     // eat the ones we handle here
          if (code == keys.Y && keys.is_CTRL_ALT( flags ) )       e.stopPropagation(); // ctrl-alt-y
@@ -160,7 +245,12 @@ if (false)
     scene.root.on("onKeyDown", function(e)
     {
       var code = e.keyCode; var flags = e.flags;
-      console.log("onKeyDown shell:", code, ", ", flags);
+      var loggingDisabled = process.env.PXSCENE_KEY_LOGGING_DISABLED;
+      if (loggingDisabled && loggingDisabled === '1'){
+        console.log("onKeyDown value hidden");
+      } else {
+        console.log("onKeyDown shell:", code, ", ", flags);
+      }
 
       if( keys.is_CTRL_ALT( flags ) )
       {
@@ -185,12 +275,17 @@ if (false)
   scene.root.on("onPreChar", function(e)
   {
     console.log("in onchar");
-	  var c = e.charCode;
-    console.log("onChar:", c);
-	  // TODO eating some "undesired" chars for now... need to redo this
+    var c = e.charCode;
+    var loggingDisabled = process.env.PXSCENE_KEY_LOGGING_DISABLED;
+    if (loggingDisabled && loggingDisabled === '1'){
+      console.log("onChar value hidden");
+    } else {
+      console.log("onChar:", c);
+    }
+    // TODO eating some "undesired" chars for now... need to redo this
     if (c<32) {
       console.log("stop onChar");
-      e.stopPropagation()
+      e.stopPropagation();
     }
   });
 
@@ -207,7 +302,12 @@ if (false)
       if (typeof childScene.api                  !== undefined &&
           typeof childScene.api.wantsClearscreen === 'function')
       {
-        blackBg.draw = childScene.api.wantsClearscreen(); // use delegate preference - returns bool
+        if(childScene.api.wantsClearscreen()) // use delegate preference - returns bool
+          blackBg.a = 1; 
+
+      }
+      else {
+          blackBg.a = 1; 
       }
   });
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -215,11 +315,18 @@ if (false)
   //
   // Returns:   BOOL preference of 'shell' performing Clearscreen per frame.
   /*
-  module.exports.wantsClearscreen1 = function()  // delegate
+  module.exports.wantsClearscreen = function()  // delegate
   {
     return false;
   };
   */
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  function releaseResources() {
+    if (!isDuk && !isV8) {
+        process.removeListener("uncaughtException", uncaughtException);
+        process.removeListener("unhandledRejection", unhandledRejection);
+    }
+  }
 
+  scene.on("onClose",releaseResources);
 });

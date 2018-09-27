@@ -1,5 +1,21 @@
-// pxCore CopyRight 2007-2015 John Robinson
-// Portable Framebuffer and Windowing Library
+/*
+
+ pxCore Copyright 2005-2018 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // pxBuffer.h
 
 #ifndef PX_BUFFER_H
@@ -43,7 +59,7 @@ class pxBuffer
 {
 public:
 
-pxBuffer(): mPixelFormat(RT_DEFAULT_PIX), mBase(NULL), mWidth(0), mHeight(0), mStride(0), mUpsideDown(false) {}
+pxBuffer(): mPixelFormat(RT_DEFAULT_PIX), mSrcIndexR(0), mSrcIndexG(0), mSrcIndexB(0), mSrcIndexA(0), mDstIndexR(0), mDstIndexG(0), mDstIndexB(0), mDstIndexA(0), mBase(NULL), mWidth(0), mHeight(0), mStride(0), mUpsideDown(false)  {}
 
   void* base() const { return mBase; }
   void setBase(void* p) { mBase = p; }
@@ -74,7 +90,7 @@ pxBuffer(): mPixelFormat(RT_DEFAULT_PIX), mBase(NULL), mWidth(0), mHeight(0), mS
                       ((mUpsideDown?(mHeight-line-1):line) * mStride));
   }
 
-  inline pxPixel *pixel(int32_t x, int32_t y)
+  inline pxPixel *pixel(int32_t x, int32_t y) const
   {
     return scanline(y) + x;
   }
@@ -140,9 +156,9 @@ pxBuffer(): mPixelFormat(RT_DEFAULT_PIX), mBase(NULL), mWidth(0), mHeight(0), mS
     blit(s, 0, 0, width(), height(), 0, 0);
   }
 
-  inline void blit(pxBuffer& b, int32_t dstLeft, int32_t dstTop,
+  inline void blit(const pxBuffer& b, int32_t dstLeft, int32_t dstTop,
                    int32_t dstWidth, int32_t dstHeight,
-                   int32_t srcLeft, int32_t srcTop)
+                   int32_t srcLeft, int32_t srcTop) const
   {
     pxRect srcBounds = bounds();
     pxRect dstBounds = b.bounds();
@@ -170,12 +186,12 @@ pxBuffer(): mPixelFormat(RT_DEFAULT_PIX), mBase(NULL), mWidth(0), mHeight(0), mS
     }
   }
 
-  inline void blit(pxBuffer& b)
+  inline void blit(const pxBuffer& b) const
   {
     blit(b, 0, 0, width(), height(), 0, 0);
   }
 
-  inline void blit(pxBuffer& b, int32_t x, int32_t y)
+  inline void blit(pxBuffer& b, int32_t x, int32_t y) const
   {
     blit(b, x, y, width(), height(), 0, 0);
   }

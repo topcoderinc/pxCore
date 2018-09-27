@@ -1,4 +1,21 @@
-// pxCore Copyright 2007-2015 John Robinson
+/*
+
+ pxCore Copyright 2005-2018 John Robinson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+*/
+
 // pxRectangle.h
 
 #ifndef PX_RECTANGLE_H
@@ -24,11 +41,23 @@ public:
   }
 
   virtual void onInit() {mReady.send("resolve",this);}
-  
-  rtError fillColor(uint32_t& /*c*/) const 
+
+  rtError fillColor(uint32_t& c) const
   {
-    // TODO
-    rtLogWarn("fillColor not implemented");
+#ifdef PX_LITTLEENDIAN_PIXELS
+
+    c = ((uint8_t) (mFillColor[0] * 255.0f) << 24) |  // R
+        ((uint8_t) (mFillColor[1] * 255.0f) << 16) |  // G
+        ((uint8_t) (mFillColor[2] * 255.0f) <<  8) |  // B
+        ((uint8_t) (mFillColor[3] * 255.0f) <<  0);   // A
+#else
+
+    c = ((uint8_t) (mFillColor[3] * 255.0f) << 24) |  // A
+        ((uint8_t) (mFillColor[2] * 255.0f) << 16) |  // B
+        ((uint8_t) (mFillColor[1] * 255.0f) <<  8) |  // G
+        ((uint8_t) (mFillColor[0] * 255.0f) <<  0);   // R
+
+#endif
     return RT_OK;
   }
 
@@ -41,10 +70,23 @@ public:
     return RT_OK;
   }
 
-  rtError lineColor(uint32_t& /*c*/) const 
+  rtError lineColor(uint32_t& c) const
   {
-    // TODO
-    rtLogWarn("lineColor not implemented");
+#ifdef PX_LITTLEENDIAN_PIXELS
+
+    c = ((uint8_t) (mLineColor[0] * 255.0f) << 24) |  // R
+        ((uint8_t) (mLineColor[1] * 255.0f) << 16) |  // G
+        ((uint8_t) (mLineColor[2] * 255.0f) <<  8) |  // B
+        ((uint8_t) (mLineColor[3] * 255.0f) <<  0);   // A
+#else
+
+    c = ((uint8_t) (mLineColor[3] * 255.0f) << 24) |  // A
+        ((uint8_t) (mLineColor[2] * 255.0f) << 16) |  // B
+        ((uint8_t) (mLineColor[1] * 255.0f) <<  8) |  // G
+        ((uint8_t) (mLineColor[0] * 255.0f) <<  0);   // R
+
+#endif
+
     return RT_OK;
   }
 
