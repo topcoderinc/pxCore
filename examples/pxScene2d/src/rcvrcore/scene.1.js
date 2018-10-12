@@ -19,6 +19,8 @@ limitations under the License.
 var isDuk=(typeof Duktape != "undefined")?true:false;
 
 var RPCContext = require('rcvrcore/rpcContext');
+// Import a global variable for load time measurement
+var loadTimeMeasure = require('rcvrcore/loadTimeMeasure');
 
 function Scene() {
   var nativeScene = null;
@@ -163,11 +165,52 @@ function Scene() {
         component = createComponent(params);
       }
 
+      // [Performance Tests]
+      // Hold the return object and inject the load time measurement hooks
+      // into the ready.then of the object.
+      var retObj;
       if( component !== null ) {
-        return component;
+        retObj = component;
       } else {
-        return nativeScene.create(params);
+        retObj = nativeScene.create(params);
       }
+      // Bind type to the return object so that we can check the type of the object outside easily
+      retObj.t = params.t;
+      // Doesn't support Duktape
+      if (isDuk) {
+        return retObj;
+      }
+      // Check if the load time measurement is enabled for this compoenent
+      if (params.hasOwnProperty("t")
+          && loadTimeMeasure.loadTimeMeasurementFlagMap.hasOwnProperty(params.t)
+          && loadTimeMeasure.loadTimeMeasurementFlagMap[params.t]) {
+        // Count the creation
+        var componentCreationCountMap = loadTimeMeasure.componentCreationCountMap;
+        if (!componentCreationCountMap.hasOwnProperty(params.t)) {
+          componentCreationCountMap[params.t] = 1;
+        } else {
+          componentCreationCountMap[params.t]++;
+        }
+        // Record the creation time of the object
+        var start = process.hrtime();
+        // Register a resolve function for the ready promise, then we can measure the load time.
+        retObj.ready.then(function () {
+          // Measure the load time
+          // Measure the elapsed time, the return value of process.hrtime is [second, nanoseconds]
+          var elapsedTime = process.hrtime(start);
+          // Convert it to milliseconds
+          var elapsedMilliseconds = elapsedTime[0] * 1000 + elapsedTime[1] * 1e-6;
+          // Accumulate the load time
+          var componentloadTimeMap = loadTimeMeasure.componentloadTimeMap;
+          if (!componentloadTimeMap.hasOwnProperty(params.t)) {
+            componentloadTimeMap[params.t] = elapsedMilliseconds;
+          } else {
+            componentloadTimeMap[params.t] += elapsedMilliseconds;
+          }
+        });
+      }
+      // Return the object to outside
+      return retObj;
   }; // ENDIF - create()
   
   this.stopPropagation = function() {

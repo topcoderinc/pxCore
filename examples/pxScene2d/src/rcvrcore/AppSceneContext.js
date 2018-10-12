@@ -282,7 +282,13 @@ function createModule_pxScope(xModule) {
     appQueryParams: this.queryParams,
     getPackageBaseFilePath: this.getPackageBaseFilePath.bind(this),
     getFile: this.getFile.bind(this),
-    getModuleFile: xModule.getFile.bind(xModule)
+    getModuleFile: xModule.getFile.bind(xModule),
+    // New APIs, enable/disable load time measurement
+    enableLoadTimeMeasurement: xModule.enableLoadTimeMeasurement.bind(xModule),
+    disableLoadTimeMeasurement: xModule.disableLoadTimeMeasurement.bind(xModule),
+    getCreationCountByType: xModule.getCreationCountByType.bind(xModule),
+    getLoadTimeByType: xModule.getLoadTimeByType.bind(xModule),
+    resetLoadTimeCounter: xModule.resetLoadTimeCounter.bind(xModule)
   };
 }
 

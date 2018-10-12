@@ -21,6 +21,8 @@ limitations under the License.
 var hasExtension = require('rcvrcore/utils/FileUtils').hasExtension;
 var Logger = require('rcvrcore/Logger').Logger;
 var log = new Logger('XModule');
+// Import a global variable for load time measurement
+var loadTimeMeasure = require('rcvrcore/loadTimeMeasure');
 
 function XModule(name, appSceneContext, basePath, jarName) {
   log.message(5, "Create new XModule for " + name);
@@ -179,6 +181,65 @@ XModule.prototype.getFile = function(filePath) {
 
 XModule.prototype.resolveFilePath = function(filePath) {
   return this.appSceneContext.resolveModulePath(filePath, this);
+};
+
+/**
+ * [Performance Tests]
+ * New API
+ * Enable the load time measurement for a component
+ * If the load time is enabled, then when the object is ready, it will measure the load time.
+ * @param {*} componentType The compoenent type, such as 'image', 'image9', 'scene' etc.
+ */
+XModule.prototype.enableLoadTimeMeasurement = function (componentType) {
+  loadTimeMeasure.enableLoadTimeMeasurement(componentType);
+};
+
+/**
+ * [Performance Tests]
+ * New API
+ * Disable the load time measurement for a component
+ * @param {*} componentType The compoenent type, such as 'image', 'image9', 'scene' etc.
+ */
+XModule.prototype.disableLoadTimeMeasurement = function (componentType) {
+  loadTimeMeasure.disableLoadTimeMeasurement(componentType);
+};
+
+/**
+ * [Performance Tests]
+ * New API
+ * Get the creation count of specific type of component
+ * @param {*} componentType The compoenent type, such as 'image', 'image9', 'scene' etc.
+ * @returns The creation count
+ */
+XModule.prototype.getCreationCountByType = function (componentType) {
+  if (!loadTimeMeasure.componentCreationCountMap.hasOwnProperty(componentType)) {
+    return 0;
+  }
+  return loadTimeMeasure.componentCreationCountMap[componentType];
+};
+
+/**
+ * [Performance Tests]
+ * New API
+ * Get the accumulated load time of specific type of component
+ * @param {*} componentType The compoenent type, such as 'image', 'image9', 'scene' etc.
+ * @returns The accumulated load time
+ */
+XModule.prototype.getLoadTimeByType = function (componentType) {
+  if (!loadTimeMeasure.componentloadTimeMap.hasOwnProperty(componentType)) {
+    return 0;
+  }
+  return loadTimeMeasure.componentloadTimeMap[componentType];
+};
+
+/**
+ * [Performance Tests]
+ * New API
+ * Reset the load time counter, including the # of created components
+ * and the accumulated load time of components
+ */
+XModule.prototype.resetLoadTimeCounter = function () {
+  loadTimeMeasure.resetCounter();
 };
 
 module.exports = XModule;
