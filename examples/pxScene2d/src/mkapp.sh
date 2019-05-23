@@ -90,6 +90,7 @@ cp -a rcvrcore/* $bundleRes/rcvrcore
 # NOTE" jsMin.sh will default to a 'min' name with 1 arg.  E.g.  "jsMin.sh INPUT.js"  >> INPUT.min.js
 #
 ${minJS} init.js $bundleRes/init.js
+${minJS} viewVideo.js $bundleRes/viewVideo.js
 ${minJS} shell.js $bundleRes/shell.js
 ${minJS} browser.js $bundleRes/browser.js
 ${minJS} about.js $bundleRes/about.js

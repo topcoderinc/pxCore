@@ -1,0 +1,434 @@
+/*
+* If not stated otherwise in this file or this component's license file the
+* following copyright and licenses apply:
+*
+* Copyright 2018 RDK Management
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+body {
+    background-color: #000;
+    font: 15px Tahoma;
+    color: white;
+}
+
+.container {
+width: 100%;
+height: 100%;
+position: absolute;
+padding:0;
+margin:0;
+left: 0px;
+top: 0px;
+z-index: -1000;
+overflow:hidden;
+}
+
+.videoPlayer {
+height: 100%;
+width:100%;
+position:absolute;
+bottom:0;
+left:0;
+}
+
+/* For all the buttons */
+.button {
+    background-color:  rgba(255,255,255,0.8); 
+    text-align: center;
+    display: inline-block;
+    cursor: pointer;
+    border-radius: 2px;
+    border: 2px solid #00448A;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+    transition: background-color 0s;
+}
+
+#controlDiv {
+    transition: all 0s linear;
+}
+
+#controlDivNext {
+    transition: all 0s linear;
+}
+
+#videoControlsDiv {
+    height:60px;
+    opacity: 0;
+    position: fixed;
+    bottom: 0;
+    width:100%;
+    -webkit-transition: opacity 0s;
+    -moz-transition: opacity 0s;
+    -o-transition: opacity 0s;
+    -ms-transition: opacity 0s;
+    transition: opacity 0s;
+    background-image: linear-gradient(left, #000000 30%,#171717 50%, #000000 70%);
+    background-image: -o-linear-gradient(left, #000000 30%,#171717 50%, #000000 70%);
+    background-image: -moz-linear-gradient(left, #000000 30%,#171717 50%, #000000 70%);
+    background-image: -webkit-linear-gradient(left, #000000 30%,#171717 50%, #000000 70%);
+    border-top: 1px solid #00253D;
+    border-right: 1px solid #00253D;
+    border-left: 1px solid #00253D;
+    box-shadow:         0 -3px 3px -3px #002C4A, 3px 0px 3px -3px #002C4A, -3px 0px 3px -3px #002C4A;
+    border-radius: 3px 3px 0px 0px / 6px 6px 0px 0px; /* top left, top right, bottom right, bottom left */
+}
+
+#videoControlsDivNext {
+    padding-top: 10px;
+    height:60px;
+    opacity: 0;
+    position: fixed;
+    top: 0;
+    width:100%;
+    -webkit-transition: opacity 0s;
+    -moz-transition: opacity 0s;
+    -o-transition: opacity 0s;
+    -ms-transition: opacity 0s;
+    transition: opacity 0s;
+    background-image: linear-gradient(left, #000000 30%,#171717 50%, #000000 70%);
+    background-image: -o-linear-gradient(left, #000000 30%,#171717 50%, #000000 70%);
+    background-image: -moz-linear-gradient(left, #000000 30%,#171717 50%, #000000 70%);
+    background-image: -webkit-linear-gradient(left, #000000 30%,#171717 50%, #000000 70%);
+    border-top: 1px solid #00253D;
+    border-right: 1px solid #00253D;
+    border-left: 1px solid #00253D;
+    box-shadow:         0 -3px 3px -3px #002C4A, 3px 0px 3px -3px #002C4A, -3px 0px 3px -3px #002C4A;
+    border-radius: 3px 3px 0px 0px / 6px 6px 0px 0px; /* top left, top right, bottom right, bottom left */
+}
+
+#userEnteredVideoURL { 
+    margin-top: 10px;
+	margin-left:20px;
+    width: 17%;
+}
+
+#videoContainer #videoControlsDiv {
+    opacity: .9;
+}
+
+#videoContainer #videoControlsDivNext {
+    opacity: .9;
+}
+
+img {
+    display: block;
+    height: 21px;  
+    width: 31px;
+}
+
+.flipImg {
+    -webkit-transform: scaleX(-1);
+    transform: scaleX(-1);
+}
+
+#rewindButton {
+    height: 30px;
+}
+
+#skipBackwardButton {
+    height: 30px;
+}
+
+#muteVideoButton {
+    height: 30px;
+}
+
+#skipForwardButton {
+    height: 30px;
+}
+
+#fastForwardButton {
+    height: 30px;
+}
+
+#ccButton {
+    height: 30px;
+}
+
+#loadButton {
+    height: 20px;
+    margin-left: -5px;
+}
+
+#deleteButton {
+    height: 20px;
+    margin-left: -5px;
+    background-color:  #C96E5F; 
+}
+
+#deleteButton.focus ,#deleteButton:active {
+    background-color: red;
+}
+
+#playOrPauseButton {
+    background-color:#ccc;
+    margin-top: 10px;
+    margin-left: 25%;
+    height: 30px;
+    width: 50px;
+}
+
+#playOrPauseButton.focus {
+    background-color: orange;
+}
+
+#seekBar {
+    width: 397px;
+    padding:10px;
+    text-align:center;
+    height: 6px;
+}
+
+#seekBarOuter {
+    display: inline-block;
+    width: 398px;
+    height: 25px;
+    background-color: rgba(0,0,0,0.4);
+    outline: thin solid #00448A;
+}
+
+
+	
+#videoURLs {
+    width: 20%;
+	margin-left:7%;
+}
+
+#userURLPlayButton {
+    height: 22px;
+    margin-left: -5px;
+}
+
+#helpButton.focus ,#helpButton:active {
+    background-color: orange;
+}
+
+#helpContent {
+    font: 15px Tahoma;
+    color: #fff;
+}
+
+.focus {
+    background:orange;
+}
+
+
+/* The Modal */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1; 
+    padding-top: 100px; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgb(0,0,0); 
+    background-color: rgba(0,0,0,0.4);
+}
+
+/* Modal Content */
+.modal-content {
+    position: relative;
+    background-color: #fefefe;
+    margin: auto;
+    margin-top: 100px;
+    padding: 0;
+    border: 1px solid #888;
+    width: 35%;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    -webkit-animation-name: animatetop;
+    -webkit-animation-duration: 0.4s;
+    animation-name: animatetop;
+    animation-duration: 0.4s
+}
+
+.modal-header {
+    padding: 2px 16px;
+    text-align: center;
+    background-color: #0088CC;
+    color: white;
+}
+
+.modal-body {
+    padding: 2px 16px;
+    color: #000;
+}
+
+
+/* The Overlay Modal */
+.overModal {
+    display: none; 
+    position: fixed; 
+    z-index: 1; 
+    padding-top: 75px; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+}
+
+/* Overlay Modal Content */
+.overlay-modal-content {
+    position: relative;
+    background-color: rgb(0,0,0); 
+    background-color: rgba(0,0,0,0.8);
+    margin: auto;
+    padding: 0;
+    border: 1px solid #2B363D;
+    width: 35%;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    -webkit-animation-name: animatetop;
+    -webkit-animation-duration: 0.4s;
+    animation-name: animatetop;
+    animation-duration: 0.4s
+}
+
+.overlay-modal-body {
+    color:#34C8C9;
+    margin-left: 30px;
+    font: 15px arial, sans-serif;
+    text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+}
+
+.overlay-inside {
+    color:#fff;
+}
+
+/* Add Animation */
+@-webkit-keyframes animatetop {
+    from {top:-300px; opacity:0} 
+    to {top:0; opacity:1}
+}
+
+@keyframes animatetop {
+    from {top:-300px; opacity:0}
+    to {top:0; opacity:1}
+}
+
+@-webkit-keyframes animatebottom {
+   from {bottom:-300px; opacity:0} 
+    to {bottom:0; opacity:1}
+}
+
+@keyframes animatebottom {
+     from {bottom:-300px; opacity:0} 
+    to {bottom:0; opacity:1}
+}
+
+#AutoplayState {
+    margin-left: 10px;
+}
+
+#replaceDateState {
+    margin-left: 10px;
+}
+
+#autoPlayCheck {
+    margin-top: 40px;
+}
+
+
+/*Toggle Switch*/
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 45px;
+  height: 24px;
+  top:3px;
+}
+.switch.focus {
+    background-color:darkorange;
+    border-radius: 3px;
+}
+
+.switch input {display:none;}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 3px;
+  left: 0;
+  right: 0;
+  bottom: -5px;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 19px;
+  width: 19px;
+  left: 4px;
+  top: 3px;
+  bottom: 2px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #0063C9;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #0063C9;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(17px);
+  -ms-transform: translateX(17px);
+  transform: translateX(17px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+/*help round button*/
+.round-button {
+    width:32px;
+    height:32px;
+    margin-left: 15px;
+    margin-top: 12px;
+    border: 2px solid #f5f5f5;
+    border-radius: 50%;
+    color:#f5f5f5;
+    background: #464646;
+    box-shadow: 0 0 3px gray;
+}
+
+.round-button img{
+    width: 42px;
+    height: 42px;
+    margin-left: -12.5px;
+    margin-top: -8.5px;
+
+}
+.round-button:hover {
+    background: #262626;
+}
+
+::-webkit-input-placeholder { /* Webkit */
+  color:#262626;
+}

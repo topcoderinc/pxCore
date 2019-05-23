@@ -111,6 +111,8 @@ else {
         */
         else if (ext=='.js' || ext=='.jar') {
             // Do nothing and let the url fall through
+        } else if (ext === '.mpd' || ext === 'hls' || ext === '.m3u8') {
+            url = 'viewVideo.js?url='+encodeURIComponent(url)
         }
         else {
             // TODO Do a HTTP head check to see if we can get a mimetype/contenttype for routing

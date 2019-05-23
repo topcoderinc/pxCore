@@ -56,7 +56,7 @@ fi
 
 #--------- PNG
 
-if [ ! -e ./libpng-1.6.28/.libs/libpng16.16.dylib ] ||
+if [ ! -e ./libpng-1.6.37/.libs/libpng16.16.dylib ] ||
    [ "$(uname)" != "Darwin" ]
 then
 
@@ -236,3 +236,9 @@ fi
 
 #--------
 
+#------ AAMP
+banner "AAMP"
+cd aamp
+./build-aamp.sh
+cd ..
+#-------

@@ -36,6 +36,7 @@
 #include "pxTimer.h"
 
 #include "pxRectangle.h"
+#include "aamp/pxAAMPPlayer.h"
 #include "pxText.h"
 #include "pxTextBox.h"
 #include "pxImage.h"
@@ -706,6 +707,8 @@ rtError pxScene2d::create(rtObjectRef p, rtObjectRef& o)
     e = createWayland(p,o);
   else if (!strcmp("object",t.cString()))
     e = createObject(p,o);
+  else if (!strcmp("aamp", t.cString()))
+      e = createAAMP(p, o);
   else
   {
     rtLogError("Unknown object type, %s in scene.create.", t.cString());
@@ -751,6 +754,14 @@ rtError pxScene2d::createRectangle(rtObjectRef p, rtObjectRef& o)
   o.set(p);
   o.send("init");
   return RT_OK;
+}
+
+rtError pxScene2d::createAAMP(rtObjectRef p, rtObjectRef& o)
+{
+    o = new pxAAMPPlayer(this);
+    o.set(p);
+    o.send("init");
+    return RT_OK;
 }
 
 rtError pxScene2d::createText(rtObjectRef p, rtObjectRef& o)
