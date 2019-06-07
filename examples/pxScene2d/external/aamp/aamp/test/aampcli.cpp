@@ -516,6 +516,7 @@ int main(int argc, char **argv)
 	InitPlayerLoop(0,NULL);
 
 	mSingleton = new PlayerInstanceAAMP();
+	mSingleton->aamp->mUseImageSink = false;
 #ifdef LOG_CLI_EVENTS
 	myEventListener = new myAAMPEventListener();
 	mSingleton->RegisterEvents(myEventListener);

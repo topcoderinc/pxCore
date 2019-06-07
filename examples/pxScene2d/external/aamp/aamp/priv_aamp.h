@@ -53,6 +53,9 @@
 #define AAMP_PACKED __attribute__((__packed__))
 #endif
 
+
+typedef std::function<void(const char* type)> StateChangeFunc; /**< players state change callback function */
+
 /**
  * @addtogroup AAMP_COMMON_TYPES
  * @{
@@ -1536,6 +1539,15 @@ public:
 	pthread_cond_t mCondDiscontinuity;
 	gint mDiscontinuityTuneOperationId;
 	bool mIsVSS;       /**< Indicates if stream is VSS, updated during Tune*/
+
+	// ---> export properties and callback
+	bool mUseImageSink; /**< save video frame, and let other render show that, aamp-cli need set this to false*/
+	guint8* mFrameData;
+	bool mIsCopyingFrame;
+	int mFrameWidth;
+	int mFrameHeight;
+	long mFrameId;
+	StateChangeFunc mStateChangeFunc;
 
 	/**
 	 * @brief Curl initialization function

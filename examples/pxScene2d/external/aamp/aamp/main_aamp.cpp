@@ -1039,6 +1039,12 @@ void PrivateInstanceAAMP::NotifyEOSReached()
 			mStreamSink->Stop(false);
 		}
 		SendAnomalyEvent(ANOMALY_TRACE, "Generating EOS event");
+		
+		if (mStateChangeFunc)
+		{
+			mStateChangeFunc("sourceended");
+			mStateChangeFunc("sourceclose");
+		}
 		return;
 	}
 	if (!IsDiscontinuityProcessPending())
@@ -5469,6 +5475,12 @@ bool PrivateInstanceAAMP::HarvestFragments(bool modifyCount)
  */
 void PrivateInstanceAAMP::NotifyFirstFrameReceived()
 {
+	logprintf("---->PrivateInstanceAAMP::NotifyFirstFrameReceived\n");
+	if (mStateChangeFunc)
+	{
+		mStateChangeFunc("sourceopen");
+	}
+
 	SetState(eSTATE_PLAYING);
 #ifdef AAMP_STOP_SINK_ON_SEEK
 	/*Do not send event on trickplay as CC is not enabled*/
@@ -5783,6 +5795,13 @@ PrivateInstanceAAMP::PrivateInstanceAAMP()
 	mUserRequestedBandwidth = gpGlobalConfig->defaultBitrate;
 	mNetworkProxy = NULL;
 	mLicenseProxy = NULL;
+	mFrameData = NULL;
+	mIsCopyingFrame = false;
+	mFrameWidth = 0;
+	mFrameHeight = 0;
+	mFrameId = 0;
+	mUseImageSink = true;
+	mStateChangeFunc = NULL;
 }
 
 

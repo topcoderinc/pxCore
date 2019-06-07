@@ -1,43 +1,54 @@
-#include "aamp/AAMPView.h"
+#include "aamp/pxAAMPPlayer.h"
 #include "cocoa_window.h"
-#include "pxObject.h"
 #include <Cocoa/Cocoa.h>
 
-extern void *gWindow;
+static NSWindow *aampWindow = nullptr;
 
-static NSView *aampNativeView;
-
-AAMPView::AAMPView()
+/**
+ * prepare aamp native window view
+ */
+void prepareAAMP()
 {
-  auto window = (NSWindow *) gWindow;
-
-  /**
-   * create subview
-   */
-  NSView *view = [[NSView alloc] init];
-  [view setWantsLayer:YES];
-  [window.contentView addSubview:view];
-  aampNativeView = view;
+  if (!aampWindow) {
+    if ([NSThread isMainThread]) {
+      createAndRunCocoaWindow();
+    } else {
+      dispatch_async(dispatch_get_main_queue(), ^{
+        createAndRunCocoaWindow();
+      });
+    }
+  }
 }
 
-AAMPView::~AAMPView()
-{
-  rtLogInfo("delete mAAMPView ...");
-  [aampNativeView removeFromSuperview];
-}
-
+/**
+ * get native view
+ * @return the nsview
+ */
 guintptr getWindowContentView()
 {
-  return (guintptr) aampNativeView;
+  return (guintptr) [aampWindow contentView];
 }
 
+
+/**
+ * create cocco window
+ * @return
+ */
 int createAndRunCocoaWindow()
 {
-  rtLogError("createAndRunCocoaWindow didn't implement !");
+  // HACK, create 1x1 window, and hide it
+  // WHY need this
+  // gstreamer don't support offscreen render, the only way is create window and set overlay window
+  // then hide the window
+  NSRect frame = NSMakeRect(0, 0, 1, 1);
+  NSWindow *window = [[[NSWindow alloc] initWithContentRect:frame
+                                                  styleMask:NSBorderlessWindowMask
+                                                    backing:NSBackingStoreBuffered
+                                                      defer:NO] autorelease];
+  [window setBackgroundColor:[NSColor blueColor]];
+  [window makeKeyAndOrderFront:[NSApplication sharedApplication]];
+  [[window contentView] setWantsLayer:YES];
+  [window contentView].alphaValue = 0;
+  aampWindow = window;
   return 0;
-}
-
-void AAMPView::setSize(float x, float y, float w, float h)
-{
-  [aampNativeView setFrame:NSMakeRect(x, y, w, h)];
 }

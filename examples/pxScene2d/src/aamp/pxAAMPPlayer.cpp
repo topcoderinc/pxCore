@@ -1,5 +1,7 @@
 #include "pxAAMPPlayer.h"
 #include "pxContext.h"
+#include "SourceBuffer.h"
+#include "pxScene2d.h"
 
 
 #include <gst/gst.h>
@@ -8,6 +10,8 @@
 #include <StreamAbstractionAAMP.h>
 #include <pxScene2d.h>
 
+
+extern pxContext context;
 
 /**
  * static things wont release unit app exist
@@ -33,8 +37,8 @@ static void *AAMPGstPlayer_StreamThread(void *arg)
     logprintf("AAMPGstPlayer_StreamThread: exited main event loop\n");
   }
   g_main_loop_unref(AAMPGstPlayerMainLoop);
-  AAMPGstPlayerMainLoop = NULL;
-  return NULL;
+  AAMPGstPlayerMainLoop = nullptr;
+  return nullptr;
 }
 
 /**
@@ -49,80 +53,169 @@ void InitPlayerLoop(int argc, char **argv)
     gst_init(&argc, &argv);
     AAMPGstPlayerMainLoop = g_main_loop_new(nullptr, FALSE);
     aampMainLoopThread = g_thread_new("AAMPGstPlayerLoop", &AAMPGstPlayer_StreamThread, nullptr);
+    mSingleton = new PlayerInstanceAAMP();
+    mSingleton->aamp->mUseImageSink = true;
   }
 }
 
+extern pxContext context;
 
 void pxAAMPPlayer::onInit()
 {
   mReady.send("resolve", this);
   pxObject::onInit();
-  updateAAMPSize();
+  mMediaSource->load(mSrc.cString());
 }
 
-rtError pxAAMPPlayer::updateUrl(rtString const &newUrl)
-{
-  rtLogInfo("updateUrl url = %s", newUrl.cString());
-  this->mUrl = std::string(newUrl.cString());
-  mSingleton->Tune(this->mUrl.c_str());
-  return RT_OK;
-}
 
 pxAAMPPlayer::~pxAAMPPlayer()
 {
-  rtLogInfo("delete pxAAMPPlayer.");
-  rtLogSetLevel(RT_LOG_WARN);
+  rtLogWarn("delete pxAAMPPlayer.");
 }
 
-void pxAAMPPlayer::initAAMP()
+pxAAMPPlayer::pxAAMPPlayer(pxScene2d *scene) : pxObject(scene), mMediaSource(new MediaSource),
+                                               mMuted(false), mRenderFrameId(0), mTimeTik(0), mPreviousFrameTime(-1.0)
 {
-  mAAMPView = new AAMPView();
+  prepareAAMP();
   InitPlayerLoop(0, nullptr);
-  mSingleton = new PlayerInstanceAAMP();
+  mRenderFrameId = 0;
+  mOffscreen = new pxOffscreen();
+  mMediaSource->setInstanceAamp(mSingleton);
 }
 
-
-void pxAAMPPlayer::getGlobalPosition(float *pos)
+rtError pxAAMPPlayer::getSrc(rtString &v) const
 {
-  pos[0] = diffX;
-  pos[1] = diffY;
-  pxObject *p = this;
-  while (p) {
-    pos[0] += p->x();
-    pos[1] += p->y();
-    p = p->parent();
-  }
+  v = mSrc;
+  return RT_OK;
 }
 
-void pxAAMPPlayer::updateAAMPSize()
+rtError pxAAMPPlayer::updateSrc(rtString const &newSrc)
 {
-  float pos[2];
-  getGlobalPosition(pos);
-  mAAMPView->setSize(pos[0], pos[1], mw, mh);
-  rtLogError("%f %f", mw, mh);
+  mMediaSource->addSourceBuffer(new SourceBuffer);
+  mSrc = newSrc;
+  return RT_OK;
 }
 
 
 void pxAAMPPlayer::dispose(bool pumpJavascript)
 {
   mSingleton->Stop();
-  delete mAAMPView;
+  if (mSingleton->aamp->mFrameData) {
+    free(mSingleton->aamp->mFrameData);
+    mSingleton->aamp->mFrameData = nullptr;
+    mSingleton->aamp->mFrameId = 0;
+  }
   pxObject::dispose(pumpJavascript);
+}
+
+void pxAAMPPlayer::draw()
+{
+  // whole spark only have one aamp player, so here use mSingleton instead of mMediaSource->getInstanceAamp()
+  if (mSingleton->aamp->mFrameData) {
+    if (mSingleton->aamp->mIsCopyingFrame) {}
+    else if (mRenderFrameId == mSingleton->aamp->mFrameId) {
+      // bad network (waiting network), or video fps too lower(waiting new frame)
+    } else {
+      mRenderFrameId = mSingleton->aamp->mFrameId;
+      int w = mSingleton->aamp->mFrameWidth;
+      int h = mSingleton->aamp->mFrameHeight;
+      uint8_t *bits = mSingleton->aamp->mFrameData;
+      mOffscreen->init(w, h);  // video frame size may changed when netword changed, so need reset size
+
+      // TODO here need more effective method to copy frame data to offscreen
+      for (int y = 0; y < h; y++) {
+        pxPixel *d = mOffscreen->scanline(y);
+        for (int x = 0; x < w; x++) {
+          int index = y * w + x;
+          *d = pxPixel(bits[index * 4], bits[index * 4 + 1], bits[index * 4 + 2]);
+          d++;
+        }
+      }
+    }
+    mTextureRef = context.createTexture(*mOffscreen);
+    context.drawImage(0, 0, mw, mh, mTextureRef, nullptr, false);
+  }
+
+  mScene->mDirty = true;
+  markDirty(); // always try to redraw
 }
 
 rtError pxAAMPPlayer::pause()
 {
-  mSingleton->SetRate(1);
+  mMediaSource->getInstanceAamp()->SetRate(0);
   return RT_OK;
 }
 
 rtError pxAAMPPlayer::play()
 {
-  mSingleton->SetRate(0);
+  mMediaSource->getInstanceAamp()->SetRate(1);
   return RT_OK;
 }
 
+rtError pxAAMPPlayer::fastSeek(double time)
+{
+  mMediaSource->getInstanceAamp()->Seek(time);
+  return RT_OK;
+}
+
+rtError pxAAMPPlayer::getMediaSource(rtObjectRef &v) const
+{
+  v = mMediaSource;
+  return RT_OK;
+}
+
+rtError pxAAMPPlayer::getDuration(double &v) const
+{
+  v = mMediaSource->getInstanceAamp()->GetPlaybackDuration();
+  return RT_OK;
+}
+
+rtError pxAAMPPlayer::getCurrentTime(double &v) const
+{
+  v = mMediaSource->getInstanceAamp()->GetPlaybackPosition();
+  return RT_OK;
+}
+
+rtError pxAAMPPlayer::getDefaultMuted(bool &v) const
+{
+  v = mMuted;
+  return RT_OK;
+}
+
+rtError pxAAMPPlayer::setDefaultMuted(bool const &v)
+{
+  mMediaSource->getInstanceAamp()->SetVideoMute(v);
+  mMuted = v;
+  return RT_OK;
+}
+
+void pxAAMPPlayer::update(double t, bool updateChildren)
+{
+  if (mPreviousFrameTime <= 0) {
+    mPreviousFrameTime = t;
+  }
+
+  mTimeTik += (t - mPreviousFrameTime);
+
+  if (mTimeTik > 0.5) {
+    mEmit.send("update");
+    mTimeTik = 0;
+  }
+
+  mPreviousFrameTime = t;
+  pxObject::update(t, updateChildren);
+}
+
+
 rtDefineObject(pxAAMPPlayer, pxObject)
-rtDefineProperty(pxAAMPPlayer, url)
+
+
+rtDefineProperty(pxAAMPPlayer, src)
+rtDefineProperty(pxAAMPPlayer, mediaSource)
+rtDefineProperty(pxAAMPPlayer, currentSrc)
+rtDefineProperty(pxAAMPPlayer, currentTime)
+rtDefineProperty(pxAAMPPlayer, duration)
+rtDefineProperty(pxAAMPPlayer, defaultMuted)
 rtDefineMethod(pxAAMPPlayer, pause)
 rtDefineMethod(pxAAMPPlayer, play)
+rtDefineMethod(pxAAMPPlayer, fastSeek)

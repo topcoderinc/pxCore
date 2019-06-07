@@ -43,6 +43,10 @@
 #include "aampoutputprotection.h"
 #endif
 
+#include <gst/gl/gl.h>
+#include <gst/gl/gstglfuncs.h>
+#include <gst/gst.h>
+#include <gst/gl/gl.h>
 
 /**
  * @addtogroup AAMP_COMMON_TYPES 
@@ -90,7 +94,7 @@ typedef enum {
 #define DEFAULT_VIDEO_RECTANGLE "0,0,1280,720"
 #endif
 #define DEFAULT_BUFFERING_TO_MS 10                       //!< TimeOut interval to check buffer fullness
-#define DEFAULT_BUFFERING_QUEUED_BYTES_MIN  (128 * 1024) //!< prebuffer in bytes
+#define DEFAULT_BUFFERING_QUEUED_BYTES_MIN  (1024 * 1024) //!< prebuffer in bytes
 #define DEFAULT_BUFFERING_QUEUED_FRAMES_MIN (5)          //!< if the video decoder has this many queued frames start.. even at 60fps, close to 100ms...
 #define DEFAULT_BUFFERING_MAX_MS (1000)                  //!< max buffering time
 #define DEFAULT_BUFFERING_MAX_CNT (DEFAULT_BUFFERING_MAX_MS/DEFAULT_BUFFERING_TO_MS)   //!< max buffering timeout count
@@ -183,6 +187,16 @@ static const char* GstPluginNameWV = "aampwidevinedecryptor";
  * @retval FALSE if the event source should be removed.
  */
 static gboolean bus_message(GstBus * bus, GstMessage * msg, AAMPGstPlayer * _this);
+
+/**
+ * @brief Called from the mainloop when video need draw
+ * @param[in] gl_sink the gl_sink
+ * @param[in] context the gl context
+ * @param[in] sample the gl sample
+ * @param[in] _this pointer to AAMPGstPlayer instance
+ * @retval FALSE if the event source should be removed.
+ */
+static gboolean draw_callback(GstElement *gl_sink, void *context, GstSample *sample, AAMPGstPlayer * _this);
 
 /**
  * @brief Invoked synchronously when a message is available on the bus
@@ -833,6 +847,11 @@ static gboolean buffering_timeout (gpointer data)
  */
 static gboolean bus_message(GstBus * bus, GstMessage * msg, AAMPGstPlayer * _this)
 {
+	if(!GST_IS_MESSAGE(msg)) 
+	{
+		return GST_BUS_PASS;
+	}
+
 	GError *error;
 	gchar *dbg_info;
 	bool isPlaybinStateChangeEvent;
@@ -1079,7 +1098,39 @@ static gboolean bus_message(GstBus * bus, GstMessage * msg, AAMPGstPlayer * _thi
 	return TRUE;
 }
 
+static gboolean draw_callback(GstElement *gl_sink, void *context, GstSample *sample, AAMPGstPlayer * _this)
+{
+	GstVideoFrame v_frame;
+	GstVideoInfo v_info;
+	GstBuffer *buf = gst_sample_get_buffer(sample);
+	GstCaps *caps = gst_sample_get_caps(sample);
+	gst_video_info_from_caps(&v_info, caps);
+	
+	if (gst_video_frame_map(&v_frame, &v_info, buf, (GstMapFlags) (GST_MAP_READ))) {
+		int height = GST_VIDEO_FRAME_HEIGHT(&v_frame);
+		int width = GST_VIDEO_FRAME_WIDTH(&v_frame);
+		auto *pixels = static_cast<guint8 *>(GST_VIDEO_FRAME_PLANE_DATA (&v_frame, 0));
+		guint stride = GST_VIDEO_FRAME_PLANE_STRIDE (&v_frame, 0);
+		guint pixel_stride = GST_VIDEO_FRAME_COMP_PSTRIDE (&v_frame, 0);
+		_this->aamp->mIsCopyingFrame = true;
+		if (_this->aamp->mFrameData)
+		{
+			free(_this->aamp->mFrameData);
+			_this->aamp->mFrameData = NULL;
+		}
 
+		int size = width*height*pixel_stride;
+		_this->aamp->mFrameData = (guint8*)malloc(size);
+		memcpy(_this->aamp->mFrameData,pixels,size); 
+
+		_this->aamp->mFrameWidth = width;
+		_this->aamp->mFrameHeight = height;
+		_this->aamp->mIsCopyingFrame = false;
+		_this->aamp->mFrameId += 1;
+		gst_video_frame_unmap(&v_frame);
+	}
+	return TRUE;
+}
 /**
  * @brief Invoked synchronously when a message is available on the bus
  *
@@ -1091,6 +1142,10 @@ static gboolean bus_message(GstBus * bus, GstMessage * msg, AAMPGstPlayer * _thi
  */
 static GstBusSyncReply bus_sync_handler(GstBus * bus, GstMessage * msg, AAMPGstPlayer * _this)
 {
+	if(!GST_IS_MESSAGE(msg)) 
+	{
+		return GST_BUS_PASS;
+	}
 	switch(GST_MESSAGE_TYPE(msg))
 	{
 	case GST_MESSAGE_STATE_CHANGED:
@@ -1207,9 +1262,11 @@ static GstBusSyncReply bus_sync_handler(GstBus * bus, GstMessage * msg, AAMPGstP
     case GST_MESSAGE_ELEMENT:
         if (gst_is_video_overlay_prepare_window_handle_message(msg))
         {
-            logprintf("Recieved prepare-window-handle. Attaching video to window handle=%llu\n",getWindowContentView());
-            gst_video_overlay_set_window_handle (GST_VIDEO_OVERLAY (GST_MESSAGE_SRC (msg)), getWindowContentView());
+			guintptr viewId = getWindowContentView();
+            logprintf("Recieved prepare-window-handle. Attaching video to window handle=%llu\n",viewId);
+            gst_video_overlay_set_window_handle (GST_VIDEO_OVERLAY (GST_MESSAGE_SRC (msg)), viewId);
             gst_message_unref (msg);
+			return GST_BUS_DROP;
         }
         break;
 #endif
@@ -1510,7 +1567,7 @@ void AAMPGstPlayer::TearDownStream(MediaType mediaType)
 static int AAMPGstPlayer_SetupStream(AAMPGstPlayer *_this, int streamId)
 {
 	media_stream* stream = &_this->privateContext->stream[streamId];
-
+	logprintf("AAMPGstPlayer_SetupStream startup\n");
 	if (!stream->using_playersinkbin)
 	{
 #ifdef USE_GST1
@@ -1563,6 +1620,19 @@ static int AAMPGstPlayer_SetupStream(AAMPGstPlayer *_this, int streamId)
 #else
 		flags = GST_PLAY_FLAG_VIDEO | GST_PLAY_FLAG_AUDIO | GST_PLAY_FLAG_NATIVE_AUDIO | GST_PLAY_FLAG_NATIVE_VIDEO;
 #endif
+		if (_this->aamp->mUseImageSink)
+		{
+			GstElement *glimagesink = gst_element_factory_make("glimagesink", NULL);
+			g_object_set(stream->sinkbin, "video-sink", glimagesink, NULL);
+			g_signal_connect(G_OBJECT(glimagesink), "client-draw", G_CALLBACK(draw_callback), _this);
+			logprintf("---->> attach glimagesink into playbin for stream id = %d\n", streamId);
+			GstContext *gstContext = gst_context_new(GST_GL_DISPLAY_CONTEXT_TYPE, true);
+			gst_element_set_context(glimagesink, gstContext);
+		}
+		else 
+		{
+			logprintf("---->> skip attach glimagesink into playbin, because of mUseImageSink = false\n");
+		}
 		g_object_set(stream->sinkbin, "flags", flags, NULL); // needed?
 		g_object_set(stream->sinkbin, "uri", "appsrc://", NULL);
 		g_signal_connect(stream->sinkbin, "deep-notify::source", G_CALLBACK(found_source), _this);

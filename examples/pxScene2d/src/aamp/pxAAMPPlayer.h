@@ -3,61 +3,119 @@
 
 
 #include "pxObject.h"
-#include "AAMPView.h"
+#include "pxOffscreen.h"
+#include "pxTexture.h"
+
+
+#include "MediaSource.h"
 
 /**
- * aamp player class
+ * aamp player class, like <video>
+ * most of properties are from here https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement
  */
 class pxAAMPPlayer : public pxObject {
 public:
   rtDeclareObject(pxAAMPPlayer, pxObject);
 
-  rtProperty(url, getUrl, updateUrl, rtString);
+  rtProperty(src, getSrc, updateSrc, rtString);
+
+  rtReadOnlyProperty(currentSrc, getCurrentSrc, rtString);
+
+  rtReadOnlyProperty(currentTime, getCurrentTime, double);
+
+  rtReadOnlyProperty(duration, getDuration, double);
+
+  rtProperty(defaultMuted, getDefaultMuted, setDefaultMuted, bool);
 
   rtMethodNoArgAndNoReturn("pause", pause);
 
   rtMethodNoArgAndNoReturn("play", play);
 
+  rtMethod1ArgAndNoReturn("fastSeek", fastSeek, double);
+
+  rtReadOnlyProperty(mediaSource, getMediaSource, rtObjectRef);
+
   /**
    * create new aamp player
    * @param scene
    */
-  pxAAMPPlayer(pxScene2d *scene) : pxObject(scene)
+  pxAAMPPlayer(pxScene2d *scene);
+
+  rtError getCurrentSrc(rtString &v) const
   {
-    rtLogSetLevel(RT_LOG_INFO);
-    rtLogInfo("create new pxAAMPPlayer...");
-    initAAMP();
+    return getSrc(v);
   }
 
-  rtError getUrl(rtString &url) const
-  {
-    url = rtString(mUrl.c_str());
-    return RT_OK;
-  };
+  /**
+   * get src
+   * @param v the src ref
+   */
+  rtError getSrc(rtString &v) const;
+
+  /**
+   * get current stream duration
+   * @param v the output value
+   * @return
+   */
+  rtError getDuration(double &v) const;
+
+
+  /**
+   * get current time
+   * @param v the output value
+   * @return
+   */
+  rtError getCurrentTime(double &v) const;
+
+  /**
+   * get is Muted
+   * @param v the output value
+   * @return
+   */
+  rtError getDefaultMuted(bool &v) const;
+
+  /**
+   * set Muted
+   * @param v the input value
+   * @return
+   */
+  rtError setDefaultMuted(bool const &v);
+
+  /**
+   * update url
+   * @param newUrl the url
+   */
+  rtError updateSrc(rtString const &newSrc);
 
   /**
    * pause player
-   * @return
    */
   rtError pause();
 
   /**
    * play video
-   * @return
    */
   rtError play();
 
   /**
-   * update url
-   * @param newUrl the url
+   * fast seek
+   * @param time the dest time
+   */
+  rtError fastSeek(double time);
+
+
+  /**
+   * get media source
+   * @param v the output value
    * @return
    */
-  rtError updateUrl(rtString const &newUrl);
-
-  void initAAMP();
+  rtError getMediaSource(rtObjectRef &v) const;
 
   virtual ~pxAAMPPlayer();
 
+  /**
+   * spark init function
+   */
   virtual void onInit();
 
 
@@ -67,23 +125,30 @@ public:
    */
   virtual void dispose(bool pumpJavascript);
 
-  void getGlobalPosition(float *p);
-
+  /**
+   * spark draw method
+   */
+  virtual void draw();
 
   /**
-   * update aamp view size
+   * spark update function
+   * @param t the current time
+   * @param updateChildren is need updateChildren?
    */
-  void updateAAMPSize();
+  void update(double t, bool updateChildren) override;
 
-private:
-
-  std::string mUrl;
-
-  AAMPView *mAAMPView;
-
-  float diffX = 10;
-  float diffY = 60;
+protected:
+  bool mMuted;
+  rtString mSrc;
+  pxOffscreen *mOffscreen;
+  pxTextureRef mTextureRef;
+  long mRenderFrameId;
+  double mTimeTik;
+  double mPreviousFrameTime;
+  MediaSource *mMediaSource;
 };
 
+
+void prepareAAMP();
 
 #endif //PXSCENE_PXAAMPPLAYER_H

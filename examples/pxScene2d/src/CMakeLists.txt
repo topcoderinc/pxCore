@@ -511,11 +511,23 @@ if (SPARK_ENABLE_AAMP)
     set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${MAC_OPT}/libffi/lib/pkgconfig:${MAC_OPT}/openssl/lib/pkgconfig")
     pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
     pkg_check_modules(GSTREAMERBASE REQUIRED gstreamer-app-1.0)
+    pkg_check_modules(GSTREAMEGL REQUIRED gstreamer-gl-1.0)
     pkg_check_modules(LibXml2 REQUIRED libxml-2.0)
     pkg_check_modules(LIBDASH REQUIRED libdash)
-    set(PXSCENE_APP_FILES ${PXSCENE_APP_FILES} aamp/pxAAMPPlayer.cpp aamp/mac/AAMPView.mm)
+    set(PXSCENE_APP_FILES ${PXSCENE_APP_FILES}
+            aamp/pxAAMPPlayer.cpp
+            aamp/mac/AAMPView.mm
+            aamp/MediaSource.cpp
+            aamp/SourceBuffer.cpp
+            aamp/SourceBufferList.cpp
+            aamp/AudioTrack.cpp
+            aamp/VideoTrack.cpp
+            aamp/TextTrack.cpp
+            aamp/AAMPBaseObject.cpp
+            aamp/AAMPUtils.cpp
+            aamp/AAMPBaseTrack.cpp)
 
-    include_directories(AFTER ${AAMPDIR} ${GSTREAMER_INCLUDE_DIRS} /usr/local/include)
+    include_directories(AFTER ${AAMPDIR} ${GSTREAMER_INCLUDE_DIRS} ${GSTREAMEGL_INCLUDE_DIRS} /usr/local/include)
     set(ENV{LIBRARY_PATH} "$ENV{LIBRARY_PATH}:/usr/local/lib/:${MAC_OPT}/openssl/lib:${MAC_OPT}/gstreamer/lib:${MAC_OPT}/glib/lib:${MAC_OPT}/gettext/lib:${MAC_OPT}/gst-plugins-base/lib:${MAC_OPT}/ossp-uuid/lib")
 
     set(PXSCENE_LINK_LIBRARIES
