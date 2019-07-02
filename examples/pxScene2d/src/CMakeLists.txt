@@ -457,16 +457,27 @@ endif (SPARK_ENABLE_OPTIMIZED_UPDATE)
 if (SPARK_ENABLE_VIDEO)
     message("Enabling video support")
     add_definitions(-DENABLE_SPARK_VIDEO)
-    set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES} pxVideo.cpp)
-    #if (SPARK_ENABLE_AAMP)
-	  pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
-	  pkg_check_modules(GSTREAMERBASE REQUIRED gstreamer-app-1.0)
-	  pkg_check_modules(GSTREAMERGL REQUIRED gstreamer-gl-1.0)
-	  include_directories(${GSTREAMER_INCLUDE_DIRS})
-	  include_directories(${GSTREAMERBASE_INCLUDE_DIRS})
-	  include_directories(${GSTREAMERGL_INCLUDE_DIRS})
-	  set(PXSCENE_LINK_LIBRARIES ${PXSCENE_LINK_LIBRARIES} aamp abr dash xml2 uuid ${GSTREAMERGL_LIBRARIES} ${GSTREAMERBASE_LIBRARIES} ${GSTREAMER_LIBRARIES} )
-    #endif (SPARK_ENABLE_AAMP)
+    set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES} pxVideo.cpp video/GStreamPlayer.cpp video/helper.mm)
+    set(OPT /usr/local/opt)
+    set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${OPT}/libffi/lib/pkgconfig:${OPT}/openssl/lib/pkgconfig")
+    pkg_check_modules(FFI REQUIRED gstreamer-1.0)  
+	pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
+	pkg_check_modules(GSTREAMERBASE REQUIRED gstreamer-app-1.0)
+    pkg_check_modules(GSTREAMERGL REQUIRED gstreamer-gl-1.0)
+    include_directories(AFTER ${GSTREAMER_INCLUDE_DIRS} /usr/local/include)
+	include_directories(${GSTREAMER_INCLUDE_DIRS})
+	include_directories(${GSTREAMERBASE_INCLUDE_DIRS})
+    include_directories(${GSTREAMERGL_INCLUDE_DIRS})
+    set(PXSCENE_LINK_LIBRARIES uuid ${PXSCENE_LINK_LIBRARIES} ${GSTREAMERGL_LIBRARIES} ${GSTREAMERBASE_LIBRARIES} ${GSTREAMER_LIBRARIES} )
+    
+    link_directories(
+        ${OPT}/openssl/lib
+        ${OPT}/gstreamer/lib
+        ${OPT}/glib/lib
+        ${OPT}/gettext/lib
+        ${OPT}/gst-plugins-base/lib
+        ${OPT}/ossp-uuid/lib
+    )
 endif(SPARK_ENABLE_VIDEO)
 
 if (SPARK_ENABLE_VIDEO_PUNCHTHROUGH)

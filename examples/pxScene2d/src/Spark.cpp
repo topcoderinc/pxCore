@@ -95,6 +95,7 @@ pxEventLoop  eventLoop;
 pxEventLoop* gLoop = &eventLoop;
 
 pxContext context;
+void *gWindow;
 #ifdef ENABLE_DEBUG_MODE
 extern int g_argc;
 extern char** g_argv;
@@ -150,6 +151,7 @@ public:
   {
     pxWindow::init(x,y,w,h);
 
+    gWindow = mWindow;
     setUrl(url);
   }
 

@@ -20,9 +20,9 @@
 
 #define GL_SILENCE_DEPRECATION
 #include <OpenGL/gl3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+// #include <glm/glm.hpp>
+// #include <glm/gtc/matrix_transform.hpp>
+// #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <string>
 #include "pxVideo.h"
@@ -50,7 +50,7 @@ static void CheckGlError( int line )
  * @param[in] arg user_data
  * @retval void pointer
  */
-void* pxVideo::AAMPGstPlayer_StreamThread(void *arg)
+void* pxVideo::AAMPGstPlayer_StreamThread(void */*arg */)
 {
   if (AAMPGstPlayerMainLoop)
   {
@@ -84,6 +84,7 @@ void pxVideo::TermPlayerLoop()
 	{
 		g_main_loop_quit(AAMPGstPlayerMainLoop);
 		g_thread_join(aampMainLoopThread);
+		delete gPlayer;
 		gst_deinit ();
 		printf("%s(): Exited GStreamer MainLoop.\n", __FUNCTION__);
 	}
@@ -260,6 +261,10 @@ pxVideo::pxVideo(pxScene2d* scene):pxObject(scene), mVideoTexture()
 #endif //ENABLE_SPARK_VIDEO_PUNCHTHROUGH
 ,mAutoPlay(false)
 ,mUrl("")
+,gPlayer(nullptr)
+,mTimeTik(0)
+,mPreviousFrameTime(-1.0)
+,previousFrame(nullptr)
 {
 	  FBO_W = 1280;		//TODO: How to get scene size?
 	  FBO_H = 720;
@@ -268,23 +273,50 @@ pxVideo::pxVideo(pxScene2d* scene):pxObject(scene), mVideoTexture()
 	  AAMPGstPlayerMainLoop = NULL;
 	  InitPlayerLoop();
 #ifdef AAMP_USE_SHADER
-	  mAamp = new PlayerInstanceAAMP(NULL, std::bind(&pxVideo::updateYUVFrame_shader, this, _1, _2, _3, _4));
+//	  mAamp = new PlayerInstanceAAMP(NULL, std::bind(&pxVideo::updateYUVFrame_shader, this, _1, _2, _3, _4));
 #else
-	  mAamp = new PlayerInstanceAAMP(NULL, std::bind(&pxVideo::updateYUVFrame, this, _1, _2, _3, _4));
+//	  mAamp = new PlayerInstanceAAMP(NULL, std::bind(&pxVideo::updateYUVFrame, this, _1, _2, _3, _4));
 #endif
-	  assert (nullptr != mAamp);
-	  rtLogWarn("OpenGL Version[%s], GLSL Version[%s]\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
-	  sharedContext = context.createSharedContext();
-	  pxVideo::pxVideoObj = this;
+//	  assert (nullptr != mAamp);
+  // clean
+  while (!frames.empty()) {
+    frames.pop();
+  }
+  gPlayer = new GStreamPlayer(nullptr, [&](guint8 *buffer, int w, int h, guint stride, guint pixel_stride) {
+    gAampFboMutex.lock();
+    guint8 *bits = buffer;
+    pxOffscreen *offscreen = new pxOffscreen;
+    offscreen->init(w, h);  // video frame size may changed when netword changed, so need reset size
+
+    for (int y = 0; y < h; y++) {
+      pxPixel *d = offscreen->scanline(y);
+      for (int x = 0; x < w; x++) {
+        int index = y * w + x;
+        *d = pxPixel(bits[index * 4], bits[index * 4 + 1], bits[index * 4 + 2]);
+        d++;
+      }
+    }
+    frames.push(offscreen);
+    rtLogError("count = %d",frames.size());
+    gAampFboMutex.unlock();
+    gUIThreadQueue->addTask(newAampFrame, pxVideo::pxVideoObj, NULL);
+  });
+
+  gPlayer->setEventCallback([&](const char *event, void *data) {
+    mEmit.send(event);
+  });
+  rtLogWarn("OpenGL Version[%s], GLSL Version[%s]\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
+  sharedContext = context.createSharedContext();
+  pxVideo::pxVideoObj = this;
 #ifdef AAMP_USE_SHADER
-	  InitYUVShaders();
+  InitYUVShaders();
 #endif
 }
 
 pxVideo::~pxVideo()
 {
-	mAamp->Stop();
-	delete mAamp;
+//	mAamp->Stop();
+//	delete mAamp;
 	TermPlayerLoop();
 }
 
@@ -528,6 +560,17 @@ void pxVideo::updateYUVFrame(uint8_t *yuvBuffer, int size, int pixel_w, int pixe
 	}
 }
 
+void pxVideo::dispose(bool /*pumpJavascript*/)
+{
+  delete gPlayer; // delete player, but don't stop g loop
+  gAampFboMutex.lock(); // clear all frames
+  while (!frames.empty()) {
+    pxOffscreen *frame = frames.front();
+    delete frame;
+    frames.pop();
+  }
+}
+
 void pxVideo::draw()
 {
   if (mEnablePunchThrough && !isRotated())
@@ -539,14 +582,30 @@ void pxVideo::draw()
   }
   else
   {
-	static pxTextureRef nullMaskRef;
-	gAampFboMutex.lock();
-	if(NULL != gAampFbo)
-	{
-		context.drawImage(x(), y(), FBO_W, FBO_H,  gAampFbo->getTexture(), nullMaskRef);
-//		printf("SPARK: Rendered frame.\n");
-	}
-	gAampFboMutex.unlock();
+    static pxTextureRef nullMaskRef;
+    gAampFboMutex.lock();
+    if (NULL != gAampFbo)
+    {
+      context.drawImage(x(), y(), FBO_W, FBO_H, gAampFbo->getTexture(), nullMaskRef);
+    }
+
+    if (frames.size() > 0) {
+      if (previousFrame) {
+        delete previousFrame;
+      }
+      pxOffscreen *offscreen = frames.back(); // only fetch the last frame
+      while (!frames.empty()) {
+        pxOffscreen *t = frames.front();
+        if (t != offscreen) {
+          delete t;
+        }
+        frames.pop();
+      }
+      previousFrame = offscreen;
+    }
+    gAampFboMutex.unlock();
+    if (previousFrame)
+      context.drawImage(0, 0, mw, mh, context.createTexture(*previousFrame), nullMaskRef, false);
   }
 }
 
@@ -569,6 +628,21 @@ bool pxVideo::isRotated()
   return false;
 }
 
+void pxVideo::update(double t, bool updateChildren)
+{
+  if (mPreviousFrameTime <= 0) {
+    mPreviousFrameTime = t;
+  }
+
+  mTimeTik += (t - mPreviousFrameTime);
+  if (mTimeTik > 0.2 && gPlayer->isLoaded()) {
+    mEmit.send("timeupdate");
+    mTimeTik = 0;
+  }
+
+  mPreviousFrameTime = t;
+  pxObject::update(t, updateChildren);
+}
 //properties
 rtError pxVideo::availableAudioLanguages(rtObjectRef& /*v*/) const
 {
@@ -588,9 +662,9 @@ rtError pxVideo::availableSpeeds(rtObjectRef& /*v*/) const
   return RT_OK;
 }
 
-rtError pxVideo::duration(float& /*v*/) const
+rtError pxVideo::duration(float& v) const
 {
-  //TODO
+  v = gPlayer->getDuration();
   return RT_OK;
 }
 
@@ -603,6 +677,12 @@ rtError pxVideo::zoom(rtString& /*v*/) const
 rtError pxVideo::setZoom(const char* /*s*/)
 {
   //TODO
+  return RT_OK;
+}
+
+rtError pxVideo::playing(int &v) const
+{
+  v = gPlayer->isPlaying() ? 1 : 0;
   return RT_OK;
 }
 
@@ -666,15 +746,15 @@ rtError pxVideo::setSpeedProperty(float /*v*/)
   return RT_OK;
 }
 
-rtError pxVideo::position(float& /*v*/) const
+rtError pxVideo::position(float& v) const
 {
-  //TODO
+  v = gPlayer->getPosition();
   return RT_OK;
 }
 
-rtError pxVideo::setPosition(float /*v*/)
+rtError pxVideo::setPosition(float v)
 {
-  //TODO
+  gPlayer->setPosition(v);
   return RT_OK;
 }
 
@@ -712,6 +792,10 @@ rtError pxVideo::setUrl(const char* url)
 {
 	mUrl = rtString(url);
 	rtLogError("%s:%d: URL[%s].",__FUNCTION__,__LINE__,url);
+
+    if(!mUrl.isEmpty()){
+        gPlayer->loadFile(mUrl.cString());
+    }
 	return RT_OK;
 }
 
@@ -749,6 +833,7 @@ rtError pxVideo::setAutoPlay(bool value)
 {
 	mAutoPlay = value;
 	rtLogError("%s:%d: autoPlay[%s].",__FUNCTION__,__LINE__,value?"TRUE":"FALSE");
+	gPlayer->setAutoPlay(mAutoPlay);
 	return RT_OK;
 }
 
@@ -757,26 +842,30 @@ rtError pxVideo::play()
 	rtLogError("%s:%d.",__FUNCTION__,__LINE__);
 	if(!mUrl.isEmpty())
 	{
-		mAamp->Tune(mUrl.cString());
+//		mAamp->Tune(mUrl.cString());
 	}
+
+	gPlayer->play();
 	return RT_OK;
 }
 
 rtError pxVideo::pause()
 {
-	if(mAamp)
-	{
-		mAamp->SetRate(0);
-	}
+//	if(mAamp)
+//	{
+//		mAamp->SetRate(0);
+//	}
+  gPlayer->pause();
 	return RT_OK;
 }
 
 rtError pxVideo::stop()
 {
-	if(mAamp)
-	{
-		mAamp->Stop();
-	}
+//	if(mAamp)
+//	{
+//		mAamp->Stop();
+//	}
+  gPlayer->release();
 	return RT_OK;
 }
 
@@ -809,6 +898,7 @@ rtDefineProperty(pxVideo, availableAudioLanguages);
 rtDefineProperty(pxVideo, availableClosedCaptionsLanguages);
 rtDefineProperty(pxVideo, availableSpeeds);
 rtDefineProperty(pxVideo, duration);
+rtDefineProperty(pxVideo, playing);
 rtDefineProperty(pxVideo, zoom);
 rtDefineProperty(pxVideo, volume);
 rtDefineProperty(pxVideo, closedCaptionsOptions);

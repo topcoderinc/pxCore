@@ -112,6 +112,10 @@ else {
         else if (ext=='.js' || ext=='.jar') {
             // Do nothing and let the url fall through
         }
+        else if (ext == '.mp4' || ext == '.m4v' || ext == '.avi') {
+            // Do nothing and let the url fall through
+            url = 'videoPlayer.js?url=' + encodeURIComponent(url)
+        }
         else {
             // TODO Do a HTTP head check to see if we can get a mimetype/contenttype for routing
         }

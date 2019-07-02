@@ -22,10 +22,12 @@
 #define PX_VIDEO_H
 
 #include <gst/gst.h>
-#include "main_aamp.h"
+// #include "main_aamp.h"
+#include "video/GStreamPlayer.h"
 #include "pxScene2d.h"
 #include "pxObject.h"
 #include "pxContext.h"
+#include <queue>
 
 //#define AAMP_USE_SHADER 1
 
@@ -38,6 +40,7 @@ public:
   rtReadOnlyProperty(availableClosedCaptionsLanguages, availableClosedCaptionsLanguages, rtObjectRef);
   rtReadOnlyProperty(availableSpeeds, availableSpeeds, rtObjectRef);
   rtReadOnlyProperty(duration, duration, float);
+  rtReadOnlyProperty(playing, playing, int);
   rtProperty(zoom, zoom, setZoom, rtString);
   rtProperty(volume, volume, setVolume, uint32_t);
   rtProperty(closedCaptionsOptions, closedCaptionsOptions, setClosedCaptionsOptions, rtObjectRef);
@@ -71,6 +74,7 @@ public:
   virtual rtError availableClosedCaptionsLanguages(rtObjectRef& v) const;
   virtual rtError availableSpeeds(rtObjectRef& v) const;
   virtual rtError duration(float& v) const;
+  virtual rtError playing(int & v) const;
   virtual rtError zoom(rtString& v) const;
   virtual rtError setZoom(const char* s);
   virtual rtError volume(uint32_t& v) const;
@@ -108,6 +112,13 @@ public:
   virtual rtError setAdditionalAuth(rtObjectRef params);
   
   virtual void draw();
+  void update(double t, bool updateChildren) override;
+
+  /**
+   * when pxObject dispose
+   * @param pumpJavascript from js invoke ?
+   */
+  virtual void dispose(bool pumpJavascript);
 
   void updateYUVFrame(uint8_t *yuvBuffer, int size, int pixel_w, int pixel_h);
   void updateYUVFrame_shader(uint8_t *yuvBuffer, int size, int pixel_w, int pixel_h);
@@ -160,7 +171,7 @@ private:
     rtString mUrl;
 
     pthread_t AAMPrenderThreadID;
-    class PlayerInstanceAAMP* mAamp;
+//    class PlayerInstanceAAMP* mAamp;
     GLuint mProgramID;
     GLuint id_y, id_u, id_v; // texture id
     GLuint textureUniformY, textureUniformU,textureUniformV;
@@ -175,6 +186,11 @@ private:
     rtMutex gAampFboMutex;
     bool initialized = false;
     GThread *aampMainLoopThread;
+    GStreamPlayer* gPlayer;
+    double mTimeTik;
+    double mPreviousFrameTime;
+    std::queue<pxOffscreen*> frames;
+    pxOffscreen *previousFrame;
 
 public:
     static pxVideo *pxVideoObj; //This object
