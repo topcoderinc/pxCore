@@ -22,12 +22,10 @@
 #define PX_VIDEO_H
 
 #include <gst/gst.h>
-// #include "main_aamp.h"
-#include "video/GStreamPlayer.h"
+#include "main_aamp.h"
 #include "pxScene2d.h"
 #include "pxObject.h"
 #include "pxContext.h"
-#include <queue>
 
 //#define AAMP_USE_SHADER 1
 
@@ -40,7 +38,6 @@ public:
   rtReadOnlyProperty(availableClosedCaptionsLanguages, availableClosedCaptionsLanguages, rtObjectRef);
   rtReadOnlyProperty(availableSpeeds, availableSpeeds, rtObjectRef);
   rtReadOnlyProperty(duration, duration, float);
-  rtReadOnlyProperty(playing, playing, int);
   rtProperty(zoom, zoom, setZoom, rtString);
   rtProperty(volume, volume, setVolume, uint32_t);
   rtProperty(closedCaptionsOptions, closedCaptionsOptions, setClosedCaptionsOptions, rtObjectRef);
@@ -74,7 +71,6 @@ public:
   virtual rtError availableClosedCaptionsLanguages(rtObjectRef& v) const;
   virtual rtError availableSpeeds(rtObjectRef& v) const;
   virtual rtError duration(float& v) const;
-  virtual rtError playing(int & v) const;
   virtual rtError zoom(rtString& v) const;
   virtual rtError setZoom(const char* s);
   virtual rtError volume(uint32_t& v) const;
@@ -110,15 +106,8 @@ public:
   virtual rtError setPositionRelative(float seconds);
   virtual rtError requestStatus();
   virtual rtError setAdditionalAuth(rtObjectRef params);
-  
-  virtual void draw();
-  void update(double t, bool updateChildren) override;
 
-  /**
-   * when pxObject dispose
-   * @param pumpJavascript from js invoke ?
-   */
-  virtual void dispose(bool pumpJavascript);
+  virtual void draw();
 
   void updateYUVFrame(uint8_t *yuvBuffer, int size, int pixel_w, int pixel_h);
   void updateYUVFrame_shader(uint8_t *yuvBuffer, int size, int pixel_w, int pixel_h);
@@ -132,68 +121,63 @@ private:
   static void newAampFrame(void* context, void* data);
 
 private:
-    static constexpr char const *VSHADER =
-    		"attribute vec2 vertexIn;"
-    		"attribute vec2 textureIn;"
-    		"varying vec2 textureOut;"
-    		"void main() {"
-    			"gl_Position = vec4(vertexIn,0, 1);"
-    			"textureOut = textureIn;"
-    		"}";
+  static constexpr char const *VSHADER =
+      "attribute vec2 vertexIn;"
+      "attribute vec2 textureIn;"
+      "varying vec2 textureOut;"
+      "void main() {"
+      "gl_Position = vec4(vertexIn,0, 1);"
+      "textureOut = textureIn;"
+      "}";
 
-    static constexpr char const *FSHADER =
-    		"#ifdef GL_ES \n"
-    			"  precision mediump float; \n"
-    		"#endif \n"
-    		"varying vec2 textureOut;"
-    		"uniform sampler2D tex_y;"
-    		"uniform sampler2D tex_u;"
-    		"uniform sampler2D tex_v;"
-    		"void main() {"
-    			"vec3 yuv;"
-    			"vec3 rgb;"
-    			"yuv.x = texture2D(tex_y, textureOut).r;"
-    			"yuv.y = texture2D(tex_u, textureOut).r - 0.5;"
-    			"yuv.z = texture2D(tex_v, textureOut).r - 0.5;"
-    			"rgb = mat3( 1, 1, 1, 0, -0.39465, 2.03211, 1.13983, -0.58060,  0) * yuv;"
-    			"gl_FragColor = vec4(rgb, 1);"
-    		"}";
+  static constexpr char const *FSHADER =
+      "#ifdef GL_ES \n"
+      "  precision mediump float; \n"
+      "#endif \n"
+      "varying vec2 textureOut;"
+      "uniform sampler2D tex_y;"
+      "uniform sampler2D tex_u;"
+      "uniform sampler2D tex_v;"
+      "void main() {"
+      "vec3 yuv;"
+      "vec3 rgb;"
+      "yuv.x = texture2D(tex_y, textureOut).r;"
+      "yuv.y = texture2D(tex_u, textureOut).r - 0.5;"
+      "yuv.z = texture2D(tex_v, textureOut).r - 0.5;"
+      "rgb = mat3( 1, 1, 1, 0, -0.39465, 2.03211, 1.13983, -0.58060,  0) * yuv;"
+      "gl_FragColor = vec4(rgb, 1);"
+      "}";
 
-    static constexpr int ATTRIB_VERTEX=0;
-    static constexpr int ATTRIB_TEXTURE=1;
-    static constexpr int FPS = 60;
-    static GMainLoop *AAMPGstPlayerMainLoop;
+  static constexpr int ATTRIB_VERTEX=0;
+  static constexpr int ATTRIB_TEXTURE=1;
+  static constexpr int FPS = 60;
+  static GMainLoop *AAMPGstPlayerMainLoop;
 
-    bool isRotated();
-    pxTextureRef mVideoTexture;
-    bool mEnablePunchThrough;
-    bool mAutoPlay;
-    rtString mUrl;
+  bool isRotated();
+  pxTextureRef mVideoTexture;
+  bool mEnablePunchThrough;
+  bool mAutoPlay;
+  rtString mUrl;
 
-    pthread_t AAMPrenderThreadID;
-//    class PlayerInstanceAAMP* mAamp;
-    GLuint mProgramID;
-    GLuint id_y, id_u, id_v; // texture id
-    GLuint textureUniformY, textureUniformU,textureUniformV;
-    GLuint _vertexArray;
-    GLuint _vertexBuffer[2];
-    GLfloat currentAngleOfRotation = 0.0;
+  pthread_t AAMPrenderThreadID;
+  class PlayerInstanceAAMP* mAamp;
+  GLuint mProgramID;
+  GLuint id_y, id_u, id_v; // texture id
+  GLuint textureUniformY, textureUniformU,textureUniformV;
+  GLuint _vertexArray;
+  GLuint _vertexBuffer[2];
+  GLfloat currentAngleOfRotation = 0.0;
 
-    int FBO_W;
-    int FBO_H;
-    pxSharedContextRef sharedContext;
-    pxContextFramebufferRef gAampFbo;
-    rtMutex gAampFboMutex;
-    bool initialized = false;
-    GThread *aampMainLoopThread;
-    GStreamPlayer* gPlayer;
-    double mTimeTik;
-    double mPreviousFrameTime;
-    std::queue<pxOffscreen*> frames;
-    pxOffscreen *previousFrame;
+  int FBO_W;
+  int FBO_H;
+  pxSharedContextRef sharedContext;
+  pxContextFramebufferRef gAampFbo;
+  rtMutex gAampFboMutex;
+  bool initialized = false;
+  GThread *aampMainLoopThread;
 
 public:
-    static pxVideo *pxVideoObj; //This object
+  static pxVideo *pxVideoObj; //This object
 };
 
 #endif // PX_VIDEO_H

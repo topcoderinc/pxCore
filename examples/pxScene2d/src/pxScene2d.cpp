@@ -41,7 +41,7 @@
 #include "pxImage.h"
 
 #ifdef ENABLE_SPARK_VIDEO
-#include "pxVideo.h"
+#include "pxHtmlVideo.h"
 #endif //ENABLE_SPARK_VIDEO
 
 #ifdef PX_SERVICE_MANAGER
@@ -1019,7 +1019,7 @@ rtError pxScene2d::createWayland(rtObjectRef p, rtObjectRef& o)
 rtError pxScene2d::createVideo(rtObjectRef p, rtObjectRef& o)
 {
 #ifdef ENABLE_SPARK_VIDEO
-  o = new pxVideo(this);
+  o = new pxHtmlVideo(this);
   o.set(p);
   o.send("init");
   return RT_OK;

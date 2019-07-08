@@ -457,7 +457,21 @@ endif (SPARK_ENABLE_OPTIMIZED_UPDATE)
 if (SPARK_ENABLE_VIDEO)
     message("Enabling video support")
     add_definitions(-DENABLE_SPARK_VIDEO)
-    set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES} pxVideo.cpp video/GStreamPlayer.cpp video/helper.mm)
+    set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES}
+            pxHtmlVideo.cpp
+            mse/GStreamPlayer.cpp
+            mse/helper.mm
+            mse/MediaSource.cpp
+            mse/SourceBuffer.cpp
+            mse/SourceBufferList.cpp
+            mse/AudioTrack.cpp
+            mse/VideoTrack.cpp
+            mse/TextTrack.cpp
+            mse/AAMPBaseObject.cpp
+            mse/AAMPUtils.cpp
+            mse/AAMPBaseTrack.cpp
+            )
+
     set(OPT /usr/local/opt)
     set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${OPT}/libffi/lib/pkgconfig:${OPT}/openssl/lib/pkgconfig")
     pkg_check_modules(FFI REQUIRED gstreamer-1.0)  

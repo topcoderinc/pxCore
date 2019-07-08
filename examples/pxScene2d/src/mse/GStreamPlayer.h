@@ -6,10 +6,12 @@
 #include <gst/gst.h>
 #include <functional>
 #include <stdio.h>
+#include <string>
 #include <string.h>
 #include <stdlib.h>
 #include <gst/gl/gl.h>
 #include <gst/gl/gstglfuncs.h>
+#include <event.h>
 
 
 typedef std::function<void(guint8 *buffer, int w, int h, guint stride, guint pixel_stride)> FrameCallback;
@@ -79,8 +81,42 @@ public:
   {
     if (eventCallback) {
       eventCallback(event, data);
+    } else {
+      g_warning("GStreamer Player event emit callback should not null!!");
     }
   }
+
+  bool seekable()
+  {
+    return playbin && file;
+  }
+
+
+  bool isEnded() const;
+
+  void setEnded(bool ended);
+
+  bool isLoop() const;
+
+  void setLoop(bool loop);
+
+  int getReadyState() const;
+
+  void setReadyState(int readyState);
+
+  bool isSeeking() const;
+
+  const std::string &getRuntimeError() const;
+
+  void setRuntimeError(const std::string &runtimeError);
+
+  long getCurrentTime()
+  {
+    struct timeval tp{};
+    gettimeofday(&tp, nullptr);
+    return tp.tv_sec * 1000 + tp.tv_usec / 1000;
+  }
+
 private:
   GstElement *playbin;
   GstElement *appsrc;
@@ -95,7 +131,12 @@ private:
   bool playing;
   bool loaded;
   bool autoPlay;
-
+  bool seeking;
+  std::string runtimeError;
+  bool ended;
+  bool loop;
+  int readyState;
+  long startDate;
 };
 
 

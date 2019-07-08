@@ -23,9 +23,17 @@ static gboolean GStreamer_BusMessage(GstBus * /* bus */, GstMessage *msg, GStrea
       g_free(debug_info);
       break;
     case GST_MESSAGE_EOS:
+      if (app->isPlaying()) {
+        app->emit("ended");
+        app->emit("stop");
+      }
+
       app->setPlaying(false);
-      app->emit("ended");
-      app->emit("stop");
+      app->setEnded(true);
+      if (app->isLoop()) {
+        g_warning("loop param is true, so play again!!");
+        app->play(); // play again if loop is true
+      }
       break;
     case GST_MESSAGE_DURATION:
       break;
@@ -33,11 +41,16 @@ static gboolean GStreamer_BusMessage(GstBus * /* bus */, GstMessage *msg, GStrea
       GstState old_state, new_state, pending_state;
       gst_message_parse_state_changed(msg, &old_state, &new_state, &pending_state);
       if (new_state == GST_STATE_PAUSED) {
-        app->emit("paused");
+        if (app->isPlaying()) {
+          app->emit("pause");
+        }
         app->setPlaying(false);
       } else if (new_state == GST_STATE_PLAYING) {
+        if (!app->isPlaying()) {
+          app->emit("play");
+          app->emit("playing");
+        }
         app->setPlaying(true);
-        app->emit("playing");
       }
       break;
     }
@@ -54,13 +67,18 @@ static void GStreamer_FeedData(GstElement */* appsrc*/, guint size, GStreamPlaye
 {
   // the file is loaded
   if (!app->isLoaded() && app->getDuration() > 0) {
-    app->emit("canplay");
-    app->emit("loadeddata");
+    app->emit("canplay");  // data loaded, now it can play
+    app->emit("loadeddata"); // data loaded
+    app->emit("durationchange"); // duration parsed, from 0 to real duration
+    app->emit("canplaythrough"); // this is local file, no need buffer
     app->setLoaded(true);
     g_warning("loaded first frame !! %s", app->isAutoPlay() ? "true" : "false");
     if (!app->isAutoPlay()) {
       app->pause();
     }
+    app->setReadyState(4);
+  } else {
+    app->setReadyState(3);
   }
   GstBuffer *buffer;
   GstFlowReturn ret;
@@ -152,7 +170,8 @@ GStreamer_DrawCallback(GstElement */*gl_sink */, void */*context */, GstSample *
 }
 
 GStreamPlayer::GStreamPlayer(const char *file, const FrameCallback &frameCallback) :
-    playbin(nullptr), offset(0), playing(false), loaded(false), autoPlay(false)
+    playbin(nullptr), offset(0), playing(false), loaded(false), autoPlay(false), seeking(false),
+    runtimeError(""), ended(false), loop(false), readyState(0), startDate(0)
 {
 
   if (file) {
@@ -164,12 +183,14 @@ GStreamPlayer::GStreamPlayer(const char *file, const FrameCallback &frameCallbac
 
 void GStreamPlayer::release()
 {
+  emit("closed", nullptr);
   if (playbin) {
     gst_element_set_state(playbin, GST_STATE_NULL);
     /* free the file */
     g_mapped_file_unref(file);
     playbin = nullptr;
   }
+  ended = true;
 }
 
 GStreamPlayer::~GStreamPlayer()
@@ -180,18 +201,30 @@ GStreamPlayer::~GStreamPlayer()
 
 void GStreamPlayer::loadFile(const char *fileUri)
 {
-
+  emit("loadstart");
   release();
+
+  ended = false;
+  loaded = false;
+  seeking = false;
+  playing = false;
+  readyState = 0;
 
   GError *error = NULL;
 
   /* try to open the file as an mmapped file */
   file = g_mapped_file_new(fileUri, FALSE, &error);
   if (error) {
-    g_print("failed to open file: %s\n", error->message);
+    emit("abort");
+    setRuntimeError("failed to open file");
+    emit("error");
+    g_warning("failed to open file: %s\n", error->message);
     g_error_free(error);
+    release();
     return;
   }
+  emit("loadedmetadata"); // file loaded
+  readyState = 1;
   /* get some vitals, this will be used to read data from the mmapped file and
    * feed it to appsrc. */
   length = g_mapped_file_get_length(file);
@@ -211,19 +244,18 @@ void GStreamPlayer::loadFile(const char *fileUri)
   /* get notification when the source is created so that we get a handle to it
    * and can configure it */
   g_signal_connect (playbin, "deep-notify::source", (GCallback) GStreamer_FoundSource, this);
-
+  readyState = 2;
 
   GstElement *glimagesink = gst_element_factory_make("glimagesink", "spark-video-glimage");
   g_object_set(playbin, "video-sink", glimagesink, NULL);
   g_signal_connect(G_OBJECT(glimagesink), "client-draw", G_CALLBACK(GStreamer_DrawCallback), this);
-  emit("loadstart");
   gst_element_set_state(playbin, GST_STATE_PLAYING);
+  startDate = getCurrentTime();
 }
 
 void GStreamPlayer::play()
 {
   gst_element_set_state(playbin, GST_STATE_PLAYING);
-  g_warning("getDuration,getPosition = %f %f", this->getDuration(), this->getPosition());
   if (this->getDuration() > 0 && this->getPosition() >= 0 && this->getDuration() - this->getPosition() < 0.1) {
     // think finished, replay
     setPosition(0);
@@ -260,11 +292,15 @@ void GStreamPlayer::setPosition(float position)
   if (seekTime > d) {
     seekTime = d - TIME_UNIT;
   }
+  seeking = true;
+  this->emit("seeking");
   if (!gst_element_seek(playbin, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
                         GST_SEEK_TYPE_SET, seekTime,
                         GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE)) {
     g_warning("Seek failed!\n");
   }
+  seeking = false;
+  emit("seeked");
 }
 
 void GStreamPlayer::setFrameCallback(const FrameCallback &frameCallback)
@@ -360,4 +396,50 @@ bool GStreamPlayer::isAutoPlay() const
 void GStreamPlayer::setAutoPlay(bool autoPlay)
 {
   GStreamPlayer::autoPlay = autoPlay;
+}
+
+
+bool GStreamPlayer::isEnded() const
+{
+  return ended;
+}
+
+void GStreamPlayer::setEnded(bool ended)
+{
+  GStreamPlayer::ended = ended;
+}
+
+bool GStreamPlayer::isLoop() const
+{
+  return loop;
+}
+
+void GStreamPlayer::setLoop(bool loop)
+{
+  GStreamPlayer::loop = loop;
+}
+
+int GStreamPlayer::getReadyState() const
+{
+  return readyState;
+}
+
+void GStreamPlayer::setReadyState(int readyState)
+{
+  GStreamPlayer::readyState = readyState;
+}
+
+bool GStreamPlayer::isSeeking() const
+{
+  return seeking;
+}
+
+const std::string &GStreamPlayer::getRuntimeError() const
+{
+  return runtimeError;
+}
+
+void GStreamPlayer::setRuntimeError(const std::string &runtimeError)
+{
+  GStreamPlayer::runtimeError = runtimeError;
 }

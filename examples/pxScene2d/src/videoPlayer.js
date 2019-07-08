@@ -8,12 +8,13 @@ px.import({scene: "px:scene.1.js", keys: 'px:tools.keys.js',}).then(function (im
 
     var player = scene.create({
         t: 'video',
-        url: fileUrl,
+        src: fileUrl,
         x: 0,
         y: 0,
         w: root.w,
         h: root.h,
         autoPlay: true,
+        loop: true,
         parent: scene.root,
     });
 
@@ -59,17 +60,17 @@ px.import({scene: "px:scene.1.js", keys: 'px:tools.keys.js',}).then(function (im
 
 
     function updatePlayBtnRes() {
-        playBtn.resource = player.playing ? pauseRes : playRes;
+        playBtn.resource = player.paused ? playRes : pauseRes;
     }
 
     function togglePauseOrPlay() {
         if (!isLoaded) {
             return;
         }
-        if (player.playing) {
-            player.pause();
-        } else {
+        if (player.paused) {
             player.play();
+        } else {
+            player.pause();
         }
         updatePlayBtnRes();
     }
@@ -125,12 +126,43 @@ px.import({scene: "px:scene.1.js", keys: 'px:tools.keys.js',}).then(function (im
         currentTxt.text = getTime(radio * d);
     }
 
-    player.on('canplay', function () {
-        console.log('can play');
+    const evts = [
+        'abort',
+        'canplay',
+        'canplaythrough',
+        'durationchange',
+        'ended',
+        'error',
+        'loadeddata',
+        'loadedmetadata',
+        'loadstart',
+        'pause',
+        'play',
+        'playing',
+        'seeked',
+        'seeking'
+    ];
+    for (var i = 0; i < evts.length; i++) {
+        var evt = evts[i];
+        player.on(evt, function (name) {
+            console.log('>>>>>>> got evt from player, event name = ' + name);
+            if (name === 'error') {
+                console.log(player.error);
+            }
+        })
+    }
+
+    player.mediaSource.on('sourceclose', () => {
+        console.log('>>>>>>> got evt from mediaSource, sourceclose');
     });
-    player.on('loadeddata', function () {
-        console.log('loadeddata');
-        totalText.text = getTime(player.duration);
+
+    player.mediaSource.on('sourceended', () => {
+        console.log('>>>>>>> got evt from mediaSource, sourceended');
+    });
+
+    player.mediaSource.on('sourceopen', () => {
+        console.log('>>>>>>> got evt from mediaSource, sourceopen..');
+        totalText.text = getTime(player.mediaSource.duration);
         isLoaded = true;
     });
 
