@@ -37,6 +37,15 @@ static gboolean GStreamer_BusMessage(GstBus * /* bus */, GstMessage *msg, GStrea
       break;
     case GST_MESSAGE_DURATION:
       break;
+    case GST_MESSAGE_STREAM_STATUS: {
+      GstStreamStatusType type;
+      GstElement *owner;
+      gst_message_parse_stream_status(msg, &type, &owner);
+      if (type == GST_STREAM_STATUS_TYPE_CREATE || type == GST_STREAM_STATUS_TYPE_ENTER) {
+        app->firstFrameLoaded();
+      }
+      break;
+    }
     case GST_MESSAGE_STATE_CHANGED: {
       GstState old_state, new_state, pending_state;
       gst_message_parse_state_changed(msg, &old_state, &new_state, &pending_state);
@@ -65,21 +74,7 @@ static gboolean GStreamer_BusMessage(GstBus * /* bus */, GstMessage *msg, GStrea
  */
 static void GStreamer_FeedData(GstElement */* appsrc*/, guint size, GStreamPlayer *app)
 {
-  // the file is loaded
-  if (!app->isLoaded() && app->getDuration() > 0) {
-    app->emit("canplay");  // data loaded, now it can play
-    app->emit("loadeddata"); // data loaded
-    app->emit("durationchange"); // duration parsed, from 0 to real duration
-    app->emit("canplaythrough"); // this is local file, no need buffer
-    app->setLoaded(true);
-    g_warning("loaded first frame !! %s", app->isAutoPlay() ? "true" : "false");
-    if (!app->isAutoPlay()) {
-      app->pause();
-    }
-    app->setReadyState(4);
-  } else {
-    app->setReadyState(3);
-  }
+  app->firstFrameLoaded();
   GstBuffer *buffer;
   GstFlowReturn ret;
   if (app->getOffset() >= app->getLength()) {
@@ -130,16 +125,18 @@ static void GStreamer_FoundSource(GObject */*object */, GObject *orig, GParamSpe
 
   app->setAppsrc(appsrc);
 
-  /* we can set the length in appsrc. This allows some elements to estimate the
-   * total duration of the stream. It's a good idea to set the property when you
-   * can but it's not required. */
-  g_object_set(app->getAppsrc(), "size", (gint64) app->getLength(), NULL);
-  gst_util_set_object_arg(G_OBJECT (app->getAppsrc()), "stream-type", "random-access");
+  if (!app->isRemote()) {
+    /* we can set the length in appsrc. This allows some elements to estimate the
+     * total duration of the stream. It's a good idea to set the property when you
+     * can but it's not required. */
+    g_object_set(app->getAppsrc(), "size", (gint64) app->getLength(), NULL);
+    gst_util_set_object_arg(G_OBJECT (app->getAppsrc()), "stream-type", "random-access");
 
-  /* configure the appsrc, we will push a buffer to appsrc when it needs more
-   * data */
-  g_signal_connect (app->getAppsrc(), "need-data", G_CALLBACK(GStreamer_FeedData), app);
-  g_signal_connect (app->getAppsrc(), "seek-data", G_CALLBACK(GStreamer_SeekData), app);
+    /* configure the appsrc, we will push a buffer to appsrc when it needs more
+     * data */
+    g_signal_connect (app->getAppsrc(), "need-data", G_CALLBACK(GStreamer_FeedData), app);
+    g_signal_connect (app->getAppsrc(), "seek-data", G_CALLBACK(GStreamer_SeekData), app);
+  }
 }
 
 
@@ -170,7 +167,8 @@ GStreamer_DrawCallback(GstElement */*gl_sink */, void */*context */, GstSample *
 }
 
 GStreamPlayer::GStreamPlayer(const char *file, const FrameCallback &frameCallback) :
-    playbin(nullptr), offset(0), playing(false), loaded(false), autoPlay(false), seeking(false),
+    playbin(nullptr), appsrc(nullptr), file(nullptr), bus(nullptr), data(nullptr),
+    offset(0), playing(false), loaded(false), autoPlay(false), seeking(false),
     runtimeError(""), ended(false), loop(false), readyState(0), startDate(0)
 {
 
@@ -181,14 +179,38 @@ GStreamPlayer::GStreamPlayer(const char *file, const FrameCallback &frameCallbac
 }
 
 
+void GStreamPlayer::firstFrameLoaded()
+{
+  // the file is loaded
+  if (!isLoaded() && this->getDuration() > 0) {
+    this->emit("canplay");  // data loaded, now it can play
+    this->emit("loadeddata"); // data loaded
+    this->emit("durationchange"); // duration parsed, from 0 to real duration
+    this->emit("canplaythrough"); // this is local file, no need buffer
+    this->setLoaded(true);
+    g_warning("loaded first frame !! %s", this->isAutoPlay() ? "true" : "false");
+    if (!this->isAutoPlay()) {
+      this->pause();
+    }
+    this->setReadyState(4);
+  } else {
+    this->setReadyState(3);
+  }
+}
+
 void GStreamPlayer::release()
 {
-  emit("closed", nullptr);
+  if (loaded) {
+    emit("closed", nullptr);
+  }
   if (playbin) {
     gst_element_set_state(playbin, GST_STATE_NULL);
     /* free the file */
-    g_mapped_file_unref(file);
     playbin = nullptr;
+  }
+  if (file) {
+    g_mapped_file_unref(file);
+    file = nullptr;
   }
   ended = true;
 }
@@ -208,44 +230,49 @@ void GStreamPlayer::loadFile(const char *fileUri)
   loaded = false;
   seeking = false;
   playing = false;
+  remote = false;
   readyState = 0;
 
-  GError *error = NULL;
-
-  /* try to open the file as an mmapped file */
-  file = g_mapped_file_new(fileUri, FALSE, &error);
-  if (error) {
-    emit("abort");
-    setRuntimeError("failed to open file");
-    emit("error");
-    g_warning("failed to open file: %s\n", error->message);
-    g_error_free(error);
-    release();
-    return;
-  }
-  emit("loadedmetadata"); // file loaded
-  readyState = 1;
-  /* get some vitals, this will be used to read data from the mmapped file and
-   * feed it to appsrc. */
-  length = g_mapped_file_get_length(file);
-  data = (guint8 *) g_mapped_file_get_contents(file);
-  offset = 0;
-
+  GError *error = nullptr;
   playbin = gst_element_factory_make("playbin", "spark-playbin");
-
   bus = gst_pipeline_get_bus(GST_PIPELINE (playbin));
-
   /* add watch for messages */
   gst_bus_add_watch(bus, (GstBusFunc) GStreamer_BusMessage, this);
 
-  /* set to read from appsrc */
-  g_object_set(playbin, "uri", "appsrc://", NULL);
+  emit("loadedmetadata"); // file loaded
+  readyState = 1;
 
-  /* get notification when the source is created so that we get a handle to it
-   * and can configure it */
+  if (strcasestr(fileUri, "http")) {
+    remote = true;
+    g_object_set(playbin, "uri", fileUri, NULL);
+  } else {
+
+    /* try to open the file as an mmapped file */
+    file = g_mapped_file_new(fileUri, FALSE, &error);
+    if (error) {
+      emit("abort");
+      setRuntimeError("failed to open file");
+      emit("error");
+      g_warning("failed to open file: %s\n", error->message);
+      g_error_free(error);
+      release();
+      return;
+    }
+
+    /* get some vitals, this will be used to read data from the mmapped file and feed it to appsrc. */
+    length = g_mapped_file_get_length(file);
+    data = (guint8 *) g_mapped_file_get_contents(file);
+    offset = 0;
+    /* set to read from appsrc */
+    g_object_set(playbin, "uri", "appsrc://", NULL);
+  }
+
+
+
+
+  /* get notification when the source is created so that we get a handle to it and can configure it */
   g_signal_connect (playbin, "deep-notify::source", (GCallback) GStreamer_FoundSource, this);
   readyState = 2;
-
   GstElement *glimagesink = gst_element_factory_make("glimagesink", "spark-video-glimage");
   g_object_set(playbin, "video-sink", glimagesink, NULL);
   g_signal_connect(G_OBJECT(glimagesink), "client-draw", G_CALLBACK(GStreamer_DrawCallback), this);
@@ -271,16 +298,16 @@ float GStreamPlayer::getDuration() const
 {
   gint64 duration = -1;
   if (!gst_element_query_duration(playbin, GST_FORMAT_TIME, &duration)) {
-    return -1.0;
+    return duration;
   }
   return duration / (TIME_UNIT * 1.0);
 }
 
 float GStreamPlayer::getPosition() const
 {
-  gint64 position = -1;
+  gint64 position = 0;
   if (!gst_element_query_position(playbin, GST_FORMAT_TIME, &position)) {
-    return -1.0;
+    return position;
   }
   return position / (TIME_UNIT * 1.0);
 }
@@ -442,4 +469,9 @@ const std::string &GStreamPlayer::getRuntimeError() const
 void GStreamPlayer::setRuntimeError(const std::string &runtimeError)
 {
   GStreamPlayer::runtimeError = runtimeError;
+}
+
+bool GStreamPlayer::isRemote() const
+{
+  return remote;
 }

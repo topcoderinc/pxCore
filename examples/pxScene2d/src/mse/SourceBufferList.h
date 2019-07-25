@@ -1,7 +1,7 @@
 #ifndef PXSCENE_SOURCEBUFFERLIST_H
 #define PXSCENE_SOURCEBUFFERLIST_H
 
-#include "AAMPBaseObject.h"
+#include "MSEBaseObject.h"
 #include "SourceBuffer.h"
 #include <vector>
 
@@ -9,9 +9,9 @@
  * source buffer list class
  * https://developer.mozilla.org/en-US/docs/Web/API/SourceBufferList
  */
-class SourceBufferList : public AAMPBaseObject {
+class SourceBufferList : public MSEBaseObject {
 public:
-  rtDeclareObject(SourceBufferList, AAMPBaseObject);
+  rtDeclareObject(SourceBufferList, MSEBaseObject);
 
   rtMethodNoArgAndReturn("SourceBuffer", getSourceBuffer, rtObjectRef);
 
@@ -24,7 +24,7 @@ public:
   void remove(SourceBuffer *buffer);
 
 private:
-  std::vector<AAMPBaseObject *> mBuffers;
+  std::vector<MSEBaseObject *> mBuffers;
 };
 
 
