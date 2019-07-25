@@ -1,16 +1,16 @@
 #ifndef PXSCENE_AUDIOTRACK_H
 #define PXSCENE_AUDIOTRACK_H
 
-#include "AAMPBaseTrack.h"
+#include "MSEBaseTrack.h"
 
 /**
  * Audio track class
  * https://developer.mozilla.org/en-US/docs/Web/API/AudioTrack
  */
-class AudioTrack : public AAMPBaseTrack {
+class AudioTrack : public MSEBaseTrack {
   AudioTrack(SourceBuffer *buffer);
 
-  rtDeclareObject(AudioTrack, AAMPBaseTrack);
+  rtDeclareObject(AudioTrack, MSEBaseTrack);
 
 
   rtProperty(enabled, getEnabled, setEnabled, bool);

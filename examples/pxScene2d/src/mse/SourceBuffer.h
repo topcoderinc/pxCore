@@ -1,7 +1,7 @@
 #ifndef PXSCENE_SOURCEBUFFER_H
 #define PXSCENE_SOURCEBUFFER_H
 
-#include "AAMPBaseObject.h"
+#include "MSEBaseObject.h"
 #include "AudioTrack.h"
 #include "TextTrack.h"
 #include "VideoTrack.h"
@@ -14,10 +14,10 @@
  * Source buffer class
  * https://developer.mozilla.org/en-US/docs/Web/API/SourceBuffer
  */
-class SourceBuffer : public AAMPBaseObject {
+class SourceBuffer : public MSEBaseObject {
 
 public:
-  rtDeclareObject(SourceBuffer, AAMPBaseObject);
+  rtDeclareObject(SourceBuffer, MSEBaseObject);
 
   SourceBuffer();
 
@@ -102,14 +102,14 @@ protected:
 
   float mAppendWindowEnd;
   float mAppendWindowStart;
-  std::vector<AAMPBaseObject *> mAudioTracks;
+  std::vector<MSEBaseObject *> mAudioTracks;
   float mBuffered;
   rtString mMode;
-  std::vector<AAMPBaseObject *> mTextTracks;
+  std::vector<MSEBaseObject *> mTextTracks;
   float mTimestampOffset;
-  std::vector<AAMPBaseObject *> mTrackDefaults;
+  std::vector<MSEBaseObject *> mTrackDefaults;
   bool mUpdating;
-  std::vector<AAMPBaseObject *> mVideoTracks;
+  std::vector<MSEBaseObject *> mVideoTracks;
 
 };
 

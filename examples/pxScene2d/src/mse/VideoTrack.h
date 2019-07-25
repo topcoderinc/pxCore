@@ -1,15 +1,15 @@
 #ifndef PXSCENE_VIDEOTRACK_H
 #define PXSCENE_VIDEOTRACK_H
 
-#include "AAMPBaseTrack.h"
+#include "MSEBaseTrack.h"
 
 /**
  * Video track class
  * https://developer.mozilla.org/en-US/docs/Web/API/VideoTrack
  */
-class VideoTrack : AAMPBaseTrack {
+class VideoTrack : MSEBaseTrack {
 public:
-  rtDeclareObject(VideoTrack, AAMPBaseTrack);
+  rtDeclareObject(VideoTrack, MSEBaseTrack);
 
   VideoTrack(SourceBuffer *buffer);
 

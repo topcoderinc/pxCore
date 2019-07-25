@@ -2,7 +2,7 @@
 #include "SourceBuffer.h"
 
 
-TextTrack::TextTrack(SourceBuffer *buffer) : AAMPBaseTrack(buffer), mMode(""), mInBandMetadataTrackDispatchType("")
+TextTrack::TextTrack(SourceBuffer *buffer) : MSEBaseTrack(buffer), mMode(""), mInBandMetadataTrackDispatchType("")
 {
 
 }
@@ -54,6 +54,6 @@ rtError TextTrack::removeCue(rtObjectRef cue)
 }
 
 
-rtDefineObject(TextTrack, AAMPBaseTrack)
+rtDefineObject(TextTrack, MSEBaseTrack)
 rtDefineMethod(TextTrack, addCue)
 rtDefineMethod(TextTrack, removeCue)

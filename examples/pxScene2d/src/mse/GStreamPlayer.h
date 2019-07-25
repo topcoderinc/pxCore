@@ -117,6 +117,10 @@ public:
     return tp.tv_sec * 1000 + tp.tv_usec / 1000;
   }
 
+  bool isRemote() const;
+
+  void firstFrameLoaded();
+
 private:
   GstElement *playbin;
   GstElement *appsrc;
@@ -132,6 +136,7 @@ private:
   bool loaded;
   bool autoPlay;
   bool seeking;
+  bool remote;
   std::string runtimeError;
   bool ended;
   bool loop;

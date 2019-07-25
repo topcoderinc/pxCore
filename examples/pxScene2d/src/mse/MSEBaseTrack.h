@@ -1,21 +1,21 @@
 
 
-#ifndef PXSCENE_AAMPBASETRACK_H
-#define PXSCENE_AAMPBASETRACK_H
+#ifndef PXSCENE_MSEBASETRACK_H
+#define PXSCENE_MSEBASETRACK_H
 
-#include "AAMPBaseObject.h"
+#include "MSEBaseObject.h"
 
 class SourceBuffer;
 
 /**
- * aamp base track class, contains common properties
+ * mse base track class, contains common properties
  */
-class AAMPBaseTrack : public AAMPBaseObject {
+class MSEBaseTrack : public MSEBaseObject {
 public:
 
-  AAMPBaseTrack(SourceBuffer *buffer);
+  MSEBaseTrack(SourceBuffer *buffer);
 
-  rtDeclareObject(AAMPBaseTrack, AAMPBaseObject);
+  rtDeclareObject(MSEBaseTrack, MSEBaseObject);
 
   rtProperty(id, getId, setId, rtString);
 

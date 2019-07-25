@@ -2,17 +2,17 @@
 #define PXSCENE_TEXTTRACK_H
 
 #include "rtObject.h"
-#include "AAMPBaseTrack.h"
+#include "MSEBaseTrack.h"
 
 /**
  * TextTrack class for source buffer
  * https://developer.mozilla.org/en-US/docs/Web/API/TextTrack
  */
-class TextTrack : public AAMPBaseTrack {
+class TextTrack : public MSEBaseTrack {
 public:
   TextTrack(SourceBuffer *buffer);
 
-  rtDeclareObject(TextTrack, AAMPBaseTrack);
+  rtDeclareObject(TextTrack, MSEBaseTrack);
 
 
   rtProperty(mode, getMode, setMode, rtString);

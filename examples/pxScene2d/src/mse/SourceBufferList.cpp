@@ -1,5 +1,5 @@
 #include "SourceBufferList.h"
-#include "AAMPUtils.h"
+#include "MSEUtils.h"
 
 SourceBufferList::SourceBufferList()
 {
@@ -25,6 +25,6 @@ void SourceBufferList::remove(SourceBuffer *buffer)
   mEmit.send("onremovesourcebuffer", buffer);
 }
 
-rtDefineObject(SourceBufferList, AAMPBaseObject)
+rtDefineObject(SourceBufferList, MSEBaseObject)
 rtDefineMethod(SourceBufferList, getSourceBuffer)
 

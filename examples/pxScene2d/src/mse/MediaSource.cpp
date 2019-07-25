@@ -1,5 +1,5 @@
 #include "MediaSource.h"
-#include "AAMPUtils.h"
+#include "MSEUtils.h"
 
 
 MediaSource::MediaSource() : curSourceBuffer(nullptr),
@@ -112,7 +112,7 @@ void MediaSource::onEvent(const char *event)
 
 }
 
-rtDefineObject(MediaSource, AAMPBaseObject)
+rtDefineObject(MediaSource, MSEBaseObject)
 rtDefineProperty(MediaSource, sourceBuffers)
 rtDefineProperty(MediaSource, activeSourceBuffers)
 rtDefineProperty(MediaSource, readyState)
