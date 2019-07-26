@@ -1,18 +1,18 @@
 
 
-#ifndef PXSCENE_AAMPBASEOBJECT_H
-#define PXSCENE_AAMPBASEOBJECT_H
+#ifndef PXSCENE_MSEBASEOBJECT_H
+#define PXSCENE_MSEBASEOBJECT_H
 
 #include "rtObject.h"
 
 /**
- * AAMP video base object, this is like event emit class
+ * MSE video base object, this is like event emit class
  */
-class AAMPBaseObject : public rtObject {
+class MSEBaseObject : public rtObject {
 public:
-  rtDeclareObject(AAMPBaseObject, rtObject);
+  rtDeclareObject(MSEBaseObject, rtObject);
 
-  AAMPBaseObject();
+  MSEBaseObject();
 
   // add event
   rtMethod2ArgAndNoReturn("on", addListener, rtString, rtFunctionRef);

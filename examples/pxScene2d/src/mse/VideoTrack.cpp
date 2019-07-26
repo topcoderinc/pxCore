@@ -1,7 +1,7 @@
 #include "VideoTrack.h"
 
 
-VideoTrack::VideoTrack(SourceBuffer *buffer) : AAMPBaseTrack(buffer), mSelected(false)
+VideoTrack::VideoTrack(SourceBuffer *buffer) : MSEBaseTrack(buffer), mSelected(false)
 {
 
 }
@@ -18,5 +18,5 @@ rtError VideoTrack::setSelected(bool const &v)
   return RT_OK;
 }
 
-rtDefineObject(VideoTrack, AAMPBaseTrack)
+rtDefineObject(VideoTrack, MSEBaseTrack)
 

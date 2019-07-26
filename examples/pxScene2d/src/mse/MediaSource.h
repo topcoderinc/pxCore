@@ -2,7 +2,7 @@
 #define PXSCENE_MEDIASOURCE_H
 
 
-#include "AAMPBaseObject.h"
+#include "MSEBaseObject.h"
 #include "SourceBufferList.h"
 #include <vector>
 
@@ -11,11 +11,11 @@
  * Media source class
  * https://developer.mozilla.org/en-US/docs/Web/API/MediaSource
  */
-class MediaSource : public AAMPBaseObject {
+class MediaSource : public MSEBaseObject {
 public:
   MediaSource();
 
-  rtDeclareObject(MediaSource, AAMPBaseObject);
+  rtDeclareObject(MediaSource, MSEBaseObject);
 
   rtReadOnlyProperty(sourceBuffers, getSourceBuffers, rtObjectRef);
 

@@ -467,9 +467,9 @@ if (SPARK_ENABLE_VIDEO)
             mse/AudioTrack.cpp
             mse/VideoTrack.cpp
             mse/TextTrack.cpp
-            mse/AAMPBaseObject.cpp
-            mse/AAMPUtils.cpp
-            mse/AAMPBaseTrack.cpp
+            mse/MSEBaseObject.cpp
+            mse/MSEUtils.cpp
+            mse/MSEBaseTrack.cpp
             )
 
     set(OPT /usr/local/opt)

@@ -1,6 +1,6 @@
 #include "AudioTrack.h"
 
-AudioTrack::AudioTrack(SourceBuffer *buffer) : AAMPBaseTrack(buffer)
+AudioTrack::AudioTrack(SourceBuffer *buffer) : MSEBaseTrack(buffer)
 {
 
 }
@@ -19,4 +19,4 @@ rtError AudioTrack::setEnabled(bool const &v)
 }
 
 
-rtDefineObject(AudioTrack, AAMPBaseTrack)
+rtDefineObject(AudioTrack, MSEBaseTrack)

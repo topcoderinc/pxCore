@@ -1,7 +1,7 @@
 #include "SourceBuffer.h"
-#include "AAMPUtils.h"
+#include "MSEUtils.h"
 
-rtDefineObject(SourceBuffer, AAMPBaseObject)
+rtDefineObject(SourceBuffer, MSEBaseObject)
 rtDefineProperty(SourceBuffer, appendWindowEnd)
 rtDefineProperty(SourceBuffer, appendWindowStart)
 rtDefineProperty(SourceBuffer, audioTracks)
