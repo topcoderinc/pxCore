@@ -1,0 +1,1037 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CMakeLists.txt" />
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ASCIICType.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\AggregateLogger.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Algorithms.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Assertions.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Atomics.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\AutodrainedPool.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\AutomaticThread.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\BackwardsGraph.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Bag.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\BagToHashMap.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\BitVector.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Bitmap.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\BlockObjCExceptions.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\BlockPtr.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\BloomFilter.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\BooleanLattice.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Box.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Brigand.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\BubbleSort.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\BumpPointerAllocator.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ByteOrder.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CPUTime.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CagedPtr.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CagedUniquePtr.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CallbackAggregator.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CheckedArithmetic.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CheckedBoolean.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ClockType.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CommaPrinter.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CompactPointerTuple.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CompilationThread.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Compiler.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CompletionHandler.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ConcurrentBuffer.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ConcurrentPtrHashSet.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ConcurrentVector.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Condition.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CountingLock.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CrossThreadCopier.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CrossThreadQueue.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CrossThreadTask.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CrossThreadTaskHandler.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CryptographicUtilities.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CryptographicallyRandomNumber.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\DataLog.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\DataMutex.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\DateMath.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\DebugUtilities.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\DeferrableRefCounted.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Deque.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\DisallowCType.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Dominators.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\DoublyLinkedList.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\DumbPtrTraits.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\DumbValueTraits.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\EnumTraits.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Expected.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ExportMacros.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\FastBitVector.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\FastMalloc.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\FastTLS.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\FeatureDefines.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\FileMetadata.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\FilePrintStream.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\FileSystem.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\FlipBytes.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ForbidHeapAllocation.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Forward.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Function.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\FunctionDispatcher.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\FunctionTraits.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\GetPtr.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Gigacage.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\GlobalVersion.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\GraphNodeWorklist.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\GregorianDateTime.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\HashCountedSet.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\HashFunctions.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\HashIterators.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\HashMap.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\HashMethod.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\HashSet.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\HashTable.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\HashTraits.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Hasher.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\HexNumber.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Identified.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Indenter.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\IndexKeyType.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\IndexMap.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\IndexSet.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\IndexSparseSet.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\IndexedContainerIterator.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\InlineASM.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Insertion.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\InstanceCounted.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\IsoMalloc.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\IsoMallocInlines.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\IteratorAdaptors.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\IteratorRange.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\JSONValues.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\JSValueMalloc.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\KeyValuePair.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\LEBDecoder.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Language.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ListDump.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ListHashSet.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Liveness.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Lock.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\LockAlgorithm.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\LockAlgorithmInlines.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\LockedPrintStream.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Locker.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\LocklessBag.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Logger.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\LoggerHelper.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\LoggingAccumulator.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\LoggingHashID.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\LoggingHashMap.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\LoggingHashSet.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\LoggingHashTraits.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MD5.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MachSendRight.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MainThread.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MainThreadData.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MallocPtr.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Markable.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MathExtras.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MediaTime.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MemoryFootprint.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MemoryPressureHandler.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MessageQueue.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MetaAllocator.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MetaAllocatorHandle.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MetaAllocatorPtr.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MonotonicTime.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\NakedPtr.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\NaturalLoops.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\NeverDestroyed.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\NoLock.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\NoTailCalls.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Noncopyable.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Nonmovable.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\NotFound.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\NumberOfCores.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\OSAllocator.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\OSObjectPtr.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\OSRandomSource.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ObjCRuntimeExtras.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ObjectIdentifier.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\OptionSet.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Optional.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\OrderMaker.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Packed.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\PackedIntVector.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\PageAllocation.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\PageBlock.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\PageReservation.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ParallelHelperPool.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ParallelJobs.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ParallelJobsGeneric.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ParallelJobsLibdispatch.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ParallelJobsOpenMP.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ParallelVectorIterator.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ParkingLot.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Platform.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\PlatformRegisters.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\PointerComparison.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\PointerPreparations.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\PrintStream.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\PriorityQueue.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ProcessID.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ProcessPrivilege.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\PtrTag.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RAMSize.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RandomDevice.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RandomNumber.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RandomNumberSeed.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Range.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RangeSet.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RawPointer.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ReadWriteLock.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RecursableLambda.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RecursiveLockAdapter.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RedBlackTree.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Ref.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RefCounted.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RefCountedArray.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RefCountedLeakCounter.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RefCounter.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RefPtr.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ResourceUsage.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RetainPtr.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RunLoop.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RunLoopTimer.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SHA1.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SaturatedArithmetic.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SchedulePair.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Scope.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ScopedLambda.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Seconds.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SegmentedVector.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SentinelLinkedList.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SetForScope.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SharedTask.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SimpleStats.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SingleRootGraph.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SinglyLinkedList.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SinglyLinkedListWithTail.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SixCharacterHash.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SmallPtrSet.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SoftLinking.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SpanningTree.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Spectrum.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StackBounds.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StackPointer.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StackShot.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StackShotProfiler.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StackStats.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StackTrace.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StdLibExtras.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StdList.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StdMap.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StdSet.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StdUnorderedMap.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StdUnorderedSet.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Stopwatch.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StreamBuffer.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StringExtras.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StringHashDumpContext.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StringPrintStream.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SynchronizedFixedQueue.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SystemFree.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SystemTracing.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\TaggedArrayStoragePtr.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ThreadGroup.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ThreadMessage.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ThreadSafeRefCounted.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ThreadSpecific.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Threading.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ThreadingPrimitives.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\TimeWithDynamicClockType.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\TimingScope.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\TinyLRUCache.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\TinyPtrSet.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\TriState.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\TypeCasts.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\URL.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\URLHelpers.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\URLHash.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\URLParser.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\UUID.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\UnalignedAccess.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Unexpected.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\UniStdExtras.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\UnionFind.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\UniqueArray.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\UniqueRef.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\UnsafePointer.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\VMTags.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ValueCheck.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Variant.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Vector.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\VectorTraits.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\WTFSemaphore.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\WallTime.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\WeakHashSet.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\WeakPtr.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\WeakRandom.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\WindowsExtras.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\WordLock.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\WorkQueue.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\WorkerPool.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\bignum-dtoa.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\bignum.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\cached-powers.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\diy-fp.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\double-conversion.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\fast-dtoa.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\fixed-dtoa.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\ieee.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\strtod.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\utils.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\persistence\PersistentCoder.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\persistence\PersistentCoders.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\persistence\PersistentDecoder.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\persistence\PersistentEncoder.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\ASCIIFastPath.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\ASCIILiteral.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\AtomString.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\AtomStringHash.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\AtomStringImpl.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\AtomStringTable.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\Base64.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\CString.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\ConversionMode.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\ExternalStringImpl.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\IntegerToStringConversion.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\LChar.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\LineBreakIteratorPoolICU.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\LineEnding.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\NullTextBreakIterator.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\OrdinalNumber.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\StringBuffer.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\StringBuilder.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\StringCommon.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\StringConcatenate.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\StringConcatenateNumbers.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\StringHash.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\StringHasher.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\StringImpl.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\StringOperators.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\StringToIntegerConversion.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\StringView.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\SymbolImpl.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\SymbolRegistry.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\TextBreakIterator.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\TextBreakIteratorInternalICU.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\TextPosition.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\TextStream.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\UTF8ConversionError.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\UniquedStringImpl.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\ValueToString.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\WTFString.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\icu\TextBreakIteratorICU.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\icu\UTextProvider.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\icu\UTextProviderLatin1.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\icu\UTextProviderUTF16.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\threads\BinarySemaphore.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\threads\Signals.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\unicode\CharacterNames.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\unicode\Collator.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\unicode\UTF8Conversion.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\win\WCharStringExtras.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\win\DbgHelperWin.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\win\GDIObject.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\win\SoftLinking.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\win\Win32Handle.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\CMakeFiles\a080148b1552b2ad0e01ecd4587f79a9\WTF_CopyHeaders.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CMakeFiles\WTF_CopyHeaders" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{74D942BB-6FC1-3844-B372-C9F6AE8B3A7B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{FEB8BFFC-21DE-3AC0-B2C9-C563FBA14734}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
