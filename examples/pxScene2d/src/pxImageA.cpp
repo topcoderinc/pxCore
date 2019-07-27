@@ -20,6 +20,7 @@
 
 #include "pxImageA.h"
 #include "pxContext.h"
+#include <algorithm>
 
 extern pxContext context;
 
@@ -48,6 +49,7 @@ void pxImageA::onInit()
 {
   mw = static_cast<float>(mImageWidth);
   mh = static_cast<float>(mImageHeight);
+  pxObject::onInit();
 }
 
 rtError pxImageA::url(rtString &s) const
@@ -97,9 +99,8 @@ rtError pxImageA::setUrl(const char *s)
 }
 
 // animation happens here
-void pxImageA::update(double t)
+void pxImageA::update(double t, bool updateChildren)
 {
-  pxObject::update(t);
 
   if (getImageAResource() == NULL || !mImageLoaded)
   {
@@ -143,8 +144,10 @@ void pxImageA::update(double t)
       mCachedFrame = mCurFrame;
       pxRect r(0, 0, mImageHeight, mImageWidth);
       mScene->invalidateRect(&r);
+      markDirty();
     }
   }
+  pxObject::update(t, updateChildren);
 }
 
 void pxImageA::draw()
@@ -305,6 +308,27 @@ void pxImageA::resourceDirty()
   pxObject::onTextureReady();
 }
 
+void pxImageA::createNewPromise()
+{
+  // Only create a new promise if the existing one has been
+  // resolved or rejected already.
+  if(((rtPromise*)mReady.getPtr())->status())
+  {
+    rtLogDebug("CREATING NEW PROMISE\n");
+    mReady = new rtPromise();
+    triggerUpdate();
+  }
+}
+
+bool pxImageA::needsUpdate()
+{
+  if (mParent != NULL)
+  {
+    return true;
+  }
+  return false;
+}
+
 rtError pxImageA::removeResourceListener()
 {
   if (mListenerAdded)
@@ -328,14 +352,17 @@ void pxImageA::reloadData(bool sceneSuspended)
   pxObject::reloadData(sceneSuspended);
 }
 
-uint64_t pxImageA::textureMemoryUsage()
+uint64_t pxImageA::textureMemoryUsage(std::vector<rtObject*> &objectsCounted)
 {
   uint64_t textureMemory = 0;
-  if (mTexture.getPtr() != NULL)
+  if (std::find(objectsCounted.begin(), objectsCounted.end(), this) == objectsCounted.end() )
   {
-    textureMemory += (mTexture->width() * mTexture->height() * 4);
+    if (mTexture.getPtr() != NULL)
+    {
+      textureMemory += (mTexture->width() * mTexture->height() * 4);
+    }
+    textureMemory += pxObject::textureMemoryUsage(objectsCounted);
   }
-  textureMemory += pxObject::textureMemoryUsage();
   return textureMemory;
 }
 

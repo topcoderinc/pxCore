@@ -53,19 +53,18 @@ class pxScene2dTest : public testing::Test
 
     void getArchiveTest()
     {
-      pxScene2d* scene = new pxScene2d();
+      rtObjectRef sceneRef =  new pxScene2d();
+      pxScene2d* scene = (pxScene2d*) sceneRef.getPtr();
+
+      scene->AddRef();
       rtObjectRef archive;
-      EXPECT_TRUE(RT_OK == scene->loadArchive("supportfiles/test_arc_resources.jar", archive));
-      EXPECT_TRUE(archive == scene->getArchive());
-      delete scene;
+      EXPECT_TRUE(RT_OK == scene->loadArchive("supportfiles/helloworld.js", archive));
+      EXPECT_TRUE(archive.getPtr() == scene->getArchive().getPtr());
     }
 
     void viewContainerTest()
     {
-      pxScene2d* parentscene = new pxScene2d();
-      rtObjectRef archive;
-      EXPECT_TRUE(RT_OK == parentscene->loadArchive("supportfiles/test_arc_resources.jar", archive));
-      pxSceneContainer* container = new pxSceneContainer(parentscene);
+      pxSceneContainer* container = new pxSceneContainer(NULL);
       container->setUrl("supportfiles/helloworld.js");
       pxScriptView* view = (pxScriptView*) container->mScriptView.getPtr();
       EXPECT_TRUE (NULL != view);
@@ -75,13 +74,14 @@ class pxScene2dTest : public testing::Test
       EXPECT_TRUE(RT_OK == pxScriptView::getScene(1, &args, &scene, (void*)view));
       pxScene2d* opscene = (pxScene2d*)(scene.toObject().getPtr());
       EXPECT_TRUE (NULL != opscene);
-      EXPECT_TRUE (opscene->viewContainer() == view->mViewContainer);
-      delete parentscene;
+      EXPECT_TRUE (opscene->viewContainer() == container);
     }
 
     void initFromUrlFromParentTest()
     {
-      pxScene2d* parentscene = new pxScene2d();
+      rtObjectRef sceneRef =  new pxScene2d();
+      pxScene2d* parentscene = (pxScene2d*) sceneRef.getPtr();
+      parentscene->AddRef();
       rtObjectRef archive;
       EXPECT_TRUE(RT_OK == parentscene->loadArchive("supportfiles/test_arc_resources.jar", archive));
       pxSceneContainer* container = new pxSceneContainer(parentscene);
@@ -93,17 +93,20 @@ class pxScene2dTest : public testing::Test
       args.setString("scene");
       EXPECT_TRUE(RT_OK == pxScriptView::getScene(1, &args, &scene, (void*)view));
       pxScene2d* opscene = (pxScene2d*)(scene.toObject().getPtr());
+      opscene->AddRef();
       EXPECT_TRUE (NULL != opscene);
-      EXPECT_TRUE (opscene->getArchive() == parentscene->getArchive());
+      EXPECT_TRUE (opscene->mArchive.getPtr() == parentscene->mArchive.getPtr());
     }
 
     void initFromUrlFromLocalTest()
     {
-      pxScene2d* parentscene = new pxScene2d();
+      rtObjectRef sceneRef =  new pxScene2d();
+      pxScene2d* parentscene = (pxScene2d*) sceneRef.getPtr();
+      parentscene->AddRef();
       rtObjectRef archive;
       EXPECT_TRUE(RT_OK == parentscene->loadArchive("supportfiles/helloworld.js", archive));
       pxSceneContainer* container = new pxSceneContainer(parentscene);
-      container->setUrl("helloworld.js");
+      container->setUrl("supportfiles/simple.js");
       pxScriptView* view = (pxScriptView*) container->mScriptView.getPtr();
       EXPECT_TRUE (NULL != view);
       rtValue scene;
@@ -111,8 +114,9 @@ class pxScene2dTest : public testing::Test
       args.setString("scene");
       EXPECT_TRUE(RT_OK == pxScriptView::getScene(1, &args, &scene, (void*)view));
       pxScene2d* opscene = (pxScene2d*)(scene.toObject().getPtr());
+      opscene->AddRef();
       EXPECT_TRUE (NULL != opscene);
-      EXPECT_TRUE (opscene->getArchive() != parentscene->getArchive());
+      EXPECT_TRUE (opscene->mArchive.getPtr() != parentscene->mArchive.getPtr());
     }
     void populateWaylandAppsConfigTest()
     { 
@@ -303,65 +307,11 @@ class pxScene2dTest : public testing::Test
  
       rtRef<pxObject> f, t;
       pxMatrix4f m;
-      float getFloat = 0.0;
-      bool getBool = false;
       pxObject::getMatrixFromObjectToObject(mRoot, t, m); 
       pxVector4f vf, vt;
       pxObject::transformPointFromObjectToScene(f, vf, vt);
       pxObject::transformPointFromSceneToObject(f, vf, vt);
       pxObject::transformPointFromObjectToObject(f, t, vf, vt);
-      
-      EXPECT_TRUE ( RT_OK == mRoot->setM11(1.0));
-      EXPECT_TRUE ( RT_OK == mRoot->m11(getFloat));
-      EXPECT_TRUE ( 1.0 == getFloat);
-      EXPECT_TRUE ( RT_OK == mRoot->setM12(2.0));
-      EXPECT_TRUE ( RT_OK == mRoot->m12(getFloat));
-      EXPECT_TRUE ( 2.0 == getFloat);
-      EXPECT_TRUE ( RT_OK == mRoot->setM13(3.0));
-      EXPECT_TRUE ( RT_OK == mRoot->m13(getFloat));
-      EXPECT_TRUE ( 3.0 == getFloat);
-      EXPECT_TRUE ( RT_OK == mRoot->setM14(4.0));
-      EXPECT_TRUE ( RT_OK == mRoot->m14(getFloat));
-      EXPECT_TRUE ( 4.0 == getFloat);
-      EXPECT_TRUE ( RT_OK == mRoot->setM21(5.0));
-      EXPECT_TRUE ( RT_OK == mRoot->m21(getFloat));
-      EXPECT_TRUE ( 5.0 == getFloat);
-      EXPECT_TRUE ( RT_OK == mRoot->setM22(6.0));
-      EXPECT_TRUE ( RT_OK == mRoot->m22(getFloat));
-      EXPECT_TRUE ( 6.0 == getFloat);
-      EXPECT_TRUE ( RT_OK == mRoot->setM23(7.0));
-      EXPECT_TRUE ( RT_OK == mRoot->m23(getFloat));
-      EXPECT_TRUE ( 7.0 == getFloat);
-      EXPECT_TRUE ( RT_OK == mRoot->setM24(8.0));
-      EXPECT_TRUE ( RT_OK == mRoot->m24(getFloat));
-      EXPECT_TRUE ( 8.0 == getFloat);
-      EXPECT_TRUE ( RT_OK == mRoot->setM31(9.0));
-      EXPECT_TRUE ( RT_OK == mRoot->m31(getFloat));
-      EXPECT_TRUE ( 9.0 == getFloat);
-      EXPECT_TRUE ( RT_OK == mRoot->setM32(10.0));
-      EXPECT_TRUE ( RT_OK == mRoot->m32(getFloat));
-      EXPECT_TRUE ( 10.0 == getFloat);
-      EXPECT_TRUE ( RT_OK == mRoot->setM33(11.0));
-      EXPECT_TRUE ( RT_OK == mRoot->m33(getFloat));
-      EXPECT_TRUE ( 11.0 == getFloat);
-      EXPECT_TRUE ( RT_OK == mRoot->setM34(12.0));
-      EXPECT_TRUE ( RT_OK == mRoot->m34(getFloat));
-      EXPECT_TRUE ( 12.0 == getFloat);
-      EXPECT_TRUE ( RT_OK == mRoot->setM41(13.0));
-      EXPECT_TRUE ( RT_OK == mRoot->m41(getFloat));
-      EXPECT_TRUE ( 13.0 == getFloat);
-      EXPECT_TRUE ( RT_OK == mRoot->setM42(14.0));
-      EXPECT_TRUE ( RT_OK == mRoot->m42(getFloat));
-      EXPECT_TRUE ( 14.0 == getFloat);
-      EXPECT_TRUE ( RT_OK == mRoot->setM43(15.0));
-      EXPECT_TRUE ( RT_OK == mRoot->m43(getFloat));
-      EXPECT_TRUE ( 15.0 == getFloat);
-      EXPECT_TRUE ( RT_OK == mRoot->setM44(16.0));
-      EXPECT_TRUE ( RT_OK == mRoot->m44(getFloat));
-      EXPECT_TRUE ( 16.0 == getFloat);
-      EXPECT_TRUE ( RT_OK == mRoot->setUseMatrix (true));
-      EXPECT_TRUE ( RT_OK == mRoot->useMatrix(getBool));
-      EXPECT_TRUE ( true == getBool );
   }
 
   void pxScriptViewTest()
@@ -394,19 +344,6 @@ class pxScene2dTest : public testing::Test
 
  }
 
- void multipleArchiveTest()
- {
-   pxScene2d* scene = new pxScene2d();
-   rtObjectRef archive;
-   EXPECT_TRUE(RT_OK == scene->loadArchive("supportfiles/test_arc_resources.jar", archive));
-   archive = scene->getArchive();
-   EXPECT_TRUE(true == scene->mArchiveSet);
-   rtObjectRef archive1;
-   EXPECT_TRUE(RT_OK == scene->loadArchive("supportfiles/test_arc_resources.jar", archive1));
-   EXPECT_TRUE(archive.getPtr() == scene->mArchive.getPtr());
-   delete scene;
- }
-
   private:
     pxObject*     mRoot;
     pxScriptView* mView;
@@ -426,6 +363,4 @@ TEST_F(pxScene2dTest, pxScene2dTests)
     pxScene2dClassTest();
     //pxScene2dHdrTest();
     pxScriptViewTest();
-    multipleArchiveTest();
-  
 }

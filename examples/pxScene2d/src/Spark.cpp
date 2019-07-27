@@ -95,6 +95,7 @@ pxEventLoop  eventLoop;
 pxEventLoop* gLoop = &eventLoop;
 
 pxContext context;
+void *gWindow;
 #ifdef ENABLE_DEBUG_MODE
 extern int g_argc;
 extern char** g_argv;
@@ -150,6 +151,7 @@ public:
   {
     pxWindow::init(x,y,w,h);
 
+    gWindow = mWindow;
     setUrl(url);
   }
 
@@ -355,6 +357,38 @@ protected:
     EXITSCENELOCK()
   }
 
+  virtual void onDragMove(int32_t x, int32_t y, int32_t type)
+  {
+    ENTERSCENELOCK()
+    if (mView)
+    mView->onDragMove(x, y, type);
+    EXITSCENELOCK()
+  }
+
+  virtual void onDragEnter(int32_t x, int32_t y, int32_t type)
+  {
+    ENTERSCENELOCK()
+    if (mView)
+    mView->onDragEnter(x, y, type);
+    EXITSCENELOCK()
+  }
+
+  virtual void onDragLeave(int32_t x, int32_t y, int32_t type)
+  {
+    ENTERSCENELOCK()
+    if (mView)
+    mView->onDragLeave(x, y, type);
+    EXITSCENELOCK()
+  }
+
+  virtual void onDragDrop(int32_t x, int32_t y, int32_t type, const char* dropped)
+  {
+    ENTERSCENELOCK()
+    if (mView)
+    mView->onDragDrop(x, y, type, dropped);
+    EXITSCENELOCK()
+  }
+
   virtual void onScrollWheel(float dx, float dy)
   {
     ENTERSCENELOCK()
@@ -406,6 +440,7 @@ protected:
 
   virtual void onDraw(pxSurfaceNative )
   {
+    context.updateRenderTick();
     ENTERSCENELOCK()
     if (mView)
       mView->onDraw();
@@ -718,6 +753,15 @@ if (s && (strcmp(s,"1") == 0))
   rtValue dirtyRectsSetting;
   if (RT_OK == rtSettings::instance()->value("enableDirtyRects", dirtyRectsSetting))
     gDirtyRectsEnabled = dirtyRectsSetting.toString().compare("true") == 0;
+
+  rtLogInfo("dirty rectangles enabled: %s", gDirtyRectsEnabled ? "true":"false");
+
+  rtValue optimizedUpdateSetting;
+  if (RT_OK == rtSettings::instance()->value("enableOptimizedUpdate", optimizedUpdateSetting))
+  {
+    bool enable = optimizedUpdateSetting.toString().compare("true") == 0;
+    pxScene2d::enableOptimizedUpdate(enable);
+  }
     
   // OSX likes to pass us some weird parameter on first launch after internet install
   rtLogInfo("window width = %d height = %d", windowWidth, windowHeight);
