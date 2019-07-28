@@ -20,6 +20,9 @@ public:
   // remove event
   rtMethod2ArgAndNoReturn("delListener", delListener, rtString, rtFunctionRef);
 
+  // clear event
+  rtMethod1ArgAndNoReturn("clearListeners", clearListeners, rtString);
+
   rtError addListener(rtString eventName, const rtFunctionRef &f)
   {
     return mEmit->addListener(eventName, f);
@@ -28,6 +31,11 @@ public:
   rtError delListener(rtString eventName, const rtFunctionRef &f)
   {
     return mEmit->delListener(eventName, f);
+  }
+
+  rtError clearListeners(rtString eventName)
+  {
+    return mEmit->clearListeners(eventName);
   }
 
 protected:
