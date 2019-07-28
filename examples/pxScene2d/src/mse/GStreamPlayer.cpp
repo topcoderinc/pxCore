@@ -10,8 +10,9 @@ static gboolean GStreamer_BusMessage(GstBus * /* bus */, GstMessage *msg, GStrea
 
 
   if (gst_is_video_overlay_prepare_window_handle_message(msg)) {
-    guintptr handler = (guintptr) app;
-    gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY (GST_MESSAGE_SRC(msg)), contentView(handler));
+    // TODO
+    //guintptr handler = (guintptr) app;
+    //gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY (GST_MESSAGE_SRC(msg)), contentView(handler));
   }
 
   switch (GST_MESSAGE_TYPE (msg)) {
@@ -218,7 +219,8 @@ void GStreamPlayer::release()
 GStreamPlayer::~GStreamPlayer()
 {
   release();
-  releaseView((guintptr) this);
+  // TODO
+  //releaseView((guintptr) this);
 }
 
 void GStreamPlayer::loadFile(const char *fileUri)
@@ -242,7 +244,9 @@ void GStreamPlayer::loadFile(const char *fileUri)
   emit("loadedmetadata"); // file loaded
   readyState = 1;
 
-  if (strcasestr(fileUri, "http")) {
+  // TODO
+  //if (strcasestr(fileUri, "http")) {
+  if (strstr(fileUri, "http")) {
     remote = true;
     g_object_set(playbin, "uri", fileUri, NULL);
   } else {

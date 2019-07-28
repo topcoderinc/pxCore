@@ -460,7 +460,6 @@ if (SPARK_ENABLE_VIDEO)
     set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES}
             pxHtmlVideo.cpp
             mse/GStreamPlayer.cpp
-            mse/helper.mm
             mse/MediaSource.cpp
             mse/SourceBuffer.cpp
             mse/SourceBufferList.cpp
@@ -471,6 +470,26 @@ if (SPARK_ENABLE_VIDEO)
             mse/MSEUtils.cpp
             mse/MSEBaseTrack.cpp
             )
+
+if (WIN32)
+    set(GSTREAM_ROOT C:/gstreamer/1.0/x86)
+    include_directories(${GSTREAM_ROOT}/include/gstreamer-1.0)
+    include_directories(${GSTREAM_ROOT}/include/gstreamer-1.0/include)
+    include_directories(${GSTREAM_ROOT}/lib/gstreamer-1.0/include)
+    include_directories(${GSTREAM_ROOT}/include/glib-2.0)
+    include_directories(${GSTREAM_ROOT}/include/glib-2.0/include)
+    include_directories(${GSTREAM_ROOT}/lib/glib-2.0/include)
+    include_directories(${EXTDIR}/glext/include)
+
+    set(PXSCENE_LINK_LIBRARIES ${PXSCENE_LINK_LIBRARIES} gstpbutils-1.0.lib gstaudio-1.0.lib gstbase-1.0.lib gstvideo-1.0.lib gobject-2.0.lib
+        gstapp-1.0.lib glib-2.0.lib gstreamer-1.0.lib gsttag-1.0.lib gio-2.0.lib glext.lib)
+
+    link_directories(${GSTREAM_ROOT}/lib ${EXTDIR}/glext/lib)
+else ()
+
+if (APPLE)
+    set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES} mse/helper.mm)
+endif(APPLE)
 
     set(OPT /usr/local/opt)
     set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${OPT}/libffi/lib/pkgconfig:${OPT}/openssl/lib/pkgconfig")
@@ -492,6 +511,13 @@ if (SPARK_ENABLE_VIDEO)
         ${OPT}/gst-plugins-base/lib
         ${OPT}/ossp-uuid/lib
     )
+endif()
+
+if (WIN32)
+    include_directories(${EXTDIR}/webkitWTF/Source/WTF/wtf)
+    set(PXSCENE_LINK_LIBRARIES ${PXSCENE_LINK_LIBRARIES} ${EXTDIR}/webkitWTF/lib32/WTF.lib)
+endif ()
+
 endif(SPARK_ENABLE_VIDEO)
 
 if (SPARK_ENABLE_VIDEO_PUNCHTHROUGH)

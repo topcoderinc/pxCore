@@ -21,7 +21,8 @@ void SourceBufferList::add(SourceBuffer *buffer)
 
 void SourceBufferList::remove(SourceBuffer *buffer)
 {
-  std::remove(mBuffers.begin(), mBuffers.end(), buffer);
+  // TODO
+  //std::remove(mBuffers.begin(), mBuffers.end(), buffer);
   mEmit.send("onremovesourcebuffer", buffer);
 }
 
