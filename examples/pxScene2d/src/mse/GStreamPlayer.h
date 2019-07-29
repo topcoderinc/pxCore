@@ -3,15 +3,19 @@
 #ifndef GST_0100_GSTREAMPLAYER_H
 #define GST_0100_GSTREAMPLAYER_H
 
+#include <gl/glew.h>
+#include <gl/glext.h>
+#include <gst/gl/gl.h>
+//#include <gst/gl/gstglfuncs.h>
+//#include <gst/gl/glprototypes/gstgl_compat.h>
 #include <gst/gst.h>
 #include <functional>
 #include <stdio.h>
 #include <string>
 #include <string.h>
 #include <stdlib.h>
-#include <gst/gl/gl.h>
-#include <gst/gl/gstglfuncs.h>
-#include <event.h>
+
+//#include <event.h>
 
 
 typedef std::function<void(guint8 *buffer, int w, int h, guint stride, guint pixel_stride)> FrameCallback;
@@ -112,9 +116,11 @@ public:
 
   long getCurrentTime()
   {
-    struct timeval tp{};
+    // TODO
+    return 0;
+    /*struct timeval tp{};
     gettimeofday(&tp, nullptr);
-    return tp.tv_sec * 1000 + tp.tv_usec / 1000;
+    return tp.tv_sec * 1000 + tp.tv_usec / 1000;*/
   }
 
   bool isRemote() const;

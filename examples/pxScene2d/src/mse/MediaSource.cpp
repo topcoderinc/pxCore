@@ -14,11 +14,12 @@ rtError MediaSource::getSourceBuffers(rtObjectRef &v) const
 
 rtError MediaSource::getActiveSourceBuffers(rtObjectRef &v) const
 {
-
+#if 0
   auto *rtArr = new rtArrayObject();
   rtValue c(curSourceBuffer);
   rtArr->Set((int32_t) 0, &c);
   v = rtArr;
+#endif
   return RT_OK;
 }
 
