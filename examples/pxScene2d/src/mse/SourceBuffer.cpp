@@ -9,15 +9,12 @@ rtDefineProperty(SourceBuffer, buffered)
 rtDefineProperty(SourceBuffer, mode)
 rtDefineProperty(SourceBuffer, textTracks)
 rtDefineProperty(SourceBuffer, timestampOffset)
-rtDefineProperty(SourceBuffer, trackDefaults)
 rtDefineProperty(SourceBuffer, updating)
 rtDefineProperty(SourceBuffer, videoTracks)
 rtDefineMethod(SourceBuffer, abort)
 rtDefineMethod(SourceBuffer, appendBuffer)
-rtDefineMethod(SourceBuffer, appendStream)
 rtDefineMethod(SourceBuffer, changeType)
 rtDefineMethod(SourceBuffer, remove)
-
 
 SourceBuffer::SourceBuffer() :
     gstPlayer(nullptr)
@@ -26,7 +23,6 @@ SourceBuffer::SourceBuffer() :
 
 SourceBuffer::~SourceBuffer()
 {
-
 }
 
 rtError SourceBuffer::abort()
@@ -41,12 +37,30 @@ rtError SourceBuffer::appendBuffer(rtObjectRef buffer)
   return RT_OK;
 }
 
-rtError SourceBuffer::appendStream(rtObjectRef stream, int32_t maxSize)
+void SourceBuffer::onUpdateStart()
 {
-  // TODO
-  return RT_OK;
+  mEmit.send("onupdatestart");
 }
 
+void SourceBuffer::onUpdate()
+{
+  mEmit.send("onupdate");
+}
+
+void SourceBuffer::onUpdateEnd()
+{
+  mEmit.send("onupdateend");
+}
+
+void SourceBuffer::onError()
+{
+  mEmit.send("onerror");
+}
+
+void SourceBuffer::onAbort()
+{
+  mEmit.send("onabort");
+}
 
 rtError SourceBuffer::changeType(rtString type)
 {
@@ -84,14 +98,7 @@ rtError SourceBuffer::setAppendWindowStart(float const &v)
   return RT_OK;
 }
 
-
-rtError SourceBuffer::getAudioTracks(rtObjectRef &v) const
-{
-  v = vectorToRTArr(mAudioTracks);
-  return RT_OK;
-}
-
-rtError SourceBuffer::getBuffered(float &v) const
+rtError SourceBuffer::getBuffered(rtObjectRef &v) const
 {
   v = mBuffered;
   return RT_OK;
@@ -109,28 +116,21 @@ rtError SourceBuffer::setMode(rtString const &v)
   return RT_OK;
 }
 
-rtError SourceBuffer::getTextTracks(rtObjectRef &v) const
+rtError SourceBuffer::getAudioTracks(rtObjectRef &v) const
 {
-  v = vectorToRTArr(mTextTracks);
+  v = mAudioTrackList;
   return RT_OK;
 }
 
 rtError SourceBuffer::getVideoTracks(rtObjectRef &v) const
 {
-  v = vectorToRTArr(mVideoTracks);
+  v = mVideoTrackList;
   return RT_OK;
 }
 
-rtError SourceBuffer::getTrackDefaults(rtObjectRef &v) const
+rtError SourceBuffer::getTextTracks(rtObjectRef &v) const
 {
-  v = vectorToRTArr(mTrackDefaults);
-  return RT_OK;
-}
-
-rtError SourceBuffer::setTrackDefaults(rtObjectRef const &v)
-{
-  mTrackDefaults.clear();
-  fillVectorFromRTArr(v, mTrackDefaults);
+  v = mTextTrackList;
   return RT_OK;
 }
 

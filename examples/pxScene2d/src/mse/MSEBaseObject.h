@@ -34,5 +34,4 @@ protected:
   rtEmitRef mEmit;
 };
 
-
 #endif

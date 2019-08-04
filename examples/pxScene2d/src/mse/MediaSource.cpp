@@ -2,54 +2,43 @@
 #include "MSEUtils.h"
 
 
-MediaSource::MediaSource() : curSourceBuffer(nullptr),
-                             bufferList(new SourceBufferList)
+MediaSource::MediaSource()
 {
 }
 
 rtError MediaSource::getSourceBuffers(rtObjectRef &v) const
 {
-  return bufferList->getSourceBuffer(v);
+  v = mBufferList;
+  return RT_OK;
 }
 
 rtError MediaSource::getActiveSourceBuffers(rtObjectRef &v) const
 {
-#if 0
-  auto *rtArr = new rtArrayObject();
-  rtValue c(curSourceBuffer);
-  rtArr->Set((int32_t) 0, &c);
-  v = rtArr;
-#endif
+  v = mActiveBufferList;
   return RT_OK;
 }
 
-rtError MediaSource::getReadyState(int32_t &v) const
+rtError MediaSource::getReadyState(rtString &v) const
 {
-  v = gstPlayer->getReadyState();
+  v = mReadyState;
   return RT_OK;
 }
 
 rtError MediaSource::getDuration(double &v) const
 {
-  v = gstPlayer->getDuration();
+  v = mDuration;
   return RT_OK;
 }
 
 rtError MediaSource::setDuration(double const &v)
 {
-  rtLogError("cannot set duration for const video");
+  mDuration = v;
   return RT_OK;
 }
 
-rtError MediaSource::addSourceBuffer(rtObjectRef buffer)
+rtError MediaSource::addSourceBuffer(rtString type, rtObjectRef &buffer)
 {
-  auto *sourceBuffer = dynamic_cast<SourceBuffer *>(buffer.getPtr());
-  sourceBuffer->setGstPlayer(gstPlayer);
-  bufferList->add(sourceBuffer);
-  if (curSourceBuffer) {
-    gstPlayer->release();
-  }
-  curSourceBuffer = sourceBuffer;
+  // TODO
   return RT_OK;
 }
 
@@ -62,7 +51,6 @@ rtError MediaSource::clearLiveSeekableRange()
 rtError MediaSource::endOfStream(rtString reason)
 {
   rtLogWarn("endOfStream with reason = %s", reason.cString());
-  gstPlayer->release();
   return RT_OK;
 }
 
@@ -72,54 +60,74 @@ rtError MediaSource::removeSourceBuffer(rtObjectRef buffer)
   return RT_OK;
 }
 
-rtError MediaSource::setLiveSeekableRange(int32_t start, int32_t end)
+rtError MediaSource::setLiveSeekableRange(double start, double end)
 {
   // TODO
   return RT_OK;
 }
 
-
-SourceBuffer *MediaSource::getCurSourceBuffer() const
+rtError MediaSource::isTypeSupported(rtString reason, bool &ret)
 {
-  return curSourceBuffer;
+  ret = false;
+  return RT_OK;
 }
 
-void MediaSource::load(const char *src)
+void MediaSource::onSourceOpen()
 {
-  rtLogError("start load src = %s", src);
-  gstPlayer->loadFile(src);
+  mEmit.send("onsourceopen");
 }
 
-
-GStreamPlayer *MediaSource::getGstPlayer() const
+void MediaSource::onSourceEnded()
 {
-  return gstPlayer;
+  mEmit.send("onsourceended");
 }
 
-void MediaSource::setGstPlayer(GStreamPlayer *gstPlayer)
+void MediaSource::onSourceClose()
 {
-  MediaSource::gstPlayer = gstPlayer;
+  mEmit.send("onsourceclose");
 }
 
-void MediaSource::onEvent(const char *event)
-{
-  if (!strcmp(event, "loadeddata")) {
-    mEmit.send("sourceopen", rtValue("sourceopen"));
-  } else if (!strcmp(event, "ended")) {
-    mEmit.send("sourceended", rtValue("sourceended"));
-  } else if (!strcmp(event, "closed")) {
-    mEmit.send("sourceclose", rtValue("sourceclose"));
-  }
-
-}
+//SourceBuffer *MediaSource::getCurSourceBuffer() const
+//{
+//  return curSourceBuffer;
+//}
+//
+//void MediaSource::load(const char *src)
+//{
+//  rtLogError("start load src = %s", src);
+//  gstPlayer->loadFile(src);
+//}
+//
+//
+//GStreamPlayer *MediaSource::getGstPlayer() const
+//{
+//  return gstPlayer;
+//}
+//
+//void MediaSource::setGstPlayer(GStreamPlayer *gstPlayer)
+//{
+//  MediaSource::gstPlayer = gstPlayer;
+//}
+//
+//void MediaSource::onEvent(const char *event)
+//{
+//  if (!strcmp(event, "loadeddata")) {
+//    mEmit.send("sourceopen", rtValue("sourceopen"));
+//  } else if (!strcmp(event, "ended")) {
+//    mEmit.send("sourceended", rtValue("sourceended"));
+//  } else if (!strcmp(event, "closed")) {
+//    mEmit.send("sourceclose", rtValue("sourceclose"));
+//  }
+//}
 
 rtDefineObject(MediaSource, MSEBaseObject)
 rtDefineProperty(MediaSource, sourceBuffers)
 rtDefineProperty(MediaSource, activeSourceBuffers)
-rtDefineProperty(MediaSource, readyState)
 rtDefineProperty(MediaSource, duration)
+rtDefineProperty(MediaSource, readyState)
 rtDefineMethod(MediaSource, addSourceBuffer)
 rtDefineMethod(MediaSource, clearLiveSeekableRange)
 rtDefineMethod(MediaSource, endOfStream)
 rtDefineMethod(MediaSource, removeSourceBuffer)
 rtDefineMethod(MediaSource, setLiveSeekableRange)
+rtDefineMethod(MediaSource, isTypeSupported)

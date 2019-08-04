@@ -17,59 +17,77 @@ public:
 
   rtDeclareObject(MediaSource, MSEBaseObject);
 
+  //MediaSource.idl
+  // All the source buffers created by this object.
+  //readonly attribute SourceBufferList sourceBuffers;
   rtReadOnlyProperty(sourceBuffers, getSourceBuffers, rtObjectRef);
-
-  rtReadOnlyProperty(activeSourceBuffers, getActiveSourceBuffers, rtObjectRef);
-
-  rtReadOnlyProperty(readyState, getReadyState, int32_t);
-
-  rtProperty(duration, getDuration, setDuration, double);
-
-  rtMethod1ArgAndNoReturn("addSourceBuffer", addSourceBuffer, rtObjectRef);
-
-  rtMethodNoArgAndNoReturn("clearLiveSeekableRange", clearLiveSeekableRange);
-
-  rtMethod1ArgAndNoReturn("endOfStream", endOfStream, rtString);
-
-  rtMethod1ArgAndNoReturn("removeSourceBuffer", removeSourceBuffer, rtObjectRef);
-
-  rtMethod2ArgAndNoReturn("setLiveSeekableRange", setLiveSeekableRange, int32_t, int32_t);
-
   rtError getSourceBuffers(rtObjectRef &v) const;
 
+  // Subset of sourceBuffers that provide data for the selected/enabled tracks.
+  // readonly attribute SourceBufferList activeSourceBuffers;
+  rtReadOnlyProperty(activeSourceBuffers, getActiveSourceBuffers, rtObjectRef);
   rtError getActiveSourceBuffers(rtObjectRef &v) const;
 
-  rtError getReadyState(int32_t &v) const;
-
+  //attribute unrestricted double duration;
+  rtProperty(duration, getDuration, setDuration, double);
   rtError getDuration(double &v) const;
-
   rtError setDuration(double const &v);
 
-  rtError addSourceBuffer(rtObjectRef buffer);
+  //[NewObject, MayThrowException] SourceBuffer addSourceBuffer(DOMString type);
+  rtMethod1ArgAndReturn(addSourceBuffer, addSourceBuffer, rtString, rtObjectRef);
+  rtError addSourceBuffer(rtString type, rtObjectRef &buffer);
 
-  rtError clearLiveSeekableRange();
-
-  rtError endOfStream(rtString reason);
-
+  //[MayThrowException] void removeSourceBuffer(SourceBuffer buffer);
+  rtMethod1ArgAndNoReturn(removeSourceBuffer, removeSourceBuffer, rtObjectRef);
   rtError removeSourceBuffer(rtObjectRef buffer);
 
-  rtError setLiveSeekableRange(int32_t start, int32_t end);
+  //readonly attribute ReadyState readyState;
+  rtReadOnlyProperty(readyState, getReadyState, rtString);
+  rtError getReadyState(rtString &v) const;
 
+  //[MayThrowException] void endOfStream(optional EndOfStreamError error);
+  rtMethod1ArgAndNoReturn(endOfStream, endOfStream, rtString);
+  rtError endOfStream(rtString reason);
 
-  SourceBuffer *getCurSourceBuffer() const;
+  //static boolean isTypeSupported (DOMString type);
+  rtMethod1ArgAndReturn(isTypeSupported, isTypeSupported, rtString, bool);
+  rtError isTypeSupported(rtString reason, bool &ret);
 
-  void load(const char *src);
+  //[MayThrowException] void setLiveSeekableRange(double start, double end);
+  rtMethod2ArgAndNoReturn(setLiveSeekableRange, setLiveSeekableRange, double, double);
+  rtError setLiveSeekableRange(double start, double end);
 
-  GStreamPlayer *getGstPlayer() const;
+  //[MayThrowException] void clearLiveSeekableRange();
+  rtMethodNoArgAndNoReturn(clearLiveSeekableRange, clearLiveSeekableRange);
+  rtError clearLiveSeekableRange();
 
-  void setGstPlayer(GStreamPlayer *gstPlayer);
+  //attribute EventHandler onsourceopen;
+  void onSourceOpen();
 
-  void onEvent(const char *event);
+  //attribute EventHandler onsourceended;
+  void onSourceEnded();
+
+  //attribute EventHandler onsourceclose;
+  void onSourceClose();
+
+  //SourceBuffer *getCurSourceBuffer() const;
+
+  //void load(const char *src);
+
+  //GStreamPlayer *getGstPlayer() const;
+
+  //void setGstPlayer(GStreamPlayer *gstPlayer);
+
+  //void onEvent(const char *event);
 
 protected:
-  GStreamPlayer *gstPlayer;
-  SourceBufferList *bufferList;
-  SourceBuffer *curSourceBuffer;
+  //GStreamPlayer *gstPlayer;
+  //SourceBuffer *curSourceBuffer;
+
+  SourceBufferList mBufferList;
+  SourceBufferList mActiveBufferList;
+  double mDuration;
+  rtString mReadyState;
 };
 
 

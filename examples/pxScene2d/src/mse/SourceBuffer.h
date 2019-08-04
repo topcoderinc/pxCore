@@ -5,6 +5,8 @@
 #include "AudioTrack.h"
 #include "TextTrack.h"
 #include "VideoTrack.h"
+#include "MSEBaseTrackList.h"
+#include "TimeRanges.h"
 #include "GStreamPlayer.h"
 #include <vector>
 #include <string>
@@ -23,78 +25,78 @@ public:
 
   virtual ~SourceBuffer();
 
-  rtProperty(appendWindowEnd, getAppendWindowEnd, setAppendWindowEnd, float);
-
-  rtProperty(appendWindowStart, getAppendWindowStart, setAppendWindowStart, float);
-
-  rtReadOnlyProperty(audioTracks, getAudioTracks, rtObjectRef);
-
-  rtReadOnlyProperty(buffered, getBuffered, float);
-
+  // SourceBuffer.idl
+  //attribute AppendMode mode;
   rtProperty(mode, getMode, setMode, rtString);
-
-  rtReadOnlyProperty(textTracks, getTextTracks, rtObjectRef);
-
-  rtReadOnlyProperty(timestampOffset, getTimestampOffset, float);
-
-  rtProperty(trackDefaults, getTrackDefaults, setTrackDefaults, rtObjectRef);
-
-  rtReadOnlyProperty(updating, getUpdating, bool);
-
-  rtReadOnlyProperty(videoTracks, getVideoTracks, rtObjectRef);
-
-  rtMethodNoArgAndNoReturn("abort", abort);
-
-  rtMethod1ArgAndNoReturn("appendBuffer", appendBuffer, rtObjectRef);
-
-  rtMethod2ArgAndNoReturn("appendStream", appendStream, rtObjectRef, int32_t);
-
-  rtMethod1ArgAndNoReturn("changeType", changeType, rtString);
-
-  rtMethod2ArgAndNoReturn("remove", remove, int32_t, int32_t);
-
-
-  rtError appendBuffer(rtObjectRef buffer);
-
-  rtError abort();
-
-  rtError appendStream(rtObjectRef stream, int32_t maxSize);
-
-  rtError changeType(rtString type);
-
-  rtError remove(int32_t start, int32_t end);
-
-  rtError getAppendWindowEnd(float &v) const;
-
-  rtError setAppendWindowEnd(float const &v);
-
-  rtError getAppendWindowStart(float &v) const;
-
-  rtError setAppendWindowStart(float const &v);
-
-  rtError getAudioTracks(rtObjectRef &v) const;
-
-  rtError getBuffered(float &v) const;
-
   rtError getMode(rtString &v) const;
-
   rtError setMode(rtString const &v);
 
-  rtError getTextTracks(rtObjectRef &v) const;
-
-  rtError getVideoTracks(rtObjectRef &v) const;
-
-
-  rtError getTrackDefaults(rtObjectRef &v) const;
-
-  rtError setTrackDefaults(rtObjectRef const &v);
-
-  rtError getTimestampOffset(float &v) const;
-
+  //readonly attribute boolean updating;
+  rtReadOnlyProperty(updating, getUpdating, bool);
   rtError getUpdating(bool &v) const;
 
-  GStreamPlayer *getGstPlayer() const;
+  // Returns the time ranges buffered.
+  //readonly attribute TimeRanges buffered;
+  rtReadOnlyProperty(buffered, getBuffered, rtObjectRef);
+  rtError getBuffered(rtObjectRef &v) const;
 
+  // Applies an offset to media segment timestamps.
+  //attribute double timestampOffset;
+  rtReadOnlyProperty(timestampOffset, getTimestampOffset, float);
+  rtError getTimestampOffset(float &v) const;
+
+  // [Conditional=VIDEO_TRACK] readonly attribute AudioTrackList audioTracks;
+  rtReadOnlyProperty(audioTracks, getAudioTracks, rtObjectRef);
+  rtError getAudioTracks(rtObjectRef &v) const;
+
+  // [Conditional=VIDEO_TRACK] readonly attribute VideoTrackList videoTracks;
+  rtReadOnlyProperty(videoTracks, getVideoTracks, rtObjectRef);
+  rtError getVideoTracks(rtObjectRef &v) const;
+
+  // [Conditional=VIDEO_TRACK] readonly attribute TextTrackList textTracks;
+  rtReadOnlyProperty(textTracks, getTextTracks, rtObjectRef);
+  rtError getTextTracks(rtObjectRef &v) const;
+
+  //attribute double appendWindowStart;
+  rtProperty(appendWindowStart, getAppendWindowStart, setAppendWindowStart, float);
+  rtError getAppendWindowStart(float &v) const;
+  rtError setAppendWindowStart(float const &v);
+
+  //attribute unrestricted double appendWindowEnd;
+  rtProperty(appendWindowEnd, getAppendWindowEnd, setAppendWindowEnd, float);
+  rtError getAppendWindowEnd(float &v) const;
+  rtError setAppendWindowEnd(float const &v);
+
+  // Append segment data.
+  //[MayThrowException] void appendBuffer(BufferSource data);
+  rtMethod1ArgAndNoReturn(appendBuffer, appendBuffer, rtObjectRef);
+  rtError appendBuffer(rtObjectRef buffer);
+
+  // Abort the current segment append sequence.
+  //[MayThrowException] void abort();
+  rtMethodNoArgAndNoReturn(abort, abort);
+  rtError abort();
+
+  //[MayThrowException] void remove(double start, unrestricted double end);
+  rtMethod2ArgAndNoReturn(remove, remove, int32_t, int32_t);
+  rtError remove(double start, int32_t end);
+
+  //attribute EventHandler onupdatestart;
+  void onUpdateStart();
+  //attribute EventHandler onupdate;
+  void onUpdate();
+  //attribute EventHandler onupdateend;
+  void onUpdateEnd();
+  //attribute EventHandler onerror;
+  void onError();
+  //attribute EventHandler onabort;
+  void onAbort();
+
+  // [EnabledBySetting=SourceBufferChangeType, MayThrowException] void changeType(DOMString type);
+  rtMethod1ArgAndNoReturn(changeType, changeType, rtString);
+  rtError changeType(rtString type);
+
+  GStreamPlayer *getGstPlayer() const;
   void setGstPlayer(GStreamPlayer *gstPlayer);
 
 protected:
@@ -102,15 +104,13 @@ protected:
 
   float mAppendWindowEnd;
   float mAppendWindowStart;
-  std::vector<MSEBaseObject *> mAudioTracks;
-  float mBuffered;
+  TimeRanges mBuffered;
   rtString mMode;
-  std::vector<MSEBaseObject *> mTextTracks;
+  AudioTrackList mAudioTrackList;
+  TextTrackList mTextTrackList;
+  VideoTrackList mVideoTrackList;
   float mTimestampOffset;
-  std::vector<MSEBaseObject *> mTrackDefaults;
   bool mUpdating;
-  std::vector<MSEBaseObject *> mVideoTracks;
-
 };
 
 
