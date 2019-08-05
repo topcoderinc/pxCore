@@ -211,3 +211,8 @@ fi
 
 #--------
 
+#if [ "$(uname)" == "Linux" ]
+#then
+#    ./Tools/gtk/install-dependencies
+#    ./Tools/Scripts/build-webkit --gtk --minimal --debug --media-source --video --video-track --system-malloc --cmakeargs ' -DUSE_WPE_RENDERER=OFF -DUSE_WOFF2=OFF -DUSE_OPENJPEG=OFF -DENABLE_INTROSPECTION=OFF ' --webgl --streams-api --intersection-observer --resize-observer
+#fi
