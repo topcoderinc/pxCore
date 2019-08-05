@@ -4,6 +4,7 @@
 #define PXSCENE_MSEBASETRACKLIST_H
 
 #include "MSEBaseObject.h"
+#include "MSEBaseTrack.h"
 
 class SourceBuffer;
 
@@ -18,7 +19,7 @@ public:
   rtDeclareObject(MSEBaseTrackList, MSEBaseObject);
 
   //readonly attribute unsigned long length;
-  rtReadOnlyProperty("length", length, int);
+  rtReadOnlyProperty(length, length, int);
   rtError length(int &c) const;
 
   //getter VideoTrack item(unsigned long index);
@@ -26,8 +27,8 @@ public:
   rtError Set(uint32_t i, const rtValue* value) override;
   
   //VideoTrack getTrackById(DOMString id);
-  rtMethod1ArgAndReturn(getTrackById, getTrackById, rtString, rtObjectRef);
-  rtError getTrackById(rtString id, rtObjectRef &out);
+  rtMethod1ArgAndReturn("getTrackById", getTrackById, rtString, rtObjectRef);
+  rtError getTrackById(const rtString &id, rtObjectRef &out) const;
 
   //attribute EventHandler onchange;
   void onChange();

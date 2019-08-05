@@ -151,7 +151,6 @@ public:
   {
     pxWindow::init(x,y,w,h);
 
-    gWindow = mWindow;
     setUrl(url);
   }
 

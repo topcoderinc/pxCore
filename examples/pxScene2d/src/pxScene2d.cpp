@@ -40,10 +40,6 @@
 #include "pxTextBox.h"
 #include "pxImage.h"
 
-#ifdef ENABLE_SPARK_VIDEO
-#include "pxHtmlVideo.h"
-#endif //ENABLE_SPARK_VIDEO
-
 #ifdef PX_SERVICE_MANAGER
 #include "pxServiceManager.h"
 #endif //PX_SERVICE_MANAGER
@@ -699,8 +695,8 @@ rtError pxScene2d::create(rtObjectRef p, rtObjectRef& o)
     e = createExternal(p,o);
   else if (!strcmp("wayland",t.cString()))
     e = createWayland(p,o);
-  else if (!strcmp("video",t.cString()))
-    e = createVideo(p,o);
+  /*else if (!strcmp("video",t.cString()))
+    e = createVideo(p,o);*/
   else if (!strcmp("object",t.cString()))
     e = createObject(p,o);
   else
@@ -1018,15 +1014,15 @@ rtError pxScene2d::createWayland(rtObjectRef p, rtObjectRef& o)
 
 rtError pxScene2d::createVideo(rtObjectRef p, rtObjectRef& o)
 {
-#ifdef ENABLE_SPARK_VIDEO
-  o = new pxHtmlVideo(this);
-  o.set(p);
-  o.send("init");
-  return RT_OK;
-#else
-  rtLogError("Type 'video' is not supported");
-  return RT_FAIL;
-#endif //ENABLE_SPARK_VIDEO
+//#ifdef ENABLE_SPARK_VIDEO
+//  o = new pxHtmlVideo(this);
+//  o.set(p);
+//  o.send("init");
+//  return RT_OK;
+//#else
+//  rtLogError("Type 'video' is not supported");
+//  return RT_FAIL;
+//#endif //ENABLE_SPARK_VIDEO
 }
 
 void pxScene2d::draw()

@@ -2,6 +2,8 @@
 #define PXSCENE_TIME_RANGES_H
 
 #include "rtObject.h"
+#include <vector>
+#include <utility>
 
 class TimeRanges : public rtObject {
 public:
@@ -12,15 +14,15 @@ public:
   rtError length(int &c) const;
 
   //[MayThrowException] unrestricted double start(unsigned long index);
-  rtMethod1ArgAndReturn(start, start, int, double);
+  rtMethod1ArgAndReturn("start", start, int, double);
   rtError start(int index, double &v) const;
 
   //[MayThrowException] unrestricted double end(unsigned long index);
-  rtMethod1ArgAndReturn(end, end, int, double);
+  rtMethod1ArgAndReturn("end", end, int, double);
   rtError end(int index, double &v) const;
 
 private:
-  vector<std::pair<double, double>> mRanges;
+  std::vector<std::pair<double, double>> mRanges;
 };
 
 

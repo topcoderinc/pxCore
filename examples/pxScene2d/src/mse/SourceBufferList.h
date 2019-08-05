@@ -25,11 +25,11 @@ public:
 
   // SourceBufferList.idl
   // readonly attribute unsigned long length;
-  rtReadOnlyProperty("length", length, int);
+  rtReadOnlyProperty(length, length, int);
   rtError length(int &c) const;
 
   //getter SourceBuffer item(unsigned long index);
-  rtError rtObject::Get(uint32_t /*i*/, rtValue* /*value*/) const override;
+  rtError Get(uint32_t /*i*/, rtValue* /*value*/) const override;
 
   //attribute EventHandler onaddsourcebuffer;
   //attribute EventHandler onremovesourcebuffer;

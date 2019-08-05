@@ -40,7 +40,6 @@ limitations under the License.
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include <GL/gl.h>
-#include <GL/glext.h>
 #endif
 
 // Since the lifetime of the Display should include the lifetime of all windows

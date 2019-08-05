@@ -2,7 +2,7 @@
 
 rtDefineObject(MediaError, rtObject)
 
-rtDefineObject(MediaElement, rtObject)
+rtDefineObject(MediaElement, MSEBaseObject)
 
 MediaElement::MediaElement():
   mNetworkState(0),
@@ -23,8 +23,9 @@ MediaElement::MediaElement():
 {
 }
 
-void MediaElement::load()
+rtError MediaElement::load()
 {
+  return RT_OK;
 }
 
 rtError MediaElement::canPlayType(const rtString &type, bool &ret)
@@ -33,17 +34,52 @@ rtError MediaElement::canPlayType(const rtString &type, bool &ret)
   return RT_OK;
 }
 
-void MediaElement::play()
+rtError MediaElement::play()
 {
+  return RT_OK;
 }
 
-void MediaElement::pause()
+rtError MediaElement::pause()
 {
+  return RT_OK;
 }
 
-void MediaElement::fastSeek(double time)
+rtError MediaElement::fastSeek(double time)
 {
+  return RT_OK;
 }
+
+rtDefineProperty(MediaElement, error)
+rtDefineProperty(MediaElement, src)
+rtDefineProperty(MediaElement, currentSrc)
+rtDefineProperty(MediaElement, crossOrigin)
+rtDefineProperty(MediaElement, networkState)
+rtDefineProperty(MediaElement, preload)
+rtDefineProperty(MediaElement, buffered)
+rtDefineProperty(MediaElement, readyState)
+rtDefineProperty(MediaElement, seeking)
+rtDefineProperty(MediaElement, currentTime)
+rtDefineProperty(MediaElement, duration)
+rtDefineProperty(MediaElement, paused)
+rtDefineProperty(MediaElement, defaultPlaybackRate)
+rtDefineProperty(MediaElement, playbackRate)
+rtDefineProperty(MediaElement, played)
+rtDefineProperty(MediaElement, seekable)
+rtDefineProperty(MediaElement, ended)
+rtDefineProperty(MediaElement, autoplay)
+rtDefineProperty(MediaElement, loop)
+rtDefineProperty(MediaElement, controls)
+rtDefineProperty(MediaElement, volume)
+rtDefineProperty(MediaElement, muted)
+rtDefineProperty(MediaElement, defaultMuted)
+rtDefineProperty(MediaElement, audioTracks)
+rtDefineProperty(MediaElement, videoTracks)
+rtDefineProperty(MediaElement, textTracks)
+rtDefineMethod(MediaElement, load)
+rtDefineMethod(MediaElement, canPlayType)
+rtDefineMethod(MediaElement, play)
+rtDefineMethod(MediaElement, pause)
+rtDefineMethod(MediaElement, fastSeek)
 
 rtDefineObject(AudioElement, MediaElement)
 

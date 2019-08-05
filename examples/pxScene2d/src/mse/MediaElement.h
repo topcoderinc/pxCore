@@ -6,6 +6,7 @@
 #include "rtObject.h"
 #include "MSEUtils.h"
 #include "TimeRanges.h"
+#include "MSEBaseTrackList.h"
 
 class MediaError : public rtObject {
 public:
@@ -15,22 +16,22 @@ public:
 
   rtReadOnlyProperty(error, getError, int);
 
-  rtError getError(rtValue &val) const { val = mCode; return RT_OK; }
+  rtError getError(int &val) const { val = mCode; return RT_OK; }
 
   int mCode;
 };
 
-class MediaElement : public rtObject {
+class MediaElement : public MSEBaseObject {
 public:
 
-  rtDeclareObject(MediaElement, rtObject);
+  rtDeclareObject(MediaElement, MSEBaseObject);
 
   MediaElement();
 
   // HTMLMediaElement.idl
   // error state
   //readonly attribute MediaError error;
-  defineReadOnlyAttribute(error, mError, rtObjectRef)
+  defineReadOnlyAttribute(error, &mError, rtObjectRef)
 
   // network state
   //[CEReactions=NotNeeded, Reflect, URL] attribute USVString src;
@@ -55,13 +56,13 @@ public:
   defineReadWriteAttribute(preload, mPreload, rtString)
 
   //readonly attribute TimeRanges buffered;
-  defineReadWriteAttribute(buffered, mBuffered, TimeRanges)
+  defineReadOnlyAttribute(buffered, &mBuffered, rtObjectRef)
 
-  rtMethodNoArgAndNoReturn(load, load)
-  void load();
+  rtMethodNoArgAndNoReturn("load", load)
+  rtError load();
 
   //DOMString canPlayType(DOMString type);
-  rtMethod1ArgAndReturn(canPlayType, canPlayType, rtString, bool)
+  rtMethod1ArgAndReturn("canPlayType", canPlayType, rtString, bool)
   rtError canPlayType(const rtString &type, bool &ret);
 
   // ready state
@@ -95,10 +96,10 @@ public:
   defineReadWriteAttribute(playbackRate, mPlaybackRate, double)
 
   //readonly attribute TimeRanges played;
-  defineReadOnlyAttribute(played, mPlayed, TimeRanges)
+  defineReadOnlyAttribute(played, &mPlayed, rtObjectRef)
 
   //readonly attribute TimeRanges seekable;
-  defineReadOnlyAttribute(seekable, mSeekable, TimeRanges)
+  defineReadOnlyAttribute(seekable, &mSeekable, rtObjectRef)
 
   //readonly attribute boolean ended;
   defineReadOnlyAttribute(ended, mEnded, bool)
@@ -109,14 +110,14 @@ public:
   //[CEReactions=NotNeeded, Reflect] attribute boolean loop;
   defineReadWriteAttribute(loop, mLoop, bool)
 
-  rtMethodNoArgAndNoReturn(play, play)
-  void play();
+  rtMethodNoArgAndNoReturn("play", play)
+  rtError play();
 
-  rtMethodNoArgAndNoReturn(pause, pause)
-  void pause();
+  rtMethodNoArgAndNoReturn("pause", pause)
+  rtError pause();
 
-  rtMethod1ArgAndNoReturn(fastSeek, fastSeek, double)
-  void fastSeek(double time);
+  rtMethod1ArgAndNoReturn("fastSeek", fastSeek, double)
+  rtError fastSeek(double time);
 
   // controls
   //[CEReactions=NotNeeded] attribute boolean controls;
@@ -132,13 +133,13 @@ public:
   defineReadWriteAttribute(defaultMuted, mDefaultMuted, bool)
 
   //[Conditional=VIDEO_TRACK, ImplementedAs=ensureAudioTracks] readonly attribute AudioTrackList audioTracks;
-  defineReadOnlyAttribute(audioTracks, mAudioTracks, AudioTrackList)
+  defineReadOnlyAttribute(audioTracks, &mAudioTracks, rtObjectRef)
 
   //[Conditional=VIDEO_TRACK, ImplementedAs=ensureVideoTracks] readonly attribute VideoTrackList videoTracks;
-  defineReadOnlyAttribute(videoTracks, mVideoTracks, VideoTrackList)
+  defineReadOnlyAttribute(videoTracks, &mVideoTracks, rtObjectRef)
 
   //[Conditional=VIDEO_TRACK, ImplementedAs=ensureTextTracks] readonly attribute TextTrackList textTracks;
-  defineReadOnlyAttribute(textTracks, mTextTracks, TextTrackList)
+  defineReadOnlyAttribute(textTracks, &mTextTracks, rtObjectRef)
 
   //[Conditional=VIDEO_TRACK, MayThrowException] TextTrack addTextTrack(DOMString kind, optional DOMString label = "", optional DOMString language = "");
 
@@ -170,6 +171,7 @@ protected:
   MediaError mError;
   rtString   mSrc;
   rtString   mCurrentSrc;
+  rtString   mCrossOrigin;
   int        mNetworkState;
   rtString   mPreload;
   TimeRanges mBuffered;

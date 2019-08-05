@@ -28,11 +28,11 @@ rtError MSEBaseTrackList::Set(uint32_t i, const rtValue* value)
   {
     return RT_PROP_NOT_FOUND;
   }
-  mTracks[i] = (MSEBaseTrack*)value->getVoidPtr();
+  mTracks[i] = (MSEBaseTrack*)value->toVoidPtr();
   return RT_OK;
 }
 
-rtError MSEBaseTrackList::getTrackById(rtString id, rtObjectRef &out)
+rtError MSEBaseTrackList::getTrackById(const rtString &id, rtObjectRef &out) const
 {
   // TODO
   return RT_PROP_NOT_FOUND;

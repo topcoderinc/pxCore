@@ -16,8 +16,7 @@ rtDefineMethod(SourceBuffer, appendBuffer)
 rtDefineMethod(SourceBuffer, changeType)
 rtDefineMethod(SourceBuffer, remove)
 
-SourceBuffer::SourceBuffer() :
-    gstPlayer(nullptr)
+SourceBuffer::SourceBuffer()
 {
 }
 
@@ -62,13 +61,13 @@ void SourceBuffer::onAbort()
   mEmit.send("onabort");
 }
 
-rtError SourceBuffer::changeType(rtString type)
+rtError SourceBuffer::changeType(const rtString &type)
 {
   // TODO
   return RT_OK;
 }
 
-rtError SourceBuffer::remove(int32_t start, int32_t end)
+rtError SourceBuffer::remove(double start, double end)
 {
   // TODO
   return RT_OK;
@@ -100,7 +99,7 @@ rtError SourceBuffer::setAppendWindowStart(float const &v)
 
 rtError SourceBuffer::getBuffered(rtObjectRef &v) const
 {
-  v = mBuffered;
+  v = &mBuffered;
   return RT_OK;
 }
 
@@ -118,19 +117,19 @@ rtError SourceBuffer::setMode(rtString const &v)
 
 rtError SourceBuffer::getAudioTracks(rtObjectRef &v) const
 {
-  v = mAudioTrackList;
+  v = &mAudioTrackList;
   return RT_OK;
 }
 
 rtError SourceBuffer::getVideoTracks(rtObjectRef &v) const
 {
-  v = mVideoTrackList;
+  v = &mVideoTrackList;
   return RT_OK;
 }
 
 rtError SourceBuffer::getTextTracks(rtObjectRef &v) const
 {
-  v = mTextTrackList;
+  v = &mTextTrackList;
   return RT_OK;
 }
 
@@ -144,14 +143,4 @@ rtError SourceBuffer::getUpdating(bool &v) const
 {
   v = mUpdating;
   return RT_OK;
-}
-
-GStreamPlayer *SourceBuffer::getGstPlayer() const
-{
-  return gstPlayer;
-}
-
-void SourceBuffer::setGstPlayer(GStreamPlayer *gstPlayer)
-{
-  SourceBuffer::gstPlayer = gstPlayer;
 }

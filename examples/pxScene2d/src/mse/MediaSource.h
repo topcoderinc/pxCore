@@ -21,12 +21,12 @@ public:
   // All the source buffers created by this object.
   //readonly attribute SourceBufferList sourceBuffers;
   rtReadOnlyProperty(sourceBuffers, getSourceBuffers, rtObjectRef);
-  rtError getSourceBuffers(rtObjectRef &v) const;
+  rtError getSourceBuffers(rtObjectRef &v);
 
   // Subset of sourceBuffers that provide data for the selected/enabled tracks.
   // readonly attribute SourceBufferList activeSourceBuffers;
   rtReadOnlyProperty(activeSourceBuffers, getActiveSourceBuffers, rtObjectRef);
-  rtError getActiveSourceBuffers(rtObjectRef &v) const;
+  rtError getActiveSourceBuffers(rtObjectRef &v);
 
   //attribute unrestricted double duration;
   rtProperty(duration, getDuration, setDuration, double);
@@ -34,11 +34,11 @@ public:
   rtError setDuration(double const &v);
 
   //[NewObject, MayThrowException] SourceBuffer addSourceBuffer(DOMString type);
-  rtMethod1ArgAndReturn(addSourceBuffer, addSourceBuffer, rtString, rtObjectRef);
+  rtMethod1ArgAndReturn("addSourceBuffer", addSourceBuffer, rtString, rtObjectRef);
   rtError addSourceBuffer(rtString type, rtObjectRef &buffer);
 
   //[MayThrowException] void removeSourceBuffer(SourceBuffer buffer);
-  rtMethod1ArgAndNoReturn(removeSourceBuffer, removeSourceBuffer, rtObjectRef);
+  rtMethod1ArgAndNoReturn("removeSourceBuffer", removeSourceBuffer, rtObjectRef);
   rtError removeSourceBuffer(rtObjectRef buffer);
 
   //readonly attribute ReadyState readyState;
@@ -46,19 +46,19 @@ public:
   rtError getReadyState(rtString &v) const;
 
   //[MayThrowException] void endOfStream(optional EndOfStreamError error);
-  rtMethod1ArgAndNoReturn(endOfStream, endOfStream, rtString);
+  rtMethod1ArgAndNoReturn("endOfStream", endOfStream, rtString);
   rtError endOfStream(rtString reason);
 
   //static boolean isTypeSupported (DOMString type);
-  rtMethod1ArgAndReturn(isTypeSupported, isTypeSupported, rtString, bool);
+  rtMethod1ArgAndReturn("isTypeSupported", isTypeSupported, rtString, bool);
   rtError isTypeSupported(rtString reason, bool &ret);
 
   //[MayThrowException] void setLiveSeekableRange(double start, double end);
-  rtMethod2ArgAndNoReturn(setLiveSeekableRange, setLiveSeekableRange, double, double);
+  rtMethod2ArgAndNoReturn("setLiveSeekableRange", setLiveSeekableRange, double, double);
   rtError setLiveSeekableRange(double start, double end);
 
   //[MayThrowException] void clearLiveSeekableRange();
-  rtMethodNoArgAndNoReturn(clearLiveSeekableRange, clearLiveSeekableRange);
+  rtMethodNoArgAndNoReturn("clearLiveSeekableRange", clearLiveSeekableRange);
   rtError clearLiveSeekableRange();
 
   //attribute EventHandler onsourceopen;

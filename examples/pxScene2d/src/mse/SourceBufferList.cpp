@@ -1,5 +1,6 @@
 #include "SourceBufferList.h"
 #include "MSEUtils.h"
+#include <algorithm>
 
 SourceBufferList::SourceBufferList()
 {
@@ -21,6 +22,10 @@ void SourceBufferList::add(SourceBuffer *buffer)
 
 void SourceBufferList::remove(SourceBuffer *buffer)
 {
+  /*auto it = std::find(mBuffers.begin(), mBuffers.end(), buffer);
+  if (it != mBuffers.end()) {
+    mBuffers.erase(it);
+  }*/
   std::remove(mBuffers.begin(), mBuffers.end(), buffer);
   mEmit.send("onremovesourcebuffer", buffer);
 }

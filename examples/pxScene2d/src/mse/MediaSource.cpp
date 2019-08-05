@@ -6,15 +6,15 @@ MediaSource::MediaSource()
 {
 }
 
-rtError MediaSource::getSourceBuffers(rtObjectRef &v) const
+rtError MediaSource::getSourceBuffers(rtObjectRef &v)
 {
-  v = mBufferList;
+  v = &mBufferList;
   return RT_OK;
 }
 
-rtError MediaSource::getActiveSourceBuffers(rtObjectRef &v) const
+rtError MediaSource::getActiveSourceBuffers(rtObjectRef &v)
 {
-  v = mActiveBufferList;
+  v = &mActiveBufferList;
   return RT_OK;
 }
 

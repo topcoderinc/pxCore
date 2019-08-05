@@ -7,7 +7,6 @@
 #include "VideoTrack.h"
 #include "MSEBaseTrackList.h"
 #include "TimeRanges.h"
-#include "GStreamPlayer.h"
 #include <vector>
 #include <string>
 
@@ -69,17 +68,17 @@ public:
 
   // Append segment data.
   //[MayThrowException] void appendBuffer(BufferSource data);
-  rtMethod1ArgAndNoReturn(appendBuffer, appendBuffer, rtObjectRef);
+  rtMethod1ArgAndNoReturn("appendBuffer", appendBuffer, rtObjectRef);
   rtError appendBuffer(rtObjectRef buffer);
 
   // Abort the current segment append sequence.
   //[MayThrowException] void abort();
-  rtMethodNoArgAndNoReturn(abort, abort);
+  rtMethodNoArgAndNoReturn("abort", abort);
   rtError abort();
 
   //[MayThrowException] void remove(double start, unrestricted double end);
-  rtMethod2ArgAndNoReturn(remove, remove, int32_t, int32_t);
-  rtError remove(double start, int32_t end);
+  rtMethod2ArgAndNoReturn("remove", remove, double, double);
+  rtError remove(double start, double end);
 
   //attribute EventHandler onupdatestart;
   void onUpdateStart();
@@ -93,15 +92,10 @@ public:
   void onAbort();
 
   // [EnabledBySetting=SourceBufferChangeType, MayThrowException] void changeType(DOMString type);
-  rtMethod1ArgAndNoReturn(changeType, changeType, rtString);
-  rtError changeType(rtString type);
-
-  GStreamPlayer *getGstPlayer() const;
-  void setGstPlayer(GStreamPlayer *gstPlayer);
+  rtMethod1ArgAndNoReturn("changeType", changeType, rtString);
+  rtError changeType(const rtString &type);
 
 protected:
-  GStreamPlayer *gstPlayer;
-
   float mAppendWindowEnd;
   float mAppendWindowStart;
   TimeRanges mBuffered;

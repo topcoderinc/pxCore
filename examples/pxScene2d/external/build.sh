@@ -71,19 +71,19 @@ fi
 
 #--------- FT
 
-if [ ! -e ./ft/objs/.libs/libfreetype.6.dylib ] ||
-   [ "$(uname)" != "Darwin" ]
-then
-
-  banner "FT"
-
-  cd ft
-  export LIBPNG_LIBS="-L../png/.libs -lpng16"
-  ./configure --with-png=no
-  make all "-j${make_parallel}"
-  cd ..
-
-fi
+#if [ ! -e ./ft/objs/.libs/libfreetype.6.dylib ] ||
+#   [ "$(uname)" != "Darwin" ]
+#then
+#
+#  banner "FT"
+#
+#  cd ft
+#  export LIBPNG_LIBS="-L../png/.libs -lpng16"
+#  ./configure --with-png=no
+#  make all "-j${make_parallel}"
+#  cd ..
+#
+#fi
 
 #--------- JPG
 
@@ -148,9 +148,8 @@ fi
 
 #--------- LIBNODE
 
-if [ ! -e node/libnode.dylib ] ||
-   [ "$(uname)" != "Darwin" ]
-then
+if [ "$(uname)" = "Darwin" ] ; then
+if [ ! -e node/libnode.dylib ] ; then
 
   banner "NODE"
 
@@ -162,12 +161,12 @@ then
   ln -sf out/Release/libnode.48.dylib libnode.48.dylib
   ln -sf libnode.48.dylib libnode.dylib
   cd ..
-
+fi
 fi
 
 #--------- uWebSockets
-if [ ! -e ./uWebSockets/libuWS.dylib ] ||
-   [ "$(uname)" != "Darwin" ]
+if [ "$(uname)" = "Darwin" ] ; then
+if [ ! -e ./uWebSockets/libuWS.dylib ]
 then
 
   banner "uWEBSOCKETS"
@@ -181,7 +180,7 @@ then
 
   make
   cd ..
-
+fi
 fi
 #--------
 

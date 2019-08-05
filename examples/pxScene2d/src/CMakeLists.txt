@@ -458,17 +458,18 @@ if (SPARK_ENABLE_VIDEO)
     message("Enabling video support")
     add_definitions(-DENABLE_SPARK_VIDEO)
     set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES}
-            pxHtmlVideo.cpp
-            mse/GStreamPlayer.cpp
-            mse/MediaSource.cpp
-            mse/SourceBuffer.cpp
-            mse/SourceBufferList.cpp
             mse/AudioTrack.cpp
             mse/VideoTrack.cpp
             mse/TextTrack.cpp
+            mse/MediaSource.cpp
+            mse/MediaElement.cpp
+            mse/SourceBuffer.cpp
+            mse/SourceBufferList.cpp
             mse/MSEBaseObject.cpp
-            mse/MSEUtils.cpp
             mse/MSEBaseTrack.cpp
+            mse/MSEBaseTrackList.cpp
+            mse/MSEUtils.cpp
+            mse/TimeRanges.cpp
             )
 
 if (WIN32)
@@ -485,11 +486,14 @@ if (WIN32)
         gstapp-1.0.lib glib-2.0.lib gstreamer-1.0.lib gsttag-1.0.lib gio-2.0.lib glext.lib)
 
     link_directories(${GSTREAM_ROOT}/lib ${EXTDIR}/glext/lib)
-else ()
 
-if (APPLE)
+    include_directories(${EXTDIR}/webkitWTF/Source/WTF/wtf)
+    set(PXSCENE_LINK_LIBRARIES ${PXSCENE_LINK_LIBRARIES} ${EXTDIR}/webkitWTF/lib32/WTF.lib)
+
+elseif (CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+
+elseif (APPLE)
     set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES} mse/helper.mm)
-endif(APPLE)
 
     set(OPT /usr/local/opt)
     set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${OPT}/libffi/lib/pkgconfig:${OPT}/openssl/lib/pkgconfig")
@@ -512,11 +516,6 @@ endif(APPLE)
         ${OPT}/ossp-uuid/lib
     )
 endif()
-
-if (WIN32)
-    include_directories(${EXTDIR}/webkitWTF/Source/WTF/wtf)
-    set(PXSCENE_LINK_LIBRARIES ${PXSCENE_LINK_LIBRARIES} ${EXTDIR}/webkitWTF/lib32/WTF.lib)
-endif ()
 
 endif(SPARK_ENABLE_VIDEO)
 
