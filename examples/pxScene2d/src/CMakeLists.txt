@@ -478,6 +478,8 @@ set(WEBKIT_BUILD_ROOT ${WEBKIT_ROOT}/WebKitBuild/Debug)
             mse/TimeRanges.cpp
             )
 
+    set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES} pxMediaSource.cpp)
+
 if (WIN32)
     set(GSTREAM_ROOT C:/gstreamer/1.0/x86)
     include_directories(${GSTREAM_ROOT}/include/gstreamer-1.0)
@@ -497,6 +499,15 @@ if (WIN32)
     set(PXSCENE_LINK_LIBRARIES ${PXSCENE_LINK_LIBRARIES} ${EXTDIR}/webkitWTF/lib32/WTF.lib)
 
 elseif (CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+
+    pkg_check_modules(FFI REQUIRED gstreamer-1.0)  
+	pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
+	pkg_check_modules(GSTREAMERBASE REQUIRED gstreamer-app-1.0)
+    pkg_check_modules(GSTREAMERGL REQUIRED gstreamer-gl-1.0)
+    include_directories(AFTER ${GSTREAMER_INCLUDE_DIRS} /usr/local/include)
+	include_directories(${GSTREAMER_INCLUDE_DIRS})
+	include_directories(${GSTREAMERBASE_INCLUDE_DIRS})
+    include_directories(${GSTREAMERGL_INCLUDE_DIRS})
 
     set(PXSCENE_DEFINITIONS ${PXSCENE_DEFINITIONS} -DHAVE_CONFIG_H=1 -DBUILDING_WITH_CMAKE)
 

@@ -6,6 +6,7 @@
 #include "SourceBufferList.h"
 #include <vector>
 
+class pxScene2d;
 
 /**
  * Media source class
