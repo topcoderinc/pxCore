@@ -10,6 +10,12 @@
 #include <vector>
 #include <string>
 
+namespace WebCore
+{
+class MediaSource;
+}
+
+struct MSESourceBufferImpl;
 
 /**
  * Source buffer class
@@ -20,7 +26,7 @@ class MSESourceBuffer : public MSEBaseObject {
 public:
   rtDeclareObject(MSESourceBuffer, MSEBaseObject);
 
-  MSESourceBuffer();
+  MSESourceBuffer(WebCore::MediaSource &mediaSource, rtString type);
 
   virtual ~MSESourceBuffer();
 
@@ -68,8 +74,8 @@ public:
 
   // Append segment data.
   //[MayThrowException] void appendBuffer(BufferSource data);
-  rtMethod1ArgAndNoReturn("appendBuffer", appendBuffer, rtObjectRef);
-  rtError appendBuffer(rtObjectRef buffer);
+  rtMethod1ArgAndNoReturn("appendBuffer", appendBuffer, rtBuffer);
+  rtError appendBuffer(const rtBuffer &buffer);
 
   // Abort the current segment append sequence.
   //[MayThrowException] void abort();
@@ -105,6 +111,7 @@ protected:
   MSEVideoTrackList mVideoTrackList;
   float mTimestampOffset;
   bool mUpdating;
+  MSESourceBufferImpl *mSourceBufferImpl;
 };
 
 

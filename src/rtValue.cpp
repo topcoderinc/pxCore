@@ -36,6 +36,7 @@ rtValue::rtValue(float v)               :mType(0) { setFloat(v);  }
 rtValue::rtValue(double v)              :mType(0) { setDouble(v); }
 rtValue::rtValue(const char* v)         :mType(0) { setString(v); }
 rtValue::rtValue(const rtString& v)     :mType(0) { setString(v); }
+rtValue::rtValue(const rtBuffer& v)     :mType(0) { setBuffer(v); }
 rtValue::rtValue(const rtIObject* v)    :mType(0) { setObject(v); }
 rtValue::rtValue(const rtObjectRef& v)  :mType(0) { setObject(v); }
 rtValue::rtValue(const rtIFunction* v)  :mType(0) { setFunction(v); }
@@ -78,6 +79,11 @@ bool rtValue::compare(const rtValue& lhs, const rtValue& rhs)
         result = (lhs.mValue.stringValue == rhs.mValue.stringValue);
     }
     break;
+    case RT_bufferType:
+      {
+        result = lhs.mValue.bufferValue == rhs.mValue.bufferValue;
+      }
+      break;
     case RT_objectType:   result = (lhs.mValue.objectValue == rhs.mValue.objectValue); break;
     case RT_functionType: result = (lhs.mValue.functionValue == rhs.mValue.functionValue); break;
     }
@@ -230,6 +236,13 @@ void rtValue::setString(const rtString& v)
 {
   setEmpty();
   mType    = RT_stringType; mValue.stringValue = new rtString(v);
+  mIsEmpty = false;
+}
+
+void rtValue::setBuffer(const rtBuffer& v)
+{
+  setEmpty();
+  mType    = RT_bufferType; mValue.bufferValue = new rtBuffer(v);
   mIsEmpty = false;
 }
 
@@ -654,6 +667,25 @@ rtError rtValue::getString(rtString& v) const
       break;
     }
     v = buffer;
+  }
+  return RT_OK;
+}
+
+rtError rtValue::getBuffer(rtBuffer& v) const
+{
+  if (mType == RT_bufferType)
+    v = *mValue.bufferValue;
+  else
+  {
+    // TODO EVIL buffer on stack
+    char buffer[256]; buffer[0] = 0;
+    switch(mType)
+    {
+    default:
+      rtLogError("No conversion from %s to buffer.", rtStrType(mType));
+      break;
+    }
+    v = rtBuffer(buffer, 1);
   }
   return RT_OK;
 }

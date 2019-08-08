@@ -63,6 +63,10 @@ public:
   rtMethodNoArgAndNoReturn("clearLiveSeekableRange", clearLiveSeekableRange);
   rtError clearLiveSeekableRange();
 
+  // TODO: remove this
+  rtMethodNoArgAndNoReturn("play", play);
+  rtError play();
+
   //attribute EventHandler onsourceopen;
   void onSourceOpen();
 

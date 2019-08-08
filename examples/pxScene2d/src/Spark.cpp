@@ -94,6 +94,9 @@ static uv_work_t nodeLoopReq;
 #include <WebCore/platform/Timer.h>
 #include <wtf/Threading.h>
 #include <gst/gst.h>
+extern "C" {
+#include <X11/Xlib.h>
+}
 #endif
 
 #include "rtThreadPool.h"
@@ -608,6 +611,10 @@ namespace OptimusClient
 
 int pxMain(int argc, char* argv[])
 {
+#ifdef ENABLE_SPARK_VIDEO
+  XInitThreads();
+#endif
+
 #ifdef HAS_LINUX_BREAKPAD
   google_breakpad::MinidumpDescriptor descriptor("/tmp");
   google_breakpad::ExceptionHandler eh(descriptor, NULL, dumpCallback, NULL, true, -1);

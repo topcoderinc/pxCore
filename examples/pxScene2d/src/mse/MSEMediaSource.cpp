@@ -1,4 +1,5 @@
 #include "MSEMediaSource.h"
+#include "MSESourceBuffer.h"
 #include "MSEUtils.h"
 
 #include <gst/gst.h>
@@ -8,15 +9,35 @@
 #include "MediaSource.h"
 #include "HTMLVideoElement.h"
 #include "WebCore/fileapi/Blob.h"
+#include "WebCore/dom/Event.h"
+#include "WebCore/dom/EventNames.h"
+
+class MSEMediaSourceEventListener: public WebCore::EventListener {
+public:
+  MSEMediaSourceEventListener(MSEMediaSource &pxCoreMediaSource): 
+    WebCore::EventListener(WebCore::EventListener::JSEventListenerType),
+    mPxCoreMediaSource(pxCoreMediaSource)
+  {
+  }
+
+  virtual bool operator==(const WebCore::EventListener&) const { return false; }
+  virtual void handleEvent(WebCore::ScriptExecutionContext&, WebCore::Event&)
+  {
+    mPxCoreMediaSource.onSourceOpen();
+  }
+
+  static Ref<MSEMediaSourceEventListener> create(MSEMediaSource &pxCoreMediaSource) { return adoptRef(*new MSEMediaSourceEventListener(pxCoreMediaSource)); }
+
+private:
+  MSEMediaSource &mPxCoreMediaSource;
+};
 
 struct MSEMediaSourceImpl {
   MSEMediaSourceImpl(WebCore::Document &doc, WebCore::MediaSource &mediaSource,
      WebCore::HTMLVideoElement &videoElement)
     : mDocument(doc), mMediaSource(mediaSource), mVideoElement(videoElement)
   {
-
     mVideoElement->setSrcObject(WebCore::MediaProvider(RefPtr(&mediaSource)));
-
   }
 
   Ref<WebCore::Document> mDocument;
@@ -30,6 +51,9 @@ MSEMediaSource::MSEMediaSource(): mMediaSourceImpl(NULL)
   Ref<WebCore::Document> document = WebCore::Document::create(url);
   Ref<WebCore::MediaSource> mediaSource = WebCore::MediaSource::create(document.get());
   Ref<WebCore::HTMLVideoElement> videoElement = WebCore::HTMLVideoElement::create(document.get());
+
+  mediaSource->addEventListener(WebCore::eventNames().sourceopenEvent, MSEMediaSourceEventListener::create(*this));
+
   mMediaSourceImpl = new MSEMediaSourceImpl(document.get(), mediaSource.get(), videoElement.get());
 }
 
@@ -73,7 +97,8 @@ rtError MSEMediaSource::setDuration(double const &v)
 
 rtError MSEMediaSource::addSourceBuffer(rtString type, rtObjectRef &buffer)
 {
-  // TODO
+  MSESourceBuffer *sourceBuffer = new MSESourceBuffer(mMediaSourceImpl->mMediaSource.get(), type);
+  buffer = sourceBuffer;
   return RT_OK;
 }
 
@@ -107,19 +132,25 @@ rtError MSEMediaSource::isTypeSupported(rtString reason, bool &ret)
   return RT_OK;
 }
 
+rtError MSEMediaSource::play()
+{
+  mMediaSourceImpl->mVideoElement->play();
+  return RT_OK;
+}
+
 void MSEMediaSource::onSourceOpen()
 {
-  mEmit.send("onsourceopen");
+  mEmit.send("sourceopen");
 }
 
 void MSEMediaSource::onSourceEnded()
 {
-  mEmit.send("onsourceended");
+  mEmit.send("sourceended");
 }
 
 void MSEMediaSource::onSourceClose()
 {
-  mEmit.send("onsourceclose");
+  mEmit.send("sourceclose");
 }
 
 //SourceBuffer *MSEMediaSource::getCurSourceBuffer() const
@@ -166,3 +197,4 @@ rtDefineMethod(MSEMediaSource, endOfStream)
 rtDefineMethod(MSEMediaSource, removeSourceBuffer)
 rtDefineMethod(MSEMediaSource, setLiveSeekableRange)
 rtDefineMethod(MSEMediaSource, isTypeSupported)
+rtDefineMethod(MSEMediaSource, play)

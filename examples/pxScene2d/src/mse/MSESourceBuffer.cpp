@@ -1,27 +1,67 @@
 #include "MSESourceBuffer.h"
 #include "MSEUtils.h"
 
-rtDefineObject(MSESourceBuffer, MSEBaseObject)
-rtDefineProperty(MSESourceBuffer, appendWindowEnd)
-rtDefineProperty(MSESourceBuffer, appendWindowStart)
-rtDefineProperty(MSESourceBuffer, audioTracks)
-rtDefineProperty(MSESourceBuffer, buffered)
-rtDefineProperty(MSESourceBuffer, mode)
-rtDefineProperty(MSESourceBuffer, textTracks)
-rtDefineProperty(MSESourceBuffer, timestampOffset)
-rtDefineProperty(MSESourceBuffer, updating)
-rtDefineProperty(MSESourceBuffer, videoTracks)
-rtDefineMethod(MSESourceBuffer, abort)
-rtDefineMethod(MSESourceBuffer, appendBuffer)
-rtDefineMethod(MSESourceBuffer, changeType)
-rtDefineMethod(MSESourceBuffer, remove)
+// webkit-includes
+#include "WebCore/config.h"
+#include "MediaSource.h"
+#include "SourceBuffer.h"
+#include "HTMLVideoElement.h"
+#include "WebCore/fileapi/Blob.h"
+#include "WebCore/dom/Event.h"
+#include "WebCore/dom/EventNames.h"
+#include "WebCore/bindings/js/BufferSource.h"
 
-MSESourceBuffer::MSESourceBuffer()
+class MSESourceBufferEventListener: public WebCore::EventListener {
+public:
+  MSESourceBufferEventListener(MSESourceBuffer &pxSourceBuffer): 
+    WebCore::EventListener(WebCore::EventListener::JSEventListenerType),
+    mMseSourceBuffer(pxSourceBuffer)
+  {
+  }
+
+  virtual bool operator==(const WebCore::EventListener&) const { return false; }
+  virtual void handleEvent(WebCore::ScriptExecutionContext&, WebCore::Event&)
+  {
+    mMseSourceBuffer.onUpdateEnd();
+  }
+
+  static Ref<MSESourceBufferEventListener> create(MSESourceBuffer &pxSourceBuffer) { return adoptRef(*new MSESourceBufferEventListener(pxSourceBuffer)); }
+
+private:
+  MSESourceBuffer &mMseSourceBuffer;
+};
+
+struct MSESourceBufferImpl {
+  MSESourceBufferImpl(WebCore::MediaSource &mediaSource, rtString type): 
+    mMediaSource(mediaSource),
+    mSourceBuffer(mediaSource.addSourceBuffer(type.cString()))
+  {
+    assert(!mSourceBuffer.hasException());
+  }
+
+  WebCore::SourceBuffer &getSourceBuffer()
+  {
+    assert(!mSourceBuffer.hasException());
+    return mSourceBuffer.returnValue().get();
+  }
+
+  Ref<WebCore::MediaSource>                        mMediaSource;
+  WebCore::ExceptionOr<Ref<WebCore::SourceBuffer>> mSourceBuffer;
+};
+
+MSESourceBuffer::MSESourceBuffer(WebCore::MediaSource &mediaSource, rtString type)
 {
+  mSourceBufferImpl = new MSESourceBufferImpl(mediaSource, type);
+
+  mSourceBufferImpl->getSourceBuffer().addEventListener(WebCore::eventNames().updateendEvent, MSESourceBufferEventListener::create(*this));
 }
 
 MSESourceBuffer::~MSESourceBuffer()
 {
+  if (mSourceBufferImpl) {
+    delete mSourceBufferImpl;
+    mSourceBufferImpl = NULL;
+  }
 }
 
 rtError MSESourceBuffer::abort()
@@ -30,35 +70,38 @@ rtError MSESourceBuffer::abort()
   return RT_OK;
 }
 
-rtError MSESourceBuffer::appendBuffer(rtObjectRef buffer)
+rtError MSESourceBuffer::appendBuffer(const rtBuffer &buffer)
 {
-  // TODO
+  Ref<JSC::ArrayBuffer> jscBuf = JSC::ArrayBuffer::create(buffer.getData(), buffer.getSize());
+  WebCore::BufferSource bufferSource(WTF::RefPtr<JSC::ArrayBuffer>(&jscBuf.get()));
+  WebCore::ExceptionOr<void> exc = mSourceBufferImpl->getSourceBuffer().appendBuffer(bufferSource);
+  assert(!exc.hasException());
   return RT_OK;
 }
 
 void MSESourceBuffer::onUpdateStart()
 {
-  mEmit.send("onupdatestart");
+  mEmit.send("updatestart");
 }
 
 void MSESourceBuffer::onUpdate()
 {
-  mEmit.send("onupdate");
+  mEmit.send("update");
 }
 
 void MSESourceBuffer::onUpdateEnd()
 {
-  mEmit.send("onupdateend");
+  mEmit.send("updateend");
 }
 
 void MSESourceBuffer::onError()
 {
-  mEmit.send("onerror");
+  mEmit.send("error");
 }
 
 void MSESourceBuffer::onAbort()
 {
-  mEmit.send("onabort");
+  mEmit.send("abort");
 }
 
 rtError MSESourceBuffer::changeType(const rtString &type)
@@ -144,3 +187,19 @@ rtError MSESourceBuffer::getUpdating(bool &v) const
   v = mUpdating;
   return RT_OK;
 }
+
+
+rtDefineObject(MSESourceBuffer, MSEBaseObject)
+rtDefineProperty(MSESourceBuffer, appendWindowEnd)
+rtDefineProperty(MSESourceBuffer, appendWindowStart)
+rtDefineProperty(MSESourceBuffer, audioTracks)
+rtDefineProperty(MSESourceBuffer, buffered)
+rtDefineProperty(MSESourceBuffer, mode)
+rtDefineProperty(MSESourceBuffer, textTracks)
+rtDefineProperty(MSESourceBuffer, timestampOffset)
+rtDefineProperty(MSESourceBuffer, updating)
+rtDefineProperty(MSESourceBuffer, videoTracks)
+rtDefineMethod(MSESourceBuffer, abort)
+rtDefineMethod(MSESourceBuffer, appendBuffer)
+rtDefineMethod(MSESourceBuffer, changeType)
+rtDefineMethod(MSESourceBuffer, remove)

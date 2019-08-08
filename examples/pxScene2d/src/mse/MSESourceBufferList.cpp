@@ -17,7 +17,7 @@ rtError MSESourceBufferList::getSourceBuffer(rtObjectRef &v) const
 void MSESourceBufferList::add(MSESourceBuffer *buffer)
 {
   mBuffers.push_back(buffer);
-  mEmit.send("onaddsourcebuffer", buffer);
+  mEmit.send("addsourcebuffer", buffer);
 }
 
 void MSESourceBufferList::remove(MSESourceBuffer *buffer)
@@ -27,7 +27,7 @@ void MSESourceBufferList::remove(MSESourceBuffer *buffer)
     mBuffers.erase(it);
   }*/
   std::remove(mBuffers.begin(), mBuffers.end(), buffer);
-  mEmit.send("onremovesourcebuffer", buffer);
+  mEmit.send("removesourcebuffer", buffer);
 }
 
 rtError MSESourceBufferList::length(int &c) const

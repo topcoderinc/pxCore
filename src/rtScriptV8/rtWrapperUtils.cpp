@@ -489,6 +489,13 @@ rtValue js2rt(v8::Local<v8::Context>& ctx, const Handle<Value>& val, rtWrapperEr
   if (val->IsNull())      { return rtValue((char *)0); }
   if (val->IsString())    { return toString(isolate, val); }
   if (val->IsFunction())  { return rtValue(rtFunctionRef(new jsFunctionWrapper(ctx, val))); }
+  if (val->IsUint8Array()) 
+  {
+    v8::Uint8Array *arr = v8::Uint8Array::Cast(*val);
+    rtBuffer buf(arr->ByteLength());
+    arr->CopyContents(buf.getData(), buf.getSize());
+    return rtValue(buf);
+  }
   if (val->IsArray() || val->IsObject())
   {
     // This is mostly a heuristic. We should probably set a second internal

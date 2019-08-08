@@ -24,6 +24,7 @@
 
 #include "rtCore.h"
 #include "rtString.h"
+#include "rtBuffer.h"
 
 #define RT_voidType               '\0'
 #define RT_valueType              'v'
@@ -45,6 +46,7 @@
 #define RT_functionType           'f'
 #define RT_rtFunctionRefType      'f'
 #define RT_voidPtrType            'z'
+#define RT_bufferType             'h'
 
 // TODO JR Hack Only needed for reflection... method signature
 //Try #define CHARIZE(x) #x[0]
@@ -67,6 +69,7 @@
 #define RT_rtObjectRefType2        "o"
 #define RT_rtFunctionRefType2      "f"
 #define RT_voidPtrType2            "z"
+#define RT_rtBufferType2           "h"
 
 class rtIObject;
 class rtIFunction;
@@ -93,6 +96,7 @@ union rtValue_
   rtIObject   *objectValue;
   rtIFunction *functionValue;
   voidPtr     voidPtrValue;  // For creating mischief
+  rtBuffer   *bufferValue;
 };
 
 typedef char rtType;
@@ -116,6 +120,7 @@ class rtValue
   rtValue(const rtObjectRef& v);
   rtValue(const rtIFunction* v);
   rtValue(const rtFunctionRef& v);
+  rtValue(const rtBuffer& v);
   rtValue(const rtValue& v);
   rtValue(voidPtr v);
   ~rtValue();
@@ -132,6 +137,7 @@ class rtValue
   finline rtValue& operator=(float v)               { setFloat(v);    return *this; }
   finline rtValue& operator=(double v)              { setDouble(v);   return *this; }
   finline rtValue& operator=(const char* v)         { setString(v);   return *this; }
+  finline rtValue& operator=(const rtBuffer& v)     { setBuffer(v);   return *this; }
   finline rtValue& operator=(const rtString& v)     { setString(v);   return *this; }
   finline rtValue& operator=(const rtIObject* v)    { setObject(v);   return *this; }
   finline rtValue& operator=(const rtObjectRef& v)  { setObject(v);   return *this; }
@@ -154,6 +160,7 @@ class rtValue
   finline float      toFloat()    const { float v;       getFloat(v);  return v; }
   finline double     toDouble()   const { double v;      getDouble(v); return v; }
   finline rtString   toString()   const { rtString v;    getString(v); return v; }
+  finline rtBuffer   toBuffer()   const { rtBuffer v;    getBuffer(v); return v; }
   rtObjectRef        toObject()   const;
   rtFunctionRef      toFunction() const;
   voidPtr            toVoidPtr()  const { voidPtr v;     getVoidPtr(v);return v; }
@@ -176,6 +183,7 @@ class rtValue
   void setFloat(float v);
   void setDouble(double v);
   void setString(const rtString& v);
+  void setBuffer(const rtBuffer& v);
   void setObject(const rtIObject* v);
   void setObject(const rtObjectRef& v);
   void setFunction(const rtIFunction* v);
@@ -192,6 +200,7 @@ class rtValue
   rtError getUInt32(uint32_t& v)        const;
   rtError getFloat(float& v)            const;
   rtError getDouble(double& v)          const;
+  rtError getBuffer(rtBuffer& v)        const;
   rtError getString(rtString& v)        const;
   rtError getObject(rtObjectRef& v)     const;
   rtError getFunction(rtFunctionRef& v) const;
@@ -222,6 +231,7 @@ class rtValue
    rtError cvt(uint64_t& v)               const { return getUInt64(v);   }
    rtError cvt(float& v)                  const { return getFloat(v);    }
    rtError cvt(double& v)                 const { return getDouble(v);   }
+   rtError cvt(rtBuffer& v)               const { return getBuffer(v);   }
    rtError cvt(rtString& v)               const { return getString(v);   }
    rtError cvt(rtObjectRef& v)            const { return getObject(v);   }
    rtError cvt(rtFunctionRef& v)          const { return getFunction(v); }
@@ -238,6 +248,7 @@ class rtValue
   void asn(float v)                         { setFloat(v);    }
   void asn(double v)                        { setDouble(v);   }
   void asn(const char* v)                   { setString(v);   }
+  void asn(const rtBuffer& v)               { setBuffer(v);   }
   void asn(const rtString& v)               { setString(v);   }
   void asn(const rtIObject* v)              { setObject(v);   }
   void asn(const rtObjectRef& v)            { setObject(v);   }

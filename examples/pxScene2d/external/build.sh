@@ -148,7 +148,6 @@ fi
 
 #--------- LIBNODE
 
-if [ "$(uname)" = "Darwin" ] ; then
 if [ ! -e node/libnode.dylib ] ; then
 
   banner "NODE"
@@ -162,10 +161,8 @@ if [ ! -e node/libnode.dylib ] ; then
   ln -sf libnode.48.dylib libnode.dylib
   cd ..
 fi
-fi
 
 #--------- uWebSockets
-if [ "$(uname)" = "Darwin" ] ; then
 if [ ! -e ./uWebSockets/libuWS.dylib ]
 then
 
@@ -180,7 +177,6 @@ then
 
   make
   cd ..
-fi
 fi
 #--------
 
@@ -214,5 +210,5 @@ fi
 #if [ "$(uname)" == "Linux" ]
 #then
 #    ./Tools/gtk/install-dependencies
-#    ./Tools/Scripts/build-webkit --gtk --minimal --debug --media-source --video --video-track --system-malloc --cmakeargs ' -DUSE_WPE_RENDERER=OFF -DUSE_WOFF2=OFF -DUSE_OPENJPEG=OFF -DENABLE_INTROSPECTION=OFF ' --webgl --streams-api --intersection-observer --resize-observer
+#    ./Tools/Scripts/build-webkit --gtk --debug --media-source --video --video-track --system-malloc --cmakeargs ' -DUSE_WPE_RENDERER=OFF -DUSE_WOFF2=OFF -DUSE_OPENJPEG=OFF -DENABLE_INTROSPECTION=OFF -DENABLE_BUBBLEWRAP_SANDBOX=OFF'  --no-web-crypto --no-web-rtc --no-media-stream  --no-spellcheck --no-web-audio
 #fi
