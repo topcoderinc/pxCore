@@ -471,6 +471,19 @@ if (SPARK_ENABLE_VIDEO)
             mse/MSEBaseTrack.cpp
             )
 
+    set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES}
+            webkit_mse/MSEBaseObject.cpp
+            webkit_mse/VideoPlaybackQuality.cpp
+            webkit_mse/track/BaseTrack.cpp
+            webkit_mse/track/BaseTrackList.cpp
+            webkit_mse/track/AudioTrack.cpp
+            webkit_mse/track/VideoTrack.cpp
+            webkit_mse/track/TextTrack.cpp
+            webkit_mse/MediaSource.cpp
+            webkit_mse/SourceBuffer.cpp
+            webkit_mse/SourceBufferList.cpp
+            )
+
 if (WIN32)
     set(GSTREAM_ROOT C:/gstreamer/1.0/x86)
     include_directories(${GSTREAM_ROOT}/include/gstreamer-1.0)
