@@ -1,12 +1,12 @@
-#ifndef PXSCENE_SOURCEBUFFER_H
-#define PXSCENE_SOURCEBUFFER_H
+#ifndef PXSCENE_MSESourceBuffer_H
+#define PXSCENE_MSESourceBuffer_H
 
 #include "MSEBaseObject.h"
-#include "AudioTrack.h"
-#include "TextTrack.h"
-#include "VideoTrack.h"
+#include "MSEAudioTrack.h"
+#include "MSETextTrack.h"
+#include "MSEVideoTrack.h"
 #include "MSEBaseTrackList.h"
-#include "TimeRanges.h"
+#include "MSETimeRanges.h"
 #include <vector>
 #include <string>
 
@@ -15,16 +15,16 @@
  * Source buffer class
  * https://developer.mozilla.org/en-US/docs/Web/API/SourceBuffer
  */
-class SourceBuffer : public MSEBaseObject {
+class MSESourceBuffer : public MSEBaseObject {
 
 public:
-  rtDeclareObject(SourceBuffer, MSEBaseObject);
+  rtDeclareObject(MSESourceBuffer, MSEBaseObject);
 
-  SourceBuffer();
+  MSESourceBuffer();
 
-  virtual ~SourceBuffer();
+  virtual ~MSESourceBuffer();
 
-  // SourceBuffer.idl
+  // MSESourceBuffer.idl
   //attribute AppendMode mode;
   rtProperty(mode, getMode, setMode, rtString);
   rtError getMode(rtString &v) const;
@@ -44,15 +44,15 @@ public:
   rtReadOnlyProperty(timestampOffset, getTimestampOffset, float);
   rtError getTimestampOffset(float &v) const;
 
-  // [Conditional=VIDEO_TRACK] readonly attribute AudioTrackList audioTracks;
+  // [Conditional=VIDEO_TRACK] readonly attribute MSEAudioTrackList audioTracks;
   rtReadOnlyProperty(audioTracks, getAudioTracks, rtObjectRef);
   rtError getAudioTracks(rtObjectRef &v) const;
 
-  // [Conditional=VIDEO_TRACK] readonly attribute VideoTrackList videoTracks;
+  // [Conditional=VIDEO_TRACK] readonly attribute MSEVideoTrackList videoTracks;
   rtReadOnlyProperty(videoTracks, getVideoTracks, rtObjectRef);
   rtError getVideoTracks(rtObjectRef &v) const;
 
-  // [Conditional=VIDEO_TRACK] readonly attribute TextTrackList textTracks;
+  // [Conditional=VIDEO_TRACK] readonly attribute MSETextTrackList textTracks;
   rtReadOnlyProperty(textTracks, getTextTracks, rtObjectRef);
   rtError getTextTracks(rtObjectRef &v) const;
 
@@ -91,21 +91,21 @@ public:
   //attribute EventHandler onabort;
   void onAbort();
 
-  // [EnabledBySetting=SourceBufferChangeType, MayThrowException] void changeType(DOMString type);
+  // [EnabledBySetting=MSESourceBufferChangeType, MayThrowException] void changeType(DOMString type);
   rtMethod1ArgAndNoReturn("changeType", changeType, rtString);
   rtError changeType(const rtString &type);
 
 protected:
   float mAppendWindowEnd;
   float mAppendWindowStart;
-  TimeRanges mBuffered;
+  MSETimeRanges mBuffered;
   rtString mMode;
-  AudioTrackList mAudioTrackList;
-  TextTrackList mTextTrackList;
-  VideoTrackList mVideoTrackList;
+  MSEAudioTrackList mAudioTrackList;
+  MSETextTrackList mTextTrackList;
+  MSEVideoTrackList mVideoTrackList;
   float mTimestampOffset;
   bool mUpdating;
 };
 
 
-#endif //PXSCENE_SOURCEBUFFER_H
+#endif //PXSCENE_MSESourceBuffer_H

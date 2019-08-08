@@ -1,5 +1,5 @@
 #include "MSEBaseTrack.h"
-#include "SourceBuffer.h"
+#include "MSESourceBuffer.h"
 
 
 MSEBaseTrackList::MSEBaseTrackList()
@@ -53,11 +53,11 @@ void MSEBaseTrackList::onRemoveTrack()
   mEmit.send("onremovetrack");
 }
 
-VideoTrackList::VideoTrackList(): mSelectedIndex(-1)
+MSEVideoTrackList::MSEVideoTrackList(): mSelectedIndex(-1)
 {
 }
 
-rtError VideoTrackList::getSelectedIndex(int &v) const
+rtError MSEVideoTrackList::getSelectedIndex(int &v) const
 {
   v = mSelectedIndex;
   return RT_OK;
@@ -67,9 +67,9 @@ rtDefineObject(MSEBaseTrackList, MSEBaseObject)
 rtDefineProperty(MSEBaseTrackList, length)
 rtDefineMethod(MSEBaseTrackList, getTrackById)
 
-rtDefineObject(AudioTrackList, MSEBaseTrackList)
+rtDefineObject(MSEAudioTrackList, MSEBaseTrackList)
 
-rtDefineObject(VideoTrackList, MSEBaseTrackList)
-rtDefineProperty(VideoTrackList, selectedIndex)
+rtDefineObject(MSEVideoTrackList, MSEBaseTrackList)
+rtDefineProperty(MSEVideoTrackList, selectedIndex)
 
-rtDefineObject(TextTrackList, MSEBaseTrackList)
+rtDefineObject(MSETextTrackList, MSEBaseTrackList)

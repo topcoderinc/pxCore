@@ -1,29 +1,29 @@
-#ifndef PXSCENE_SOURCEBUFFERLIST_H
-#define PXSCENE_SOURCEBUFFERLIST_H
+#ifndef PXSCENE_MSESourceBufferList_H
+#define PXSCENE_MSESourceBufferList_H
 
 #include "MSEBaseObject.h"
-#include "SourceBuffer.h"
+#include "MSESourceBuffer.h"
 #include <vector>
 
 /**
  * source buffer list class
- * https://developer.mozilla.org/en-US/docs/Web/API/SourceBufferList
+ * https://developer.mozilla.org/en-US/docs/Web/API/MSESourceBufferList
  */
-class SourceBufferList : public MSEBaseObject {
+class MSESourceBufferList : public MSEBaseObject {
 public:
-  rtDeclareObject(SourceBufferList, MSEBaseObject);
+  rtDeclareObject(MSESourceBufferList, MSEBaseObject);
 
   rtMethodNoArgAndReturn("SourceBuffer", getSourceBuffer, rtObjectRef);
 
-  SourceBufferList();
+  MSESourceBufferList();
 
   rtError getSourceBuffer(rtObjectRef &v) const;
 
-  void add(SourceBuffer *buffer);
+  void add(MSESourceBuffer *buffer);
 
-  void remove(SourceBuffer *buffer);
+  void remove(MSESourceBuffer *buffer);
 
-  // SourceBufferList.idl
+  // MSESourceBufferList.idl
   // readonly attribute unsigned long length;
   rtReadOnlyProperty(length, length, int);
   rtError length(int &c) const;
@@ -39,4 +39,4 @@ private:
 };
 
 
-#endif //PXSCENE_SOURCEBUFFERLIST_H
+#endif //PXSCENE_MSESourceBufferList_H

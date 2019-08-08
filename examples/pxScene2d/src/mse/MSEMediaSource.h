@@ -1,24 +1,25 @@
-#ifndef PXSCENE_MEDIASOURCE_H
-#define PXSCENE_MEDIASOURCE_H
+#ifndef PXSCENE_MSEMediaSource_H
+#define PXSCENE_MSEMediaSource_H
 
 
 #include "MSEBaseObject.h"
-#include "SourceBufferList.h"
+#include "MSESourceBufferList.h"
 #include <vector>
 
-class pxScene2d;
+struct MSEMediaSourceImpl;
 
 /**
  * Media source class
- * https://developer.mozilla.org/en-US/docs/Web/API/MediaSource
+ * https://developer.mozilla.org/en-US/docs/Web/API/MSEMediaSource
  */
-class MediaSource : public MSEBaseObject {
+class MSEMediaSource : public MSEBaseObject {
 public:
-  MediaSource();
+  MSEMediaSource();
+  ~MSEMediaSource();
 
-  rtDeclareObject(MediaSource, MSEBaseObject);
+  rtDeclareObject(MSEMediaSource, MSEBaseObject);
 
-  //MediaSource.idl
+  //MSEMediaSource.idl
   // All the source buffers created by this object.
   //readonly attribute SourceBufferList sourceBuffers;
   rtReadOnlyProperty(sourceBuffers, getSourceBuffers, rtObjectRef);
@@ -85,11 +86,12 @@ protected:
   //GStreamPlayer *gstPlayer;
   //SourceBuffer *curSourceBuffer;
 
-  SourceBufferList mBufferList;
-  SourceBufferList mActiveBufferList;
+  MSESourceBufferList mBufferList;
+  MSESourceBufferList mActiveBufferList;
   double mDuration;
   rtString mReadyState;
+  MSEMediaSourceImpl *mMediaSourceImpl;
 };
 
 
-#endif //PXSCENE_MEDIASOURCE_H
+#endif //PXSCENE_MSEMediaSource_H

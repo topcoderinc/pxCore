@@ -5,7 +5,7 @@
 
 #include "rtObject.h"
 #include "MSEUtils.h"
-#include "TimeRanges.h"
+#include "MSETimeRanges.h"
 #include "MSEBaseTrackList.h"
 
 class MediaError : public rtObject {
@@ -21,12 +21,12 @@ public:
   int mCode;
 };
 
-class MediaElement : public MSEBaseObject {
+class MSEMediaElement : public MSEBaseObject {
 public:
 
-  rtDeclareObject(MediaElement, MSEBaseObject);
+  rtDeclareObject(MSEMediaElement, MSEBaseObject);
 
-  MediaElement();
+  MSEMediaElement();
 
   // HTMLMediaElement.idl
   // error state
@@ -174,7 +174,7 @@ protected:
   rtString   mCrossOrigin;
   int        mNetworkState;
   rtString   mPreload;
-  TimeRanges mBuffered;
+  MSETimeRanges mBuffered;
   int        mReadyState;
   bool       mSeeking;
   double     mCurrentTime;
@@ -182,8 +182,8 @@ protected:
   bool       mPaused;
   double     mDefaultPlaybackRate;
   double     mPlaybackRate;
-  TimeRanges mPlayed;
-  TimeRanges mSeekable;
+  MSETimeRanges mPlayed;
+  MSETimeRanges mSeekable;
   bool       mEnded;
   bool       mAutoplay;
   bool       mLoop;
@@ -191,21 +191,21 @@ protected:
   bool       mVolume;
   bool       mMuted;
   bool       mDefaultMuted;
-  AudioTrackList mAudioTracks;
-  VideoTrackList mVideoTracks;
-  TextTrackList  mTextTracks;
+  MSEAudioTrackList mAudioTracks;
+  MSEVideoTrackList mVideoTracks;
+  MSETextTrackList  mTextTracks;
 };
 
-class AudioElement: public MediaElement {
+class MSEAudioElement: public MSEMediaElement {
 public:
-  rtDeclareObject(AudioElement, MediaElement);
+  rtDeclareObject(MSEAudioElement, MSEMediaElement);
 };
 
-class VideoElement: public MediaElement {
+class MSEVideoElement: public MSEMediaElement {
 public:
-  rtDeclareObject(VideoElement, MediaElement);
+  rtDeclareObject(MSEVideoElement, MSEMediaElement);
 
-  VideoElement();
+  MSEVideoElement();
 
   //HTMLVideoElement.idl
   //[CEReactions=NotNeeded, Reflect] attribute unsigned long width;

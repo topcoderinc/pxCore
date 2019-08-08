@@ -1,17 +1,17 @@
-#include "TimeRanges.h"
+#include "MSETimeRanges.h"
 
-rtDefineObject(TimeRanges, rtArrayObject)
-rtDefineProperty(TimeRanges, length)
-rtDefineMethod(TimeRanges, start)
-rtDefineMethod(TimeRanges, end)
+rtDefineObject(MSETimeRanges, rtArrayObject)
+rtDefineProperty(MSETimeRanges, length)
+rtDefineMethod(MSETimeRanges, start)
+rtDefineMethod(MSETimeRanges, end)
 
-rtError TimeRanges::length(int &c) const
+rtError MSETimeRanges::length(int &c) const
 {
   c = (int)mRanges.size();
   return RT_OK;
 }
 
-rtError TimeRanges::start(int index, double &v) const
+rtError MSETimeRanges::start(int index, double &v) const
 {
   if (index >= mRanges.size())
   {
@@ -21,7 +21,7 @@ rtError TimeRanges::start(int index, double &v) const
   return RT_OK;
 }
 
-rtError TimeRanges::end(int index, double &v) const
+rtError MSETimeRanges::end(int index, double &v) const
 {
   if (index >= mRanges.size())
   {

@@ -5,9 +5,9 @@
 #include <vector>
 #include <utility>
 
-class TimeRanges : public rtObject {
+class MSETimeRanges : public rtObject {
 public:
-  rtDeclareObject(TimeRanges, rtObject);
+  rtDeclareObject(MSETimeRanges, rtObject);
 
   //readonly attribute unsigned long length;
   rtReadOnlyProperty(length, length, int);

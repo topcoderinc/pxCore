@@ -17,11 +17,21 @@
 */
 
 #include "pxMediaSource.h"
-#include "mse/MediaSource.h"
+#include "mse/MSEMediaSource.h"
+
+#ifdef ENABLE_SPARK_VIDEO
+#include "WebCore/config.h"
+#include <wtf/RunLoop.h>
+#include <WebCore/LogInitialization.h>
+#include <WebCore/page/ProcessWarming.h>
+#include <WebCore/platform/Timer.h>
+#include <wtf/Threading.h>
+#include <gst/gst.h>
+#endif
 
 pxMediaSource::pxMediaSource(pxScene2d *scene) :
   pxObject(scene),
-  mMediaSource(new MediaSource)
+  mMediaSource(new MSEMediaSource)
 {
 }
 
@@ -41,6 +51,28 @@ rtError pxMediaSource::getMediaSource(rtObjectRef &v) const
   v = mMediaSource;
   return RT_OK;
 }
+
+#ifdef ENABLE_SPARK_VIDEO
+static bool initialized = false;
+static void *runLoopThread(void *)
+{
+
+  WTF::RunLoop::run();
+  return 0;
+}
+#endif
+
+void pxMediaSource::init()
+{
+#ifdef ENABLE_SPARK_VIDEO
+  if (!initialized) {
+    initialized = true;
+    //GstPlayerMainLoop = g_main_loop_new(nullptr, FALSE);
+    g_thread_new("GstPlayerLoop", &runLoopThread, nullptr);
+  }
+#endif
+}
+
 
 rtDefineObject(pxMediaSource, pxObject);
 rtDefineProperty(pxMediaSource, mediaSource);

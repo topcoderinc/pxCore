@@ -5,7 +5,7 @@
 
 #include "MSEBaseObject.h"
 
-class SourceBuffer;
+class MSESourceBuffer;
 
 /**
  * mse base track class, contains common properties
@@ -13,7 +13,7 @@ class SourceBuffer;
 class MSEBaseTrack : public MSEBaseObject {
 public:
 
-  MSEBaseTrack(SourceBuffer *buffer);
+  MSEBaseTrack(MSESourceBuffer *buffer);
 
   rtDeclareObject(MSEBaseTrack, MSEBaseObject);
 
@@ -47,7 +47,7 @@ public:
   rtError getSourceBuffer(rtObjectRef &v) const;
 
 protected:
-  SourceBuffer *mBuffer;
+  MSESourceBuffer *mBuffer;
   rtString mId;
   rtString mKind;
   rtString mLabel;

@@ -1,17 +1,18 @@
-#ifndef PXSCENE_VIDEOTRACK_H
-#define PXSCENE_VIDEOTRACK_H
+#ifndef PXSCENE_MSEVideoTrack_H
+#define PXSCENE_MSEVideoTrack_H
 
 #include "MSEBaseTrack.h"
+#include "MSESourceBuffer.h"
 
 /**
  * Video track class
- * https://developer.mozilla.org/en-US/docs/Web/API/VideoTrack
+ * https://developer.mozilla.org/en-US/docs/Web/API/MSEVideoTrack
  */
-class VideoTrack : MSEBaseTrack {
+class MSEVideoTrack : MSEBaseTrack {
 public:
-  rtDeclareObject(VideoTrack, MSEBaseTrack);
+  rtDeclareObject(MSEVideoTrack, MSEBaseTrack);
 
-  VideoTrack(SourceBuffer *buffer);
+  MSEVideoTrack(MSESourceBuffer *buffer);
 
   rtProperty(selected, getSelected, setSelected, bool);
 
@@ -26,4 +27,4 @@ private:
 };
 
 
-#endif //PXSCENE_VIDEOTRACK_H
+#endif //PXSCENE_MSEVideoTrack_H

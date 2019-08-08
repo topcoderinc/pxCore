@@ -1,26 +1,26 @@
-#include "TextTrack.h"
-#include "SourceBuffer.h"
+#include "MSETextTrack.h"
+#include "MSESourceBuffer.h"
 
 
-TextTrack::TextTrack(SourceBuffer *buffer) : MSEBaseTrack(buffer), mMode(""), mInBandMetadataTrackDispatchType("")
+MSETextTrack::MSETextTrack(MSESourceBuffer *buffer) : MSEBaseTrack(buffer), mMode(""), mInBandMetadataTrackDispatchType("")
 {
 
 }
 
-rtError TextTrack::getMode(rtString &v) const
+rtError MSETextTrack::getMode(rtString &v) const
 {
   v = mMode;
   return RT_OK;
 }
 
-rtError TextTrack::setMode(rtString const &v)
+rtError MSETextTrack::setMode(rtString const &v)
 {
   mMode = v;
   return RT_OK;
 }
 
 
-rtError TextTrack::getInBandMetadataTrackDispatchType(rtString &v) const
+rtError MSETextTrack::getInBandMetadataTrackDispatchType(rtString &v) const
 {
 
   v = mInBandMetadataTrackDispatchType;
@@ -28,32 +28,32 @@ rtError TextTrack::getInBandMetadataTrackDispatchType(rtString &v) const
 }
 
 
-rtError TextTrack::getActiveCues(rtObjectRef &v) const
+rtError MSETextTrack::getActiveCues(rtObjectRef &v) const
 {
   // TODO
   return RT_OK;
 }
 
-rtError TextTrack::getCues(rtObjectRef &v) const
-{
-  // TODO
-  return RT_OK;
-}
-
-
-rtError TextTrack::addCue(rtObjectRef cue)
-{
-  // TODO
-  return RT_OK;
-}
-
-rtError TextTrack::removeCue(rtObjectRef cue)
+rtError MSETextTrack::getCues(rtObjectRef &v) const
 {
   // TODO
   return RT_OK;
 }
 
 
-rtDefineObject(TextTrack, MSEBaseTrack)
-rtDefineMethod(TextTrack, addCue)
-rtDefineMethod(TextTrack, removeCue)
+rtError MSETextTrack::addCue(rtObjectRef cue)
+{
+  // TODO
+  return RT_OK;
+}
+
+rtError MSETextTrack::removeCue(rtObjectRef cue)
+{
+  // TODO
+  return RT_OK;
+}
+
+
+rtDefineObject(MSETextTrack, MSEBaseTrack)
+rtDefineMethod(MSETextTrack, addCue)
+rtDefineMethod(MSETextTrack, removeCue)

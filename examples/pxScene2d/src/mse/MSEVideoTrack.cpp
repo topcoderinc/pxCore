@@ -1,22 +1,21 @@
-#include "VideoTrack.h"
+#include "MSEVideoTrack.h"
 
 
-VideoTrack::VideoTrack(SourceBuffer *buffer) : MSEBaseTrack(buffer), mSelected(false)
+MSEVideoTrack::MSEVideoTrack(MSESourceBuffer *buffer) : MSEBaseTrack(buffer), mSelected(false)
 {
 
 }
 
-rtError VideoTrack::getSelected(bool &v) const
+rtError MSEVideoTrack::getSelected(bool &v) const
 {
   v = mSelected;
   return RT_OK;
 }
 
-rtError VideoTrack::setSelected(bool const &v)
+rtError MSEVideoTrack::setSelected(bool const &v)
 {
   mSelected = v;
   return RT_OK;
 }
 
-rtDefineObject(VideoTrack, MSEBaseTrack)
-
+rtDefineObject(MSEVideoTrack, MSEBaseTrack)

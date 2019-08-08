@@ -1,18 +1,18 @@
-#ifndef PXSCENE_TEXTTRACK_H
-#define PXSCENE_TEXTTRACK_H
+#ifndef PXSCENE_MSETextTrack_H
+#define PXSCENE_MSETextTrack_H
 
 #include "rtObject.h"
 #include "MSEBaseTrack.h"
 
 /**
- * TextTrack class for source buffer
- * https://developer.mozilla.org/en-US/docs/Web/API/TextTrack
+ * MSETextTrack class for source buffer
+ * https://developer.mozilla.org/en-US/docs/Web/API/MSETextTrack
  */
-class TextTrack : public MSEBaseTrack {
+class MSETextTrack : public MSEBaseTrack {
 public:
-  TextTrack(SourceBuffer *buffer);
+  MSETextTrack(MSESourceBuffer *buffer);
 
-  rtDeclareObject(TextTrack, MSEBaseTrack);
+  rtDeclareObject(MSETextTrack, MSEBaseTrack);
 
 
   rtProperty(mode, getMode, setMode, rtString);
@@ -47,4 +47,4 @@ protected:
 };
 
 
-#endif //PXSCENE_TEXTTRACK_H
+#endif //PXSCENE_MSETextTrack_H

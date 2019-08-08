@@ -25,7 +25,7 @@
 #include "pxObject.h"
 #include "pxContext.h"
 
-class MediaSource;
+class MSEMediaSource;
 
 class pxMediaSource: public pxObject
 {
@@ -41,8 +41,10 @@ public:
 
   virtual rtError getMediaSource(rtObjectRef &v) const;
 
+  static void init();
+
 private:
-  MediaSource *mMediaSource;
+  MSEMediaSource *mMediaSource;
 };
 
 #endif // PX_VIDEO_H

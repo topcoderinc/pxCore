@@ -1,10 +1,10 @@
-#include "MediaElement.h"
+#include "MSEMediaElement.h"
 
 rtDefineObject(MediaError, rtObject)
 
-rtDefineObject(MediaElement, MSEBaseObject)
+rtDefineObject(MSEMediaElement, MSEBaseObject)
 
-MediaElement::MediaElement():
+MSEMediaElement::MSEMediaElement():
   mNetworkState(0),
   mReadyState(0),
   mSeeking(0),
@@ -23,73 +23,73 @@ MediaElement::MediaElement():
 {
 }
 
-rtError MediaElement::load()
+rtError MSEMediaElement::load()
 {
   return RT_OK;
 }
 
-rtError MediaElement::canPlayType(const rtString &type, bool &ret)
+rtError MSEMediaElement::canPlayType(const rtString &type, bool &ret)
 {
   ret = false;
   return RT_OK;
 }
 
-rtError MediaElement::play()
+rtError MSEMediaElement::play()
 {
   return RT_OK;
 }
 
-rtError MediaElement::pause()
+rtError MSEMediaElement::pause()
 {
   return RT_OK;
 }
 
-rtError MediaElement::fastSeek(double time)
+rtError MSEMediaElement::fastSeek(double time)
 {
   return RT_OK;
 }
 
-rtDefineProperty(MediaElement, error)
-rtDefineProperty(MediaElement, src)
-rtDefineProperty(MediaElement, currentSrc)
-rtDefineProperty(MediaElement, crossOrigin)
-rtDefineProperty(MediaElement, networkState)
-rtDefineProperty(MediaElement, preload)
-rtDefineProperty(MediaElement, buffered)
-rtDefineProperty(MediaElement, readyState)
-rtDefineProperty(MediaElement, seeking)
-rtDefineProperty(MediaElement, currentTime)
-rtDefineProperty(MediaElement, duration)
-rtDefineProperty(MediaElement, paused)
-rtDefineProperty(MediaElement, defaultPlaybackRate)
-rtDefineProperty(MediaElement, playbackRate)
-rtDefineProperty(MediaElement, played)
-rtDefineProperty(MediaElement, seekable)
-rtDefineProperty(MediaElement, ended)
-rtDefineProperty(MediaElement, autoplay)
-rtDefineProperty(MediaElement, loop)
-rtDefineProperty(MediaElement, controls)
-rtDefineProperty(MediaElement, volume)
-rtDefineProperty(MediaElement, muted)
-rtDefineProperty(MediaElement, defaultMuted)
-rtDefineProperty(MediaElement, audioTracks)
-rtDefineProperty(MediaElement, videoTracks)
-rtDefineProperty(MediaElement, textTracks)
-rtDefineMethod(MediaElement, load)
-rtDefineMethod(MediaElement, canPlayType)
-rtDefineMethod(MediaElement, play)
-rtDefineMethod(MediaElement, pause)
-rtDefineMethod(MediaElement, fastSeek)
+rtDefineProperty(MSEMediaElement, error)
+rtDefineProperty(MSEMediaElement, src)
+rtDefineProperty(MSEMediaElement, currentSrc)
+rtDefineProperty(MSEMediaElement, crossOrigin)
+rtDefineProperty(MSEMediaElement, networkState)
+rtDefineProperty(MSEMediaElement, preload)
+rtDefineProperty(MSEMediaElement, buffered)
+rtDefineProperty(MSEMediaElement, readyState)
+rtDefineProperty(MSEMediaElement, seeking)
+rtDefineProperty(MSEMediaElement, currentTime)
+rtDefineProperty(MSEMediaElement, duration)
+rtDefineProperty(MSEMediaElement, paused)
+rtDefineProperty(MSEMediaElement, defaultPlaybackRate)
+rtDefineProperty(MSEMediaElement, playbackRate)
+rtDefineProperty(MSEMediaElement, played)
+rtDefineProperty(MSEMediaElement, seekable)
+rtDefineProperty(MSEMediaElement, ended)
+rtDefineProperty(MSEMediaElement, autoplay)
+rtDefineProperty(MSEMediaElement, loop)
+rtDefineProperty(MSEMediaElement, controls)
+rtDefineProperty(MSEMediaElement, volume)
+rtDefineProperty(MSEMediaElement, muted)
+rtDefineProperty(MSEMediaElement, defaultMuted)
+rtDefineProperty(MSEMediaElement, audioTracks)
+rtDefineProperty(MSEMediaElement, videoTracks)
+rtDefineProperty(MSEMediaElement, textTracks)
+rtDefineMethod(MSEMediaElement, load)
+rtDefineMethod(MSEMediaElement, canPlayType)
+rtDefineMethod(MSEMediaElement, play)
+rtDefineMethod(MSEMediaElement, pause)
+rtDefineMethod(MSEMediaElement, fastSeek)
 
-rtDefineObject(AudioElement, MediaElement)
+rtDefineObject(MSEAudioElement, MSEMediaElement)
 
-VideoElement::VideoElement() : mWidth(0), mHeight(0), mVideoWidth(0), mVideoHeight(0)
+MSEVideoElement::MSEVideoElement() : mWidth(0), mHeight(0), mVideoWidth(0), mVideoHeight(0)
 {
 }
 
-rtDefineObject(VideoElement, MediaElement)
-rtDefineProperty(VideoElement, width)
-rtDefineProperty(VideoElement, height)
-rtDefineProperty(VideoElement, videoWidth)
-rtDefineProperty(VideoElement, videoHeight)
-rtDefineProperty(VideoElement, poster)
+rtDefineObject(MSEVideoElement, MSEMediaElement)
+rtDefineProperty(MSEVideoElement, width)
+rtDefineProperty(MSEVideoElement, height)
+rtDefineProperty(MSEVideoElement, videoWidth)
+rtDefineProperty(MSEVideoElement, videoHeight)
+rtDefineProperty(MSEVideoElement, poster)

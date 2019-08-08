@@ -1,26 +1,26 @@
-#include "SourceBufferList.h"
+#include "MSESourceBufferList.h"
 #include "MSEUtils.h"
 #include <algorithm>
 
-SourceBufferList::SourceBufferList()
+MSESourceBufferList::MSESourceBufferList()
 {
   mBuffers.clear();
 }
 
-rtError SourceBufferList::getSourceBuffer(rtObjectRef &v) const
+rtError MSESourceBufferList::getSourceBuffer(rtObjectRef &v) const
 {
   rtArrayObject *arr = vectorToRTArr(mBuffers);
   v = arr;
   return RT_OK;
 }
 
-void SourceBufferList::add(SourceBuffer *buffer)
+void MSESourceBufferList::add(MSESourceBuffer *buffer)
 {
   mBuffers.push_back(buffer);
   mEmit.send("onaddsourcebuffer", buffer);
 }
 
-void SourceBufferList::remove(SourceBuffer *buffer)
+void MSESourceBufferList::remove(MSESourceBuffer *buffer)
 {
   /*auto it = std::find(mBuffers.begin(), mBuffers.end(), buffer);
   if (it != mBuffers.end()) {
@@ -30,14 +30,14 @@ void SourceBufferList::remove(SourceBuffer *buffer)
   mEmit.send("onremovesourcebuffer", buffer);
 }
 
-rtError SourceBufferList::length(int &c) const
+rtError MSESourceBufferList::length(int &c) const
 {
   c = (int)mBuffers.size();
 
   return RT_OK;
 }
 
-rtError SourceBufferList::Get(uint32_t idx, rtValue* value) const
+rtError MSESourceBufferList::Get(uint32_t idx, rtValue* value) const
 {
   if (idx >= mBuffers.size()) 
   {
@@ -47,7 +47,7 @@ rtError SourceBufferList::Get(uint32_t idx, rtValue* value) const
   return RT_OK;
 }
 
-rtDefineObject(SourceBufferList, MSEBaseObject)
-rtDefineMethod(SourceBufferList, getSourceBuffer)
-rtDefineProperty(SourceBufferList, length)
+rtDefineObject(MSESourceBufferList, MSEBaseObject)
+rtDefineMethod(MSESourceBufferList, getSourceBuffer)
+rtDefineProperty(MSESourceBufferList, length)
 

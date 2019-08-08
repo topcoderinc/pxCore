@@ -41,16 +41,16 @@ protected:
   std::vector<MSEBaseTrack*> mTracks;
 };
 
-class AudioTrackList: public MSEBaseTrackList {
+class MSEAudioTrackList: public MSEBaseTrackList {
 public:
-  rtDeclareObject(AudioTrackList, MSEBaseTrackList);
+  rtDeclareObject(MSEAudioTrackList, MSEBaseTrackList);
 };
 
-class VideoTrackList: public MSEBaseTrackList {
+class MSEVideoTrackList: public MSEBaseTrackList {
 public:
-  rtDeclareObject(VideoTrackList, MSEBaseTrackList);
+  rtDeclareObject(MSEVideoTrackList, MSEBaseTrackList);
 
-  VideoTrackList();
+  MSEVideoTrackList();
 
   rtReadOnlyProperty(selectedIndex, getSelectedIndex, int);
   rtError getSelectedIndex(int &v) const;
@@ -60,9 +60,9 @@ private:
   int mSelectedIndex;
 };
 
-class TextTrackList: public MSEBaseTrackList {
+class MSETextTrackList: public MSEBaseTrackList {
 public:
-  rtDeclareObject(TextTrackList, MSEBaseTrackList);
+  rtDeclareObject(MSETextTrackList, MSEBaseTrackList);
 };
 
 

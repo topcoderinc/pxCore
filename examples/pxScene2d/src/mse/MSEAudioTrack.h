@@ -2,15 +2,16 @@
 #define PXSCENE_AUDIOTRACK_H
 
 #include "MSEBaseTrack.h"
+#include "MSESourceBuffer.h"
 
 /**
  * Audio track class
  * https://developer.mozilla.org/en-US/docs/Web/API/AudioTrack
  */
-class AudioTrack : public MSEBaseTrack {
-  AudioTrack(SourceBuffer *buffer);
+class MSEAudioTrack : public MSEBaseTrack {
+  MSEAudioTrack(MSESourceBuffer *buffer);
 
-  rtDeclareObject(AudioTrack, MSEBaseTrack);
+  rtDeclareObject(MSEAudioTrack, MSEBaseTrack);
 
 
   rtProperty(enabled, getEnabled, setEnabled, bool);

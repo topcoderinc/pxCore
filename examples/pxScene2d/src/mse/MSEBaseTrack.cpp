@@ -1,8 +1,8 @@
 #include "MSEBaseTrack.h"
-#include "SourceBuffer.h"
+#include "MSESourceBuffer.h"
 
 
-MSEBaseTrack::MSEBaseTrack(SourceBuffer *buffer) :
+MSEBaseTrack::MSEBaseTrack(MSESourceBuffer *buffer) :
     mBuffer(buffer), mId(""), mKind(""), mLabel(""), mLanguage("")
 {
 
