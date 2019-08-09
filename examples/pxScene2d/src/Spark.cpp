@@ -89,7 +89,6 @@ static uv_work_t nodeLoopReq;
 #ifdef ENABLE_SPARK_VIDEO
 #include "WebCore/config.h"
 #include <wtf/RunLoop.h>
-#include <WebCore/LogInitialization.h>
 #include <WebCore/page/ProcessWarming.h>
 #include <WebCore/platform/Timer.h>
 #include <wtf/Threading.h>
@@ -758,7 +757,6 @@ if (s && (strcmp(s,"1") == 0))
   gst_init(NULL, NULL);
   WTF::initializeMainThread();
   WTF::RunLoop::initializeMainRunLoop();
-  WebCore::initializeLogChannelsIfNecessary();
   WebCore::ProcessWarming::prewarmGlobally();
   WTF::RunLoop::main();
 #endif

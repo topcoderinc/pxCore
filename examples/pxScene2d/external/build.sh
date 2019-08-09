@@ -214,5 +214,6 @@ then
    git checkout ad02ed4fc62ca969b96ea99fdedef3a9153914d4
    git apply < ../0001-webkit_mse_fix.patch
    ./Tools/gtk/install-dependencies
-   ./Tools/Scripts/build-webkit --gtk --release --media-source --video --video-track --system-malloc --cmakeargs ' -DUSE_WPE_RENDERER=OFF -DUSE_WOFF2=OFF -DUSE_OPENJPEG=OFF -DENABLE_INTROSPECTION=OFF -DENABLE_BUBBLEWRAP_SANDBOX=OFF'  --no-web-crypto --no-web-rtc --no-media-stream  --no-spellcheck --no-web-audio
+   ./Tools/Scripts/build-webkit --gtk --debug --media-source --video --video-track --system-malloc --cmakeargs ' -DUSE_WPE_RENDERER=OFF -DUSE_WOFF2=OFF -DUSE_OPENJPEG=OFF -DENABLE_INTROSPECTION=OFF -DENABLE_BUBBLEWRAP_SANDBOX=OFF'  --no-web-crypto --no-web-rtc --no-media-stream  --no-spellcheck --no-web-audio
+   cd ..
 fi

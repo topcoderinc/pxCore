@@ -457,7 +457,7 @@ endif (SPARK_ENABLE_OPTIMIZED_UPDATE)
 if (SPARK_ENABLE_VIDEO)
 
     set(WEBKIT_ROOT ${EXTDIR}/webkit)
-    set(WEBKIT_BUILD_ROOT ${WEBKIT_ROOT}/WebKitBuild/Release)
+    set(WEBKIT_BUILD_ROOT ${WEBKIT_ROOT}/WebKitBuild/Debug)
     set(WEBKIT_SOURCE ${WEBKIT_ROOT}/Source)
 
     message("Enabling video support")
