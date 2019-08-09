@@ -1,0 +1,213 @@
+From efea52450991914e76f7752dd5bcbe727857ff4d Mon Sep 17 00:00:00 2001
+From: Alexey Kuts <kruntuid@gmail.com>
+Date: Fri, 9 Aug 2019 01:25:29 +0300
+Subject: [PATCH] 	webkit_mse_fix
+
+---
+ Source/WebCore/html/HTMLMediaElement.cpp      | 24 +++++++++---
+ .../gstreamer/MediaPlayerPrivateGStreamer.cpp |  4 +-
+ .../MediaPlayerPrivateGStreamerBase.cpp       | 37 +++++++++++++++++++
+ 3 files changed, 58 insertions(+), 7 deletions(-)
+
+diff --git a/Source/WebCore/html/HTMLMediaElement.cpp b/Source/WebCore/html/HTMLMediaElement.cpp
+index 885cb54c59b..4a490150f53 100644
+--- a/Source/WebCore/html/HTMLMediaElement.cpp
++++ b/Source/WebCore/html/HTMLMediaElement.cpp
+@@ -1214,8 +1214,8 @@ void HTMLMediaElement::prepareForLoad()
+     m_loadState = WaitingForSource;
+     m_currentSourceNode = nullptr;
+ 
+-    if (!document().hasBrowsingContext())
+-        return;
++    //if (!document().hasBrowsingContext())
++        //return;
+ 
+     createMediaPlayer();
+ 
+@@ -1499,6 +1499,7 @@ void HTMLMediaElement::loadResource(const URL& initialURL, ContentType& contentT
+ 
+     INFO_LOG(LOGIDENTIFIER, initialURL, contentType, keySystem);
+ 
++    /*
+     RefPtr<Frame> frame = document().frame();
+     if (!frame) {
+         mediaLoadingFailed(MediaPlayer::FormatError);
+@@ -1510,8 +1511,10 @@ void HTMLMediaElement::loadResource(const URL& initialURL, ContentType& contentT
+         mediaLoadingFailed(MediaPlayer::FormatError);
+         return;
+     }
++    */
+ 
+-    URL url = initialURL;
++    URL url = URL(URL(), "blob:null/71b969b0-131e-4f2d-b53b-742bb78aabc0"); // initialURL;
++    /*
+     if (!url.isEmpty() && !frame->loader().willLoadMediaElementURL(url, *this)) {
+         mediaLoadingFailed(MediaPlayer::FormatError);
+         return;
+@@ -1525,12 +1528,14 @@ void HTMLMediaElement::loadResource(const URL& initialURL, ContentType& contentT
+         }
+     }
+ #endif
++*/
+ 
+     // The resource fetch algorithm
+     m_networkState = NETWORK_LOADING;
+ 
+     // If the URL should be loaded from the application cache, pass the URL of the cached file to the media engine.
+     ApplicationCacheResource* resource = nullptr;
++    /*
+     if (!url.isEmpty() && frame->loader().documentLoader()->applicationCacheHost().shouldLoadResourceFromApplicationCache(ResourceRequest(url), resource)) {
+         // Resources that are not present in the manifest will always fail to load (at least, after the
+         // cache has been primed the first time), making the testing of offline applications simpler.
+@@ -1539,9 +1544,10 @@ void HTMLMediaElement::loadResource(const URL& initialURL, ContentType& contentT
+             return;
+         }
+     }
++    */
+ 
+     // Log that we started loading a media element.
+-    page->diagnosticLoggingClient().logDiagnosticMessage(isVideo() ? DiagnosticLoggingKeys::videoKey() : DiagnosticLoggingKeys::audioKey(), DiagnosticLoggingKeys::loadingKey(), ShouldSample::No);
++    //page->diagnosticLoggingClient().logDiagnosticMessage(isVideo() ? DiagnosticLoggingKeys::videoKey() : DiagnosticLoggingKeys::audioKey(), DiagnosticLoggingKeys::loadingKey(), ShouldSample::No);
+ 
+     m_firstTimePlaying = true;
+ 
+@@ -1558,8 +1564,8 @@ void HTMLMediaElement::loadResource(const URL& initialURL, ContentType& contentT
+ 
+     startProgressEventTimer();
+ 
+-    bool privateMode = document().page() && document().page()->usesEphemeralSession();
+-    m_player->setPrivateBrowsingMode(privateMode);
++    //bool privateMode = document().page() && document().page()->usesEphemeralSession();
++    //m_player->setPrivateBrowsingMode(privateMode);
+ 
+     // Reset display mode to force a recalculation of what to show because we are resetting the player.
+     setDisplayMode(Unknown);
+@@ -3500,6 +3506,7 @@ void HTMLMediaElement::play(DOMPromiseDeferred<void>&& promise)
+ {
+     ALWAYS_LOG(LOGIDENTIFIER);
+ 
++    /*
+     auto success = m_mediaSession->playbackPermitted();
+     if (!success) {
+         if (success.value() == MediaPlaybackDenialReason::UserGestureRequired)
+@@ -3507,6 +3514,7 @@ void HTMLMediaElement::play(DOMPromiseDeferred<void>&& promise)
+         promise.reject(NotAllowedError);
+         return;
+     }
++    */
+ 
+     if (m_error && m_error->code() == MediaError::MEDIA_ERR_SRC_NOT_SUPPORTED) {
+         promise.reject(NotSupportedError, "The operation is not supported.");
+@@ -3524,6 +3532,7 @@ void HTMLMediaElement::play()
+ {
+     ALWAYS_LOG(LOGIDENTIFIER);
+ 
++    /*
+     auto success = m_mediaSession->playbackPermitted();
+     if (!success) {
+         if (success.value() == MediaPlaybackDenialReason::UserGestureRequired)
+@@ -3532,6 +3541,7 @@ void HTMLMediaElement::play()
+     }
+     if (processingUserGestureForMedia())
+         removeBehaviorRestrictionsAfterFirstUserGesture();
++        */
+ 
+     playInternal();
+ }
+@@ -3545,10 +3555,12 @@ void HTMLMediaElement::playInternal()
+         return;
+     }
+ 
++    /*
+     if (!document().hasBrowsingContext()) {
+         INFO_LOG(LOGIDENTIFIER, "returning because there is no browsing context");
+         return;
+     }
++    */
+ 
+     if (!m_mediaSession->clientWillBeginPlayback()) {
+         ALWAYS_LOG(LOGIDENTIFIER, "returning because of interruption");
+diff --git a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp
+index 6d7105e9a1a..87630367796 100644
+--- a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp
++++ b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp
+@@ -2468,7 +2468,9 @@ void MediaPlayerPrivateGStreamer::createGSTPlayBin(const URL& url, const String&
+     g_object_set(m_pipeline.get(), "text-sink", m_textAppSink.get(), nullptr);
+ #endif
+ 
+-    g_object_set(m_pipeline.get(), "video-sink", createVideoSink(), "audio-sink", createAudioSink(), nullptr);
++    g_object_set(m_pipeline.get(), "video-sink", createVideoSink(), nullptr); //"audio-sink", createAudioSink(), nullptr);
++    //GstElement* videoSink = gst_element_factory_make("glimagesink", "glimagesink");
++    //g_object_set (m_pipeline.get(), "video-sink", videoSink, NULL);
+ 
+     configurePlaySink();
+ 
+diff --git a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp
+index 91e17899582..bc2020e0770 100644
+--- a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp
++++ b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp
+@@ -1023,6 +1023,22 @@ MediaPlayer::MovieLoadType MediaPlayerPrivateGStreamerBase::movieLoadType() cons
+ #if USE(GSTREAMER_GL)
+ GstElement* MediaPlayerPrivateGStreamerBase::createGLAppSink()
+ {
++#if 0
++    GstElement* appsink = gst_element_factory_make("filesink", "webkit-gl-video-sink");
++    if (!appsink)
++        return nullptr;
++    g_object_set(appsink, "location", "/mnt/ssd/out.raw", nullptr);
++    return appsink;
++#endif
++    
++#if 0
++    GstElement* appsink = gst_element_factory_make("glimagesink", "webkit-gl-video-sink");
++    if (!appsink)
++        return nullptr;
++    return appsink;
++#endif
++
++#if 1 
+     GstElement* appsink = gst_element_factory_make("appsink", "webkit-gl-video-sink");
+     if (!appsink)
+         return nullptr;
+@@ -1055,10 +1071,29 @@ GstElement* MediaPlayerPrivateGStreamerBase::createGLAppSink()
+     }, this, nullptr);
+ 
+     return appsink;
++#endif
+ }
+ 
+ GstElement* MediaPlayerPrivateGStreamerBase::createVideoSinkGL()
+ {
++    GstElement* bin = gst_bin_new ("video_sink_bin");
++    GstElement* jpegenc = gst_element_factory_make ("jpegenc", NULL);
++    GstElement* avimux = gst_element_factory_make ("avimux", NULL);
++    GstElement* filesink = gst_element_factory_make ("filesink", NULL);
++    g_object_set (filesink, "location", "mjpeg.avi", NULL);
++    gst_bin_add_many(GST_BIN(bin), jpegenc, avimux, filesink, NULL);
++    gst_element_link_many(jpegenc, avimux, filesink, NULL);
++    GstPad *pad = gst_element_get_static_pad (jpegenc, "sink");
++    GstPad *ghost_pad = gst_ghost_pad_new ("sink", pad);
++    gst_pad_set_active (ghost_pad, TRUE);
++    gst_element_add_pad (bin, ghost_pad);
++    gst_object_unref (pad);
++    return bin;
++
++    //GstElement* filesink = gst_element_factory_make ("glimagesink", NULL);
++    //return filesink;
++
++#if 0
+     gboolean result = TRUE;
+     GstElement* videoSink = gst_bin_new(nullptr);
+     GstElement* upload = gst_element_factory_make("glupload", nullptr);
+@@ -1096,6 +1131,8 @@ GstElement* MediaPlayerPrivateGStreamerBase::createVideoSinkGL()
+         videoSink = nullptr;
+     }
+     return videoSink;
++#endif
++
+ }
+ 
+ void MediaPlayerPrivateGStreamerBase::ensureGLVideoSinkContext()
+-- 
+2.17.1
+
