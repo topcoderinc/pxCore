@@ -1,19 +1,47 @@
-From efea52450991914e76f7752dd5bcbe727857ff4d Mon Sep 17 00:00:00 2001
+From 3c1e54813754c52c62269a663438198baecfbf5c Mon Sep 17 00:00:00 2001
 From: Alexey Kuts <kruntuid@gmail.com>
-Date: Fri, 9 Aug 2019 01:25:29 +0300
+Date: Tue, 13 Aug 2019 02:36:15 +0300
 Subject: [PATCH] 	webkit_mse_fix
 
 ---
- Source/WebCore/html/HTMLMediaElement.cpp      | 24 +++++++++---
+ Source/WebCore/html/HTMLMediaElement.cpp      | 39 ++++++++++++---
+ Source/WebCore/html/HTMLMediaElement.h        |  5 ++
+ .../WebCore/platform/graphics/MediaPlayer.cpp |  6 +++
+ .../WebCore/platform/graphics/MediaPlayer.h   |  5 ++
  .../gstreamer/MediaPlayerPrivateGStreamer.cpp |  4 +-
- .../MediaPlayerPrivateGStreamerBase.cpp       | 37 +++++++++++++++++++
- 3 files changed, 58 insertions(+), 7 deletions(-)
+ .../MediaPlayerPrivateGStreamerBase.cpp       | 50 +++++++++++++++++++
+ 6 files changed, 102 insertions(+), 7 deletions(-)
 
 diff --git a/Source/WebCore/html/HTMLMediaElement.cpp b/Source/WebCore/html/HTMLMediaElement.cpp
-index 885cb54c59b..4a490150f53 100644
+index 885cb54c59b..2cd0351ed77 100644
 --- a/Source/WebCore/html/HTMLMediaElement.cpp
 +++ b/Source/WebCore/html/HTMLMediaElement.cpp
-@@ -1214,8 +1214,8 @@ void HTMLMediaElement::prepareForLoad()
+@@ -470,6 +470,8 @@ HTMLMediaElement::HTMLMediaElement(const QualifiedName& tagName, Document& docum
+     , m_logger(&document.logger())
+     , m_logIdentifier(uniqueLogIdentifier())
+ #endif
++    , m_renderFrameCallback(NULL)
++    , m_renderFrameCallbackArg(NULL)
+ {
+     allMediaElements().add(this);
+ 
+@@ -1171,6 +1173,15 @@ double HTMLMediaElement::getStartDate() const
+     return m_player->getStartDate().toDouble();
+ }
+ 
++void HTMLMediaElement::setRenderFrameCallback(void (*cb)(void *, void*), void* arg)
++{
++    m_renderFrameCallback = cb;
++    m_renderFrameCallbackArg = arg;
++    if (m_player) {
++        m_player->setRenderFrameCallback(m_renderFrameCallback, m_renderFrameCallbackArg);
++    }
++}
++
+ void HTMLMediaElement::load()
+ {
+     Ref<HTMLMediaElement> protectedThis(*this); // prepareForLoad may result in a 'beforeload' event, which can make arbitrary DOM mutations.
+@@ -1214,11 +1225,15 @@ void HTMLMediaElement::prepareForLoad()
      m_loadState = WaitingForSource;
      m_currentSourceNode = nullptr;
  
@@ -24,7 +52,14 @@ index 885cb54c59b..4a490150f53 100644
  
      createMediaPlayer();
  
-@@ -1499,6 +1499,7 @@ void HTMLMediaElement::loadResource(const URL& initialURL, ContentType& contentT
++    if (m_player) {
++        m_player->setRenderFrameCallback(m_renderFrameCallback, m_renderFrameCallbackArg);
++    }
++
+     // 2 - Let pending tasks be a list of all tasks from the media element's media element event task source in one of the task queues.
+     // 3 - For each task in pending tasks that would resolve pending play promises or reject pending play promises, immediately resolve or reject those promises in the order the corresponding tasks were queued.
+     // 4 - Remove each task in pending tasks from its task queue
+@@ -1499,6 +1514,7 @@ void HTMLMediaElement::loadResource(const URL& initialURL, ContentType& contentT
  
      INFO_LOG(LOGIDENTIFIER, initialURL, contentType, keySystem);
  
@@ -32,7 +67,7 @@ index 885cb54c59b..4a490150f53 100644
      RefPtr<Frame> frame = document().frame();
      if (!frame) {
          mediaLoadingFailed(MediaPlayer::FormatError);
-@@ -1510,8 +1511,10 @@ void HTMLMediaElement::loadResource(const URL& initialURL, ContentType& contentT
+@@ -1510,8 +1526,10 @@ void HTMLMediaElement::loadResource(const URL& initialURL, ContentType& contentT
          mediaLoadingFailed(MediaPlayer::FormatError);
          return;
      }
@@ -44,7 +79,7 @@ index 885cb54c59b..4a490150f53 100644
      if (!url.isEmpty() && !frame->loader().willLoadMediaElementURL(url, *this)) {
          mediaLoadingFailed(MediaPlayer::FormatError);
          return;
-@@ -1525,12 +1528,14 @@ void HTMLMediaElement::loadResource(const URL& initialURL, ContentType& contentT
+@@ -1525,12 +1543,14 @@ void HTMLMediaElement::loadResource(const URL& initialURL, ContentType& contentT
          }
      }
  #endif
@@ -59,7 +94,7 @@ index 885cb54c59b..4a490150f53 100644
      if (!url.isEmpty() && frame->loader().documentLoader()->applicationCacheHost().shouldLoadResourceFromApplicationCache(ResourceRequest(url), resource)) {
          // Resources that are not present in the manifest will always fail to load (at least, after the
          // cache has been primed the first time), making the testing of offline applications simpler.
-@@ -1539,9 +1544,10 @@ void HTMLMediaElement::loadResource(const URL& initialURL, ContentType& contentT
+@@ -1539,9 +1559,10 @@ void HTMLMediaElement::loadResource(const URL& initialURL, ContentType& contentT
              return;
          }
      }
@@ -71,7 +106,7 @@ index 885cb54c59b..4a490150f53 100644
  
      m_firstTimePlaying = true;
  
-@@ -1558,8 +1564,8 @@ void HTMLMediaElement::loadResource(const URL& initialURL, ContentType& contentT
+@@ -1558,8 +1579,8 @@ void HTMLMediaElement::loadResource(const URL& initialURL, ContentType& contentT
  
      startProgressEventTimer();
  
@@ -82,7 +117,7 @@ index 885cb54c59b..4a490150f53 100644
  
      // Reset display mode to force a recalculation of what to show because we are resetting the player.
      setDisplayMode(Unknown);
-@@ -3500,6 +3506,7 @@ void HTMLMediaElement::play(DOMPromiseDeferred<void>&& promise)
+@@ -3500,6 +3521,7 @@ void HTMLMediaElement::play(DOMPromiseDeferred<void>&& promise)
  {
      ALWAYS_LOG(LOGIDENTIFIER);
  
@@ -90,7 +125,7 @@ index 885cb54c59b..4a490150f53 100644
      auto success = m_mediaSession->playbackPermitted();
      if (!success) {
          if (success.value() == MediaPlaybackDenialReason::UserGestureRequired)
-@@ -3507,6 +3514,7 @@ void HTMLMediaElement::play(DOMPromiseDeferred<void>&& promise)
+@@ -3507,6 +3529,7 @@ void HTMLMediaElement::play(DOMPromiseDeferred<void>&& promise)
          promise.reject(NotAllowedError);
          return;
      }
@@ -98,7 +133,7 @@ index 885cb54c59b..4a490150f53 100644
  
      if (m_error && m_error->code() == MediaError::MEDIA_ERR_SRC_NOT_SUPPORTED) {
          promise.reject(NotSupportedError, "The operation is not supported.");
-@@ -3524,6 +3532,7 @@ void HTMLMediaElement::play()
+@@ -3524,6 +3547,7 @@ void HTMLMediaElement::play()
  {
      ALWAYS_LOG(LOGIDENTIFIER);
  
@@ -106,7 +141,7 @@ index 885cb54c59b..4a490150f53 100644
      auto success = m_mediaSession->playbackPermitted();
      if (!success) {
          if (success.value() == MediaPlaybackDenialReason::UserGestureRequired)
-@@ -3532,6 +3541,7 @@ void HTMLMediaElement::play()
+@@ -3532,6 +3556,7 @@ void HTMLMediaElement::play()
      }
      if (processingUserGestureForMedia())
          removeBehaviorRestrictionsAfterFirstUserGesture();
@@ -114,7 +149,7 @@ index 885cb54c59b..4a490150f53 100644
  
      playInternal();
  }
-@@ -3545,10 +3555,12 @@ void HTMLMediaElement::playInternal()
+@@ -3545,10 +3570,12 @@ void HTMLMediaElement::playInternal()
          return;
      }
  
@@ -127,6 +162,55 @@ index 885cb54c59b..4a490150f53 100644
  
      if (!m_mediaSession->clientWillBeginPlayback()) {
          ALWAYS_LOG(LOGIDENTIFIER, "returning because of interruption");
+diff --git a/Source/WebCore/html/HTMLMediaElement.h b/Source/WebCore/html/HTMLMediaElement.h
+index d0bab9fc9d6..bc0dee53bfc 100644
+--- a/Source/WebCore/html/HTMLMediaElement.h
++++ b/Source/WebCore/html/HTMLMediaElement.h
+@@ -176,6 +176,11 @@ public:
+ 
+     bool doesHaveAttribute(const AtomString&, AtomString* value = nullptr) const override;
+ 
++    void setRenderFrameCallback(void (*cb)(void*, void*), void* arg);
++
++    void (*m_renderFrameCallback)(void*, void*);
++    void *m_renderFrameCallbackArg;
++
+     PlatformLayer* platformLayer() const;
+     bool isVideoLayerInline();
+     void setPreparedToReturnVideoLayerToInline(bool);
+diff --git a/Source/WebCore/platform/graphics/MediaPlayer.cpp b/Source/WebCore/platform/graphics/MediaPlayer.cpp
+index 757f09567dc..a0361091c22 100644
+--- a/Source/WebCore/platform/graphics/MediaPlayer.cpp
++++ b/Source/WebCore/platform/graphics/MediaPlayer.cpp
+@@ -364,6 +364,12 @@ MediaPlayer::~MediaPlayer()
+     ASSERT(!m_initializingMediaEngine);
+ }
+ 
++void MediaPlayer::setRenderFrameCallback(void (*cb)(void*, void*), void* arg)
++{
++    m_renderFrameCallback = cb;
++    m_renderFrameCallbackArg = arg;
++}
++
+ void MediaPlayer::invalidate()
+ {
+     m_client = &nullMediaPlayerClient();
+diff --git a/Source/WebCore/platform/graphics/MediaPlayer.h b/Source/WebCore/platform/graphics/MediaPlayer.h
+index e9df9458787..305cbb87ea6 100644
+--- a/Source/WebCore/platform/graphics/MediaPlayer.h
++++ b/Source/WebCore/platform/graphics/MediaPlayer.h
+@@ -270,6 +270,11 @@ public:
+     bool doesHaveAttribute(const AtomString&, AtomString* value = nullptr) const;
+     PlatformLayer* platformLayer() const;
+ 
++    void setRenderFrameCallback(void (*cb)(void*, void*), void* arg);
++
++    void (*m_renderFrameCallback)(void*, void*) = nullptr;
++    void *m_renderFrameCallbackArg = nullptr;
++
+ #if PLATFORM(IOS_FAMILY) || (PLATFORM(MAC) && ENABLE(VIDEO_PRESENTATION_MODE))
+     void setVideoFullscreenLayer(PlatformLayer*, WTF::Function<void()>&& completionHandler = [] { });
+     void setVideoFullscreenFrame(FloatRect);
 diff --git a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp
 index 6d7105e9a1a..87630367796 100644
 --- a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp
@@ -143,10 +227,23 @@ index 6d7105e9a1a..87630367796 100644
      configurePlaySink();
  
 diff --git a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp
-index 91e17899582..bc2020e0770 100644
+index 91e17899582..160283ade13 100644
 --- a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp
 +++ b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp
-@@ -1023,6 +1023,22 @@ MediaPlayer::MovieLoadType MediaPlayerPrivateGStreamerBase::movieLoadType() cons
+@@ -1020,9 +1020,36 @@ MediaPlayer::MovieLoadType MediaPlayerPrivateGStreamerBase::movieLoadType() cons
+     return MediaPlayer::Download;
+ }
+ 
++static gboolean
++GStreamer_DrawCallback(GstElement* /*gl_sink*/, void* /*context*/, GstSample *sample, MediaPlayerPrivateGStreamerBase *arg)
++{
++    MediaPlayer *mediaPlayer = arg->mediaPlayer();
++    if (mediaPlayer && mediaPlayer->m_renderFrameCallback) {
++        (mediaPlayer->m_renderFrameCallback)(mediaPlayer->m_renderFrameCallbackArg, (void*)sample);
++    }
++    return TRUE;
++}
++
  #if USE(GSTREAMER_GL)
  GstElement* MediaPlayerPrivateGStreamerBase::createGLAppSink()
  {
@@ -158,18 +255,19 @@ index 91e17899582..bc2020e0770 100644
 +    return appsink;
 +#endif
 +    
-+#if 0
++#if 1
 +    GstElement* appsink = gst_element_factory_make("glimagesink", "webkit-gl-video-sink");
 +    if (!appsink)
 +        return nullptr;
++    g_signal_connect(G_OBJECT(appsink), "client-draw", G_CALLBACK(GStreamer_DrawCallback), this);
 +    return appsink;
 +#endif
 +
-+#if 1 
++#if 0
      GstElement* appsink = gst_element_factory_make("appsink", "webkit-gl-video-sink");
      if (!appsink)
          return nullptr;
-@@ -1055,10 +1071,29 @@ GstElement* MediaPlayerPrivateGStreamerBase::createGLAppSink()
+@@ -1055,10 +1082,31 @@ GstElement* MediaPlayerPrivateGStreamerBase::createGLAppSink()
      }, this, nullptr);
  
      return appsink;
@@ -178,6 +276,7 @@ index 91e17899582..bc2020e0770 100644
  
  GstElement* MediaPlayerPrivateGStreamerBase::createVideoSinkGL()
  {
++#if 0
 +    GstElement* bin = gst_bin_new ("video_sink_bin");
 +    GstElement* jpegenc = gst_element_factory_make ("jpegenc", NULL);
 +    GstElement* avimux = gst_element_factory_make ("avimux", NULL);
@@ -191,15 +290,16 @@ index 91e17899582..bc2020e0770 100644
 +    gst_element_add_pad (bin, ghost_pad);
 +    gst_object_unref (pad);
 +    return bin;
++#endif
 +
 +    //GstElement* filesink = gst_element_factory_make ("glimagesink", NULL);
 +    //return filesink;
 +
-+#if 0
++#if 1
      gboolean result = TRUE;
      GstElement* videoSink = gst_bin_new(nullptr);
      GstElement* upload = gst_element_factory_make("glupload", nullptr);
-@@ -1096,6 +1131,8 @@ GstElement* MediaPlayerPrivateGStreamerBase::createVideoSinkGL()
+@@ -1096,6 +1144,8 @@ GstElement* MediaPlayerPrivateGStreamerBase::createVideoSinkGL()
          videoSink = nullptr;
      }
      return videoSink;
