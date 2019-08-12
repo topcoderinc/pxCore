@@ -8,13 +8,18 @@
 
 struct MSEMediaSourceImpl;
 
+namespace WebCore
+{
+  class MediaSource;
+}
+
 /**
  * Media source class
  * https://developer.mozilla.org/en-US/docs/Web/API/MSEMediaSource
  */
 class MSEMediaSource : public MSEBaseObject {
 public:
-  MSEMediaSource();
+  MSEMediaSource(WebCore::MediaSource &webkitMediaSource);
   ~MSEMediaSource();
 
   rtDeclareObject(MSEMediaSource, MSEBaseObject);
@@ -62,10 +67,6 @@ public:
   //[MayThrowException] void clearLiveSeekableRange();
   rtMethodNoArgAndNoReturn("clearLiveSeekableRange", clearLiveSeekableRange);
   rtError clearLiveSeekableRange();
-
-  // TODO: remove this
-  rtMethodNoArgAndNoReturn("play", play);
-  rtError play();
 
   //attribute EventHandler onsourceopen;
   void onSourceOpen();

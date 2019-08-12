@@ -477,7 +477,7 @@ if (SPARK_ENABLE_VIDEO)
             mse/MSETimeRanges.cpp
             )
 
-    set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES} pxMediaSource.cpp)
+    set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES} pxHtmlVideo2.cpp)
 
 if (WIN32)
     set(GSTREAM_ROOT C:/gstreamer/1.0/x86)

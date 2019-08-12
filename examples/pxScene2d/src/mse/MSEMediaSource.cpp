@@ -2,7 +2,10 @@
 #include "MSESourceBuffer.h"
 #include "MSEUtils.h"
 
+#include "pxOffscreen.h"
+
 #include <gst/gst.h>
+#include <gst/video/video.h>
 
 // webkit-includes
 #include "WebCore/config.h"
@@ -33,28 +36,20 @@ private:
 };
 
 struct MSEMediaSourceImpl {
-  MSEMediaSourceImpl(WebCore::Document &doc, WebCore::MediaSource &mediaSource,
-     WebCore::HTMLVideoElement &videoElement)
-    : mDocument(doc), mMediaSource(mediaSource), mVideoElement(videoElement)
+  MSEMediaSourceImpl(WebCore::MediaSource &mediaSource)
+    : mMediaSource(mediaSource)
   {
-    mVideoElement->setSrcObject(WebCore::MediaProvider(RefPtr(&mediaSource)));
   }
 
-  Ref<WebCore::Document> mDocument;
   Ref<WebCore::MediaSource> mMediaSource;
-  Ref<WebCore::HTMLVideoElement> mVideoElement;
 };
 
-MSEMediaSource::MSEMediaSource(): mMediaSourceImpl(NULL)
+
+
+MSEMediaSource::MSEMediaSource(WebCore::MediaSource &webkitMediaSource): mMediaSourceImpl(NULL)
 {
-  WTF::URL url;
-  Ref<WebCore::Document> document = WebCore::Document::create(url);
-  Ref<WebCore::MediaSource> mediaSource = WebCore::MediaSource::create(document.get());
-  Ref<WebCore::HTMLVideoElement> videoElement = WebCore::HTMLVideoElement::create(document.get());
-
-  mediaSource->addEventListener(WebCore::eventNames().sourceopenEvent, MSEMediaSourceEventListener::create(*this));
-
-  mMediaSourceImpl = new MSEMediaSourceImpl(document.get(), mediaSource.get(), videoElement.get());
+  webkitMediaSource.addEventListener(WebCore::eventNames().sourceopenEvent, MSEMediaSourceEventListener::create(*this));
+  mMediaSourceImpl = new MSEMediaSourceImpl(webkitMediaSource);
 }
 
 MSEMediaSource::~MSEMediaSource()
@@ -132,12 +127,6 @@ rtError MSEMediaSource::isTypeSupported(rtString reason, bool &ret)
   return RT_OK;
 }
 
-rtError MSEMediaSource::play()
-{
-  mMediaSourceImpl->mVideoElement->play();
-  return RT_OK;
-}
-
 void MSEMediaSource::onSourceOpen()
 {
   mEmit.send("sourceopen");
@@ -197,4 +186,3 @@ rtDefineMethod(MSEMediaSource, endOfStream)
 rtDefineMethod(MSEMediaSource, removeSourceBuffer)
 rtDefineMethod(MSEMediaSource, setLiveSeekableRange)
 rtDefineMethod(MSEMediaSource, isTypeSupported)
-rtDefineMethod(MSEMediaSource, play)

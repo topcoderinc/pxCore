@@ -13,14 +13,24 @@ px.import({scene: "px:scene.1.js",
     var numberOfChunks = 10;
     var sourceBuffer;
 
-    var ms = scene.create({ t: 'mediaSource' });
-    ms.mediaSource.on('sourceopen', onMediaSourceOpen);
+    var video = scene.create({ 
+        t: 'video',
+        x: 0,
+        y: 0,
+        w: root.w,
+        h: root.h,
+        parent: scene.root
+    });
+
+    var mediaSource = video.createMediaSource();
+
+    mediaSource.on('sourceopen', onMediaSourceOpen);
     console.log("created ms");
 
     function onMediaSourceOpen() {
         console.log("onMediaSourceOpen");
 
-        sourceBuffer = ms.mediaSource.addSourceBuffer('video/mp4; codecs="avc1.4d401f"');
+        sourceBuffer = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.4d401f"');
         sourceBuffer.on('updateend', nextSegment);
 
         px.getFile(initUrl).then(function (buf) {
@@ -29,7 +39,7 @@ px.import({scene: "px:scene.1.js",
             sourceBuffer.appendBuffer(arr);
         });
 
-        ms.mediaSource.play();
+        video.play();
     }
 
     function nextSegment() {
