@@ -79,7 +79,7 @@ static void webkitOnFrameRendered(void *arg, void *sampleArg)
 }
 
 pxHtmlVideo2::pxHtmlVideo2(pxScene2d *scene) :
-    pxObject(scene)
+    pxObject(scene), previousFrame(nullptr)
 {
   WTF::URL url;
   Ref<WebCore::Document> document = WebCore::Document::create(url);
