@@ -84,7 +84,7 @@ void pxHtmlVideo::newEvent(void *context, void *data)
   auto *videoObj = reinterpret_cast<pxHtmlVideo *>(context);
   const char *name = reinterpret_cast<const char *>(data);
   videoObj->mEmit.send(name, rtValue(name));
-  videoObj->mMediaSource->onEvent(name);
+//  videoObj->mMediaSource->onEvent(name);
 }
 
 
@@ -129,7 +129,7 @@ pxHtmlVideo::pxHtmlVideo(pxScene2d *scene) :
   gPlayer->setEventCallback([&](const char *event, void */*data*/) {
     gUIThreadQueue->addTask(newEvent, pxHtmlVideo::pxHtmlVideoObj, (void *) event);
   });
-  mMediaSource->setGstPlayer(gPlayer);
+//  mMediaSource->setGstPlayer(gPlayer);
   rtLogError("GStreamer player created!");
   pxHtmlVideo::pxHtmlVideoObj = this;
 }
@@ -147,7 +147,6 @@ void pxHtmlVideo::onInit()
   }
   mReady.send("resolve", this);
   pxObject::onInit();
-  mMediaSource->load(mUrl.cString());
 }
 
 void pxHtmlVideo::dispose(bool /*pumpJavascript*/)
@@ -247,7 +246,7 @@ rtError pxHtmlVideo::setUrl(const char *url)
   rtLogError("%s:%d: URL[%s].", __FUNCTION__, __LINE__, url);
 
   if (!mUrl.isEmpty()) {
-    mMediaSource->addSourceBuffer(new SourceBuffer);
+//    mMediaSource->addSourceBuffer(new SourceBuffer);
   }
   return RT_OK;
 }
@@ -287,8 +286,6 @@ rtError pxHtmlVideo::stop()
 
 rtError pxHtmlVideo::load()
 {
-  mMediaSource->getGstPlayer()->release();
-  mMediaSource->load(mUrl.cString());
   return RT_OK;
 }
 
@@ -307,71 +304,58 @@ rtError pxHtmlVideo::canPlayType(rtString type, rtString &ret)
 
 rtError pxHtmlVideo::videoTracks(rtObjectRef &v) const
 {
-  if (mMediaSource->getCurSourceBuffer()) {
-    return mMediaSource->getCurSourceBuffer()->getVideoTracks(v);
-  }
   return RT_FAIL;
 }
 
 rtError pxHtmlVideo::audioTracks(rtObjectRef &v) const
 {
-  if (mMediaSource->getCurSourceBuffer()) {
-    return mMediaSource->getCurSourceBuffer()->getAudioTracks(v);
-  }
   return RT_FAIL;
 }
 
 rtError pxHtmlVideo::ended(bool &ended) const
 {
-  ended = mMediaSource->getGstPlayer()->isEnded();
   return RT_OK;
 }
 
 rtError pxHtmlVideo::error(rtString &e) const
 {
-  e = rtString(mMediaSource->getGstPlayer()->getRuntimeError().c_str());
   return RT_OK;
 }
 
 rtError pxHtmlVideo::loop(bool &loop) const
 {
-  loop = mMediaSource->getGstPlayer()->isLoop();
   return RT_OK;
 }
 
 rtError pxHtmlVideo::setLoop(bool v)
 {
-  mMediaSource->getGstPlayer()->setLoop(v);
   return RT_OK;
 }
 
 rtError pxHtmlVideo::paused(bool &p) const
 {
-  p = !mMediaSource->getGstPlayer()->isPlaying();
   return RT_OK;
 }
 
 rtError pxHtmlVideo::readyState(int &v) const
 {
-  v = mMediaSource->getGstPlayer()->getReadyState();
-  return RT_OK;
+  return mMediaSource->getReadyState(v);
 }
 
 rtError pxHtmlVideo::seekable(bool &v) const
 {
-  v = mMediaSource->getGstPlayer()->seekable();
+  v = mMediaSource->seekable();
   return RT_OK;
 }
 
 rtError pxHtmlVideo::seeking(bool &v) const
 {
-  v = mMediaSource->getGstPlayer()->isSeeking();
+  v = mMediaSource->isSeeking();
   return RT_OK;
 }
 
 rtError pxHtmlVideo::startDate(int64_t &v) const
 {
-  v = mMediaSource->getGstPlayer()->getCurrentTime();
   return RT_OK;
 }
 

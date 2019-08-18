@@ -459,16 +459,7 @@ if (SPARK_ENABLE_VIDEO)
     add_definitions(-DENABLE_SPARK_VIDEO)
     set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES}
             pxHtmlVideo.cpp
-            mse/GStreamPlayer.cpp
-            mse/MediaSource.cpp
-            mse/SourceBuffer.cpp
-            mse/SourceBufferList.cpp
-            mse/AudioTrack.cpp
-            mse/VideoTrack.cpp
-            mse/TextTrack.cpp
-            mse/MSEBaseObject.cpp
-            mse/MSEUtils.cpp
-            mse/MSEBaseTrack.cpp
+            webkit_mse/GStreamPlayer.cpp
             )
 
     set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES}
@@ -501,7 +492,7 @@ if (WIN32)
 else ()
 
 if (APPLE)
-    set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES} mse/helper.mm)
+    set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES} webkit_mse/helper.mm)
 endif(APPLE)
 
     set(OPT /usr/local/opt)
