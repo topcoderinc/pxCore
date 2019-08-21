@@ -217,3 +217,9 @@ then
    ./Tools/Scripts/build-webkit --gtk --debug --media-source --video --video-track --system-malloc --cmakeargs ' -DUSE_WPE_RENDERER=OFF -DUSE_WOFF2=OFF -DUSE_OPENJPEG=OFF -DENABLE_INTROSPECTION=OFF -DENABLE_BUBBLEWRAP_SANDBOX=OFF'  --no-web-crypto --no-web-rtc --no-media-stream  --no-spellcheck --web-audio
    cd ..
 fi
+
+# dash
+if [ ! -e dash.js-3.0.0/dist/dash.all.debug.pxcore.js ]
+then
+    bash buildDashJS.sh
+fi

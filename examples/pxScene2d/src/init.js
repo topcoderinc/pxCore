@@ -55,6 +55,11 @@ global.Promise = Promise = require('bluebird');
 global.process = process = require('process');
 global.pako = pako = require('pako');
 }
+else {
+fetch = require('node-fetch');
+XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+dashjs = require('dash.all.debug.pxcore.js');
+}
 
 var AppSceneContext = require('rcvrcore/AppSceneContext');
 var RPCController = require('rcvrcore/rpcController');
