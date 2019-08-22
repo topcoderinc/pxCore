@@ -46,6 +46,7 @@ function AppSceneContext(params) {
 
   this.getContextID = params.getContextID;
   this.makeReady = params.makeReady;
+  this.createMediaSource = params.createMediaSource;
   this.innerscene = params.scene;
   this.rpcController = params.rpcController;
   if( params.packageUrl.indexOf('?') !== -1 ) {
@@ -370,6 +371,7 @@ AppSceneContext.prototype.runScriptInNewVMContext = function (packageUri, module
         Buffer: Buffer,
         process: processWrap,
         require: requireMethod,
+        createMediaSource: createMediaSource,
         global: globalWrap,
         setTimeout: function (callback, after, arg1, arg2, arg3) {
           //pass the timers list to callback function on timeout
@@ -421,7 +423,6 @@ AppSceneContext.prototype.runScriptInNewVMContext = function (packageUri, module
         print: print,
         getScene: getScene,
         makeReady: makeReady,
-        getContextID: getContextID
       }; // end sandbox
     }
     else

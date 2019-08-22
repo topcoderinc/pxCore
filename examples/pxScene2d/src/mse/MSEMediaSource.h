@@ -4,6 +4,7 @@
 
 #include "MSEBaseObject.h"
 #include "MSESourceBufferList.h"
+#include "MSEWebKitEventEmitter.h"
 #include <vector>
 
 struct MSEMediaSourceImpl;
@@ -17,9 +18,9 @@ namespace WebCore
  * Media source class
  * https://developer.mozilla.org/en-US/docs/Web/API/MSEMediaSource
  */
-class MSEMediaSource : public MSEBaseObject {
+class MSEMediaSource : public MSEBaseObject, public MSEWebkitEventEmitter {
 public:
-  MSEMediaSource(WebCore::MediaSource &webkitMediaSource);
+  MSEMediaSource();
   ~MSEMediaSource();
 
   rtDeclareObject(MSEMediaSource, MSEBaseObject);
@@ -68,6 +69,8 @@ public:
   rtMethodNoArgAndNoReturn("clearLiveSeekableRange", clearLiveSeekableRange);
   rtError clearLiveSeekableRange();
 
+  void onWebkitEvent(const std::string &name);
+
   //attribute EventHandler onsourceopen;
   void onSourceOpen();
 
@@ -86,6 +89,8 @@ public:
   //void setGstPlayer(GStreamPlayer *gstPlayer);
 
   //void onEvent(const char *event);
+
+  WebCore::MediaSource &getWebKitMediaSource();
 
 protected:
   //GStreamPlayer *gstPlayer;

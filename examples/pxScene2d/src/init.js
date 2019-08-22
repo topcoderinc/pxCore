@@ -70,6 +70,7 @@ global.loadUrl = function loadUrl(url) {
   var ctx = new AppSceneContext({        scene: getScene("scene.1"),
                                      makeReady: this.makeReady,
                                   getContextID: this.getContextID,
+                             createMediaSource: this.createMediaSource,
                                     packageUrl: url,
                                  rpcController: new RPCController() } );
 

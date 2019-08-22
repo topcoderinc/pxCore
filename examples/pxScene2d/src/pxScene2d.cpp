@@ -42,6 +42,8 @@
 
 #ifdef ENABLE_SPARK_VIDEO
 #include "pxHtmlVideo2.h"
+#include "mse/MSEWebKitDocument.h"
+#include "mse/MSEMediaSource.h"
 #endif
 
 #ifdef PX_SERVICE_MANAGER
@@ -622,6 +624,8 @@ rtError pxScene2d::dispose()
     // pass false to make onSceneTerminate asynchronous
     mEmit.send("onSceneTerminate", e);
     mEmit->clearListeners();
+
+    MSEWebkitDocument::dispose();
 
     mRoot     = NULL;
     mInfo     = NULL;
@@ -2997,11 +3001,13 @@ void pxScriptView::runScript()
     mGetScene = new rtFunctionCallback(getScene,  this);
     mMakeReady = new rtFunctionCallback(makeReady, this);
     mGetContextID = new rtFunctionCallback(getContextID, this);
+    mCreateMediaSourceFunc = new rtFunctionCallback(createMediaSourceFunc, this);
 
     mCtx->add("print", mPrintFunc.getPtr());
     mCtx->add("getScene", mGetScene.getPtr());
     mCtx->add("makeReady", mMakeReady.getPtr());
     mCtx->add("getContextID", mGetContextID.getPtr());
+    mCtx->add("createMediaSource", mCreateMediaSourceFunc.getPtr());
 
 #ifdef RUNINMAIN
     mReady = new rtPromise();
@@ -3119,6 +3125,11 @@ rtError pxScriptView::getScene(int numArgs, const rtValue* args, rtValue* result
   return RT_FAIL;
 }
 
+rtError pxScriptView::createMediaSourceFunc(int numArgs, const rtValue* args, rtValue* result, void* ctx)
+{
+  *result = new MSEMediaSource();
+  return RT_OK;
+}
 
 #if 1
 rtError pxScriptView::getContextID(int /*numArgs*/, const rtValue* /*args*/, rtValue* result, void* /*ctx*/)

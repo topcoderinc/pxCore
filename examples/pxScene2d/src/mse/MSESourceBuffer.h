@@ -7,6 +7,7 @@
 #include "MSEVideoTrack.h"
 #include "MSEBaseTrackList.h"
 #include "MSETimeRanges.h"
+#include "MSEWebKitEventEmitter.h"
 #include <vector>
 #include <string>
 
@@ -21,7 +22,7 @@ struct MSESourceBufferImpl;
  * Source buffer class
  * https://developer.mozilla.org/en-US/docs/Web/API/SourceBuffer
  */
-class MSESourceBuffer : public MSEBaseObject {
+class MSESourceBuffer : public MSEBaseObject, public MSEWebkitEventEmitter {
 
 public:
   rtDeclareObject(MSESourceBuffer, MSEBaseObject);
@@ -96,6 +97,8 @@ public:
   void onError();
   //attribute EventHandler onabort;
   void onAbort();
+
+  void onWebkitEvent(const std::string &name);
 
   // [EnabledBySetting=MSESourceBufferChangeType, MayThrowException] void changeType(DOMString type);
   rtMethod1ArgAndNoReturn("changeType", changeType, rtString);

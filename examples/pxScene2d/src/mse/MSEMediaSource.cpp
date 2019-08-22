@@ -1,5 +1,7 @@
+#include "MSEWebKitDocument.h"
 #include "MSEMediaSource.h"
 #include "MSESourceBuffer.h"
+#include "MSEWebKitEventEmitter.h"
 #include "MSEUtils.h"
 
 #include "pxOffscreen.h"
@@ -15,25 +17,6 @@
 #include "WebCore/dom/Event.h"
 #include "WebCore/dom/EventNames.h"
 
-class MSEMediaSourceEventListener: public WebCore::EventListener {
-public:
-  MSEMediaSourceEventListener(MSEMediaSource &pxCoreMediaSource): 
-    WebCore::EventListener(WebCore::EventListener::JSEventListenerType),
-    mPxCoreMediaSource(pxCoreMediaSource)
-  {
-  }
-
-  virtual bool operator==(const WebCore::EventListener&) const { return false; }
-  virtual void handleEvent(WebCore::ScriptExecutionContext&, WebCore::Event&)
-  {
-    mPxCoreMediaSource.onSourceOpen();
-  }
-
-  static Ref<MSEMediaSourceEventListener> create(MSEMediaSource &pxCoreMediaSource) { return adoptRef(*new MSEMediaSourceEventListener(pxCoreMediaSource)); }
-
-private:
-  MSEMediaSource &mPxCoreMediaSource;
-};
 
 struct MSEMediaSourceImpl {
   MSEMediaSourceImpl(WebCore::MediaSource &mediaSource)
@@ -45,11 +28,13 @@ struct MSEMediaSourceImpl {
 };
 
 
-
-MSEMediaSource::MSEMediaSource(WebCore::MediaSource &webkitMediaSource): mMediaSourceImpl(NULL)
+MSEMediaSource::MSEMediaSource(): mMediaSourceImpl(NULL)
 {
-  webkitMediaSource.addEventListener(WebCore::eventNames().sourceopenEvent, MSEMediaSourceEventListener::create(*this));
-  mMediaSourceImpl = new MSEMediaSourceImpl(webkitMediaSource);
+  Ref<WebCore::MediaSource> webkitMediaSource = WebCore::MediaSource::create(MSEWebkitDocument::get().getDocument());
+
+  addWebkitEventListener(&webkitMediaSource.get(), "sourceopen");
+
+  mMediaSourceImpl = new MSEMediaSourceImpl(webkitMediaSource.get());
 }
 
 MSEMediaSource::~MSEMediaSource()
@@ -140,6 +125,16 @@ void MSEMediaSource::onSourceEnded()
 void MSEMediaSource::onSourceClose()
 {
   mEmit.send("sourceclose");
+}
+
+WebCore::MediaSource &MSEMediaSource::getWebKitMediaSource()
+{
+  return mMediaSourceImpl->mMediaSource.get();
+}
+
+void MSEMediaSource::onWebkitEvent(const std::string &name)
+{
+  mEmit.send(rtString(name.c_str()));
 }
 
 //SourceBuffer *MSEMediaSource::getCurSourceBuffer() const

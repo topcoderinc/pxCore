@@ -31,18 +31,18 @@
 #endif
 
 #include "mse/MSEMediaSource.h"
+#include "mse/MSEWebKitDocument.h"
 
 extern pxContext context;
 
 pxHtmlVideo2 *pxHtmlVideo2::pxHtmlVideoObj = NULL;
 
 struct pxHtmlVideo2Impl {
-  pxHtmlVideo2Impl(WebCore::Document &doc, WebCore::HTMLVideoElement &videoElement)
-    : mDocument(doc), mVideoElement(videoElement)
+  pxHtmlVideo2Impl(WebCore::HTMLVideoElement &videoElement)
+    : mVideoElement(videoElement)
   {
   }
 
-  Ref<WebCore::Document> mDocument;
   Ref<WebCore::HTMLVideoElement> mVideoElement;
 };
 
@@ -79,14 +79,33 @@ static void webkitOnFrameRendered(void *arg, void *sampleArg)
 }
 
 pxHtmlVideo2::pxHtmlVideo2(pxScene2d *scene) :
-    pxObject(scene), previousFrame(nullptr)
+    pxObject(scene), previousFrame(nullptr),
+    mNetworkState(0),
+    mReadyState(0),
+    mSeeking(0),
+    mCurrentTime(0),
+    mDuration(0),
+    mPaused(false),
+    mDefaultPlaybackRate(0),
+    mPlaybackRate(0),
+    mEnded(false),
+    mAutoplay(false),
+    mLoop(false),
+    mControls(false),
+    mVolume(false),
+    mMuted(false),
+    mDefaultMuted(false)
 {
-  WTF::URL url;
-  Ref<WebCore::Document> document = WebCore::Document::create(url);
-  Ref<WebCore::HTMLVideoElement> videoElement = WebCore::HTMLVideoElement::create(document.get());
+  Ref<WebCore::HTMLVideoElement> videoElement = WebCore::HTMLVideoElement::create(MSEWebkitDocument::get().getDocument());
   videoElement->setRenderFrameCallback(&webkitOnFrameRendered, (void*)this);
 
-  mVideoImpl = new pxHtmlVideo2Impl(document.get(), videoElement.get());
+  for (auto s: {"canplay", "play", "waiting", "playing", "pause", "error", "seeking", "seeked", "timeupdate",
+    "progress", "ratechange", "loadedmetadata", "stalled", "ended"})
+  {
+    addWebkitEventListener(&videoElement.get(), s);
+  }
+
+  mVideoImpl = new pxHtmlVideo2Impl(videoElement.get());
 
   pxHtmlVideo2::pxHtmlVideoObj = this;
 }
@@ -153,11 +172,21 @@ void pxHtmlVideo2::draw()
   }
 }
 
-rtError pxHtmlVideo2::createMediaSource(rtObjectRef &outMediaSource)
+rtError pxHtmlVideo2::attachMediaSource(rtObjectRef mediaSourceArg)
 {
-  Ref<WebCore::MediaSource> webkitMediaSource = WebCore::MediaSource::create(mVideoImpl->mDocument.get());
-  mVideoImpl->mVideoElement->setSrcObject(WebCore::MediaProvider(RefPtr(&webkitMediaSource.get())));
-  outMediaSource = new MSEMediaSource(webkitMediaSource.get());
+  MSEMediaSource *mediaSource = dynamic_cast<MSEMediaSource*>(mediaSourceArg.ptr());
+  mVideoImpl->mVideoElement->setSrcObject(WebCore::MediaProvider(RefPtr(&mediaSource->getWebKitMediaSource())));
+}
+
+
+rtError pxHtmlVideo2::load()
+{
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::canPlayType(const rtString &type, bool &ret)
+{
+  ret = false;
   return RT_OK;
 }
 
@@ -167,6 +196,53 @@ rtError pxHtmlVideo2::play()
   return RT_OK;
 }
 
+rtError pxHtmlVideo2::pause()
+{
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::fastSeek(double time)
+{
+  return RT_OK;
+}
+
+void pxHtmlVideo2::onWebkitEvent(const std::string &name)
+{
+  mEmit.send(rtString(name.c_str()));
+}
+
 rtDefineObject(pxHtmlVideo2, pxObject);
-rtDefineMethod(pxHtmlVideo2, createMediaSource)
+rtDefineMethod(pxHtmlVideo2, attachMediaSource)
+rtDefineProperty(pxHtmlVideo2, error)
+rtDefineProperty(pxHtmlVideo2, src)
+rtDefineProperty(pxHtmlVideo2, currentSrc)
+rtDefineProperty(pxHtmlVideo2, crossOrigin)
+rtDefineProperty(pxHtmlVideo2, networkState)
+rtDefineProperty(pxHtmlVideo2, preload)
+rtDefineProperty(pxHtmlVideo2, buffered)
+rtDefineProperty(pxHtmlVideo2, readyState)
+rtDefineProperty(pxHtmlVideo2, seeking)
+rtDefineProperty(pxHtmlVideo2, currentTime)
+rtDefineProperty(pxHtmlVideo2, duration)
+rtDefineProperty(pxHtmlVideo2, paused)
+rtDefineProperty(pxHtmlVideo2, defaultPlaybackRate)
+rtDefineProperty(pxHtmlVideo2, playbackRate)
+rtDefineProperty(pxHtmlVideo2, played)
+rtDefineProperty(pxHtmlVideo2, seekable)
+rtDefineProperty(pxHtmlVideo2, ended)
+rtDefineProperty(pxHtmlVideo2, autoplay)
+rtDefineProperty(pxHtmlVideo2, loop)
+rtDefineProperty(pxHtmlVideo2, controls)
+rtDefineProperty(pxHtmlVideo2, volume)
+rtDefineProperty(pxHtmlVideo2, muted)
+rtDefineProperty(pxHtmlVideo2, defaultMuted)
+rtDefineProperty(pxHtmlVideo2, audioTracks)
+rtDefineProperty(pxHtmlVideo2, videoTracks)
+rtDefineProperty(pxHtmlVideo2, textTracks)
+rtDefineMethod(pxHtmlVideo2, load)
+rtDefineMethod(pxHtmlVideo2, canPlayType)
 rtDefineMethod(pxHtmlVideo2, play)
+rtDefineMethod(pxHtmlVideo2, pause)
+rtDefineMethod(pxHtmlVideo2, fastSeek)
+rtDefineMethod(pxHtmlVideo2, addListener1)
+rtDefineMethod(pxHtmlVideo2, delListener1)

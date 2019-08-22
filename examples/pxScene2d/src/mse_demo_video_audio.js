@@ -26,19 +26,20 @@ px.import({scene: "px:scene.1.js",
         parent: scene.root
     });
 
-    var mediaSource = video.createMediaSource();
+    var mediaSource = createMediaSource();
+    video.attachMediaSource(mediaSource);
 
-    mediaSource.on('sourceopen', onMediaSourceOpen);
+    mediaSource.addEventListener('sourceopen', onMediaSourceOpen);
     console.log("created ms");
 
     function onMediaSourceOpen() {
         console.log("onMediaSourceOpen");
 
         sourceBufferVideo = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.42c00d"');
-        sourceBufferVideo.on('updateend', nextVideoSegment);
+        sourceBufferVideo.addEventListener('updateend', nextVideoSegment);
 
         sourceBufferAudio = mediaSource.addSourceBuffer('audio/mp4; codecs="mp4a.40.2"');
-        sourceBufferAudio.on('updateend', nextAudioSegment);
+        sourceBufferAudio.addEventListener('updateend', nextAudioSegment);
 
         px.getFile(initVideoUrl).then(function (buf) {
             console.log("appending init video segment buffer with length=" + buf.length);
@@ -68,7 +69,7 @@ px.import({scene: "px:scene.1.js",
 
         indexVideo++;
         if (indexVideo >= numberOfChunks) {
-            sourceBufferVideo.delListener('updateend', nextVideoSegment);
+            sourceBufferVideo.removeEventListener('updateend', nextVideoSegment);
         }
     }
 
@@ -85,7 +86,7 @@ px.import({scene: "px:scene.1.js",
 
         indexAudio++;
         if (indexAudio >= numberOfChunks) {
-            sourceBufferAudio.delListener('updateend', nextAudioSegment);
+            sourceBufferAudio.removeEventListener('updateend', nextAudioSegment);
         }
     }
 });

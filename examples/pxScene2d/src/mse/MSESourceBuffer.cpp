@@ -11,25 +11,6 @@
 #include "WebCore/dom/EventNames.h"
 #include "WebCore/bindings/js/BufferSource.h"
 
-class MSESourceBufferEventListener: public WebCore::EventListener {
-public:
-  MSESourceBufferEventListener(MSESourceBuffer &pxSourceBuffer): 
-    WebCore::EventListener(WebCore::EventListener::JSEventListenerType),
-    mMseSourceBuffer(pxSourceBuffer)
-  {
-  }
-
-  virtual bool operator==(const WebCore::EventListener&) const { return false; }
-  virtual void handleEvent(WebCore::ScriptExecutionContext&, WebCore::Event&)
-  {
-    mMseSourceBuffer.onUpdateEnd();
-  }
-
-  static Ref<MSESourceBufferEventListener> create(MSESourceBuffer &pxSourceBuffer) { return adoptRef(*new MSESourceBufferEventListener(pxSourceBuffer)); }
-
-private:
-  MSESourceBuffer &mMseSourceBuffer;
-};
 
 struct MSESourceBufferImpl {
   MSESourceBufferImpl(WebCore::MediaSource &mediaSource, rtString type): 
@@ -53,7 +34,9 @@ MSESourceBuffer::MSESourceBuffer(WebCore::MediaSource &mediaSource, rtString typ
 {
   mSourceBufferImpl = new MSESourceBufferImpl(mediaSource, type);
 
-  mSourceBufferImpl->getSourceBuffer().addEventListener(WebCore::eventNames().updateendEvent, MSESourceBufferEventListener::create(*this));
+  for (auto s: {"updateend", "error", "abort"}) {
+    addWebkitEventListener(&mSourceBufferImpl->getSourceBuffer(), s);
+  }
 }
 
 MSESourceBuffer::~MSESourceBuffer()
@@ -62,6 +45,11 @@ MSESourceBuffer::~MSESourceBuffer()
     delete mSourceBufferImpl;
     mSourceBufferImpl = NULL;
   }
+}
+
+void MSESourceBuffer::onWebkitEvent(const std::string &name)
+{
+  mEmit.send(rtString(name.c_str()));
 }
 
 rtError MSESourceBuffer::abort()

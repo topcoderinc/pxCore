@@ -475,6 +475,8 @@ if (SPARK_ENABLE_VIDEO)
             mse/MSEBaseTrackList.cpp
             mse/MSEUtils.cpp
             mse/MSETimeRanges.cpp
+            mse/MSEWebKitDocument.cpp
+            mse/MSEWebKitEventEmitter.cpp
             )
 
     set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES} pxHtmlVideo2.cpp)
