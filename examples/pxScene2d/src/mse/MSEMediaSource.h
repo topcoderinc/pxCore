@@ -59,7 +59,7 @@ public:
 
   //static boolean isTypeSupported (DOMString type);
   rtMethod1ArgAndReturn("isTypeSupported", isTypeSupported, rtString, bool);
-  rtError isTypeSupported(rtString reason, bool &ret);
+  rtError isTypeSupported(rtString type, bool &ret);
 
   //[MayThrowException] void setLiveSeekableRange(double start, double end);
   rtMethod2ArgAndNoReturn("setLiveSeekableRange", setLiveSeekableRange, double, double);
@@ -93,13 +93,6 @@ public:
   WebCore::MediaSource &getWebKitMediaSource();
 
 protected:
-  //GStreamPlayer *gstPlayer;
-  //SourceBuffer *curSourceBuffer;
-
-  MSESourceBufferList mBufferList;
-  MSESourceBufferList mActiveBufferList;
-  double mDuration;
-  rtString mReadyState;
   MSEMediaSourceImpl *mMediaSourceImpl;
 };
 

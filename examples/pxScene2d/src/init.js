@@ -59,6 +59,13 @@ else {
 fetch = require('node-fetch');
 XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 dashjs = require('dash.all.debug.pxcore.js');
+DOMParser = require('dom-parser.js').DOMParser;
+window = {};
+window.console = console;
+window.MediaSource = 1;
+window.fetch = fetch;
+window.performance = { now: function() {return 0;} };
+window.DOMParser = DOMParser;
 }
 
 var AppSceneContext = require('rcvrcore/AppSceneContext');
@@ -70,7 +77,7 @@ global.loadUrl = function loadUrl(url) {
   var ctx = new AppSceneContext({        scene: getScene("scene.1"),
                                      makeReady: this.makeReady,
                                   getContextID: this.getContextID,
-                             createMediaSource: this.createMediaSource,
+                          createMSEMediaSource: this.createMSEMediaSource,
                                     packageUrl: url,
                                  rpcController: new RPCController() } );
 

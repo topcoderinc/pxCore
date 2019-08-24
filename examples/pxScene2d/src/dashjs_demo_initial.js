@@ -11,12 +11,17 @@ px.import({scene: "px:scene.1.js",
     .then(body => console.log("fetch-res:"+body.length));
 
     function reqListener () {
+        //console.log(this.response);
         console.log("xhr-res:"+this.responseText.length);
+        var parser = new DOMParser();
+        var ret = parser.parseFromString(this.responseText, 'text/xml');
+        console.log(ret.nodeType);
+        console.log(this.responseText);
     }
 
     var oReq = new global.XMLHttpRequest();
     oReq.addEventListener("load", reqListener);
-    oReq.open("GET", "http://www.google.com");
+    oReq.open("GET", "https://dash.akamaized.net/envivio/EnvivioDash3/manifest.mpd");
     oReq.send();
 
     var video = scene.create({ 

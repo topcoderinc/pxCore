@@ -14,6 +14,7 @@
 namespace WebCore
 {
 class MediaSource;
+class SourceBuffer;
 }
 
 struct MSESourceBufferImpl;
@@ -27,6 +28,7 @@ class MSESourceBuffer : public MSEBaseObject, public MSEWebkitEventEmitter {
 public:
   rtDeclareObject(MSESourceBuffer, MSEBaseObject);
 
+  MSESourceBuffer(WebCore::MediaSource &mediaSource, WebCore::SourceBuffer &sourceBuffer);
   MSESourceBuffer(WebCore::MediaSource &mediaSource, rtString type);
 
   virtual ~MSESourceBuffer();
@@ -48,8 +50,9 @@ public:
 
   // Applies an offset to media segment timestamps.
   //attribute double timestampOffset;
-  rtReadOnlyProperty(timestampOffset, getTimestampOffset, float);
+  rtProperty(timestampOffset, getTimestampOffset, setTimestampOffset, float);
   rtError getTimestampOffset(float &v) const;
+  rtError setTimestampOffset(const float &v);
 
   // [Conditional=VIDEO_TRACK] readonly attribute MSEAudioTrackList audioTracks;
   rtReadOnlyProperty(audioTracks, getAudioTracks, rtObjectRef);
@@ -104,6 +107,8 @@ public:
   rtMethod1ArgAndNoReturn("changeType", changeType, rtString);
   rtError changeType(const rtString &type);
 
+  WebCore::SourceBuffer &getWebkitSourceBuffer();
+
 protected:
   float mAppendWindowEnd;
   float mAppendWindowStart;
@@ -112,8 +117,6 @@ protected:
   MSEAudioTrackList mAudioTrackList;
   MSETextTrackList mTextTrackList;
   MSEVideoTrackList mVideoTrackList;
-  float mTimestampOffset;
-  bool mUpdating;
   MSESourceBufferImpl *mSourceBufferImpl;
 };
 

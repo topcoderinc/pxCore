@@ -3007,7 +3007,7 @@ void pxScriptView::runScript()
     mCtx->add("getScene", mGetScene.getPtr());
     mCtx->add("makeReady", mMakeReady.getPtr());
     mCtx->add("getContextID", mGetContextID.getPtr());
-    mCtx->add("createMediaSource", mCreateMediaSourceFunc.getPtr());
+    mCtx->add("createMSEMediaSource", mCreateMediaSourceFunc.getPtr());
 
 #ifdef RUNINMAIN
     mReady = new rtPromise();

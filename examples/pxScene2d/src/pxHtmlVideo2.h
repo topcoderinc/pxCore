@@ -30,6 +30,11 @@
 
 #include <queue>
 
+namespace WebCore 
+{
+class HTMLVideoElement;
+}
+
 struct pxHtmlVideo2Impl;
 
 class MediaError : public rtObject {
@@ -56,10 +61,18 @@ public:
   rtMethod1ArgAndNoReturn("attachMediaSource", attachMediaSource, rtObjectRef);
   rtError attachMediaSource(rtObjectRef mediaSourceArg);
 
+  rtMethodNoArgAndNoReturn("detachMediaSource", detachMediaSource);
+  rtError detachMediaSource();
+
+  rtReadOnlyProperty(nodeName, getNodeName, rtString);
+  rtError getNodeName(rtString &v) const;
+
   // HTMLMediaElement.idl
   // error state
   //readonly attribute MediaError error;
-  defineReadOnlyAttribute(error, &mError, rtObjectRef)
+  //defineReadOnlyAttribute(error, &mError, rtObjectRef)
+  rtReadOnlyProperty(error, getError, rtObjectRef);
+  rtError getError(rtObjectRef &v) const;
 
   // network state
   //[CEReactions=NotNeeded, Reflect, URL] attribute USVString src;
@@ -81,17 +94,22 @@ public:
   defineReadOnlyAttribute(networkState, mNetworkState, int)
 
   //[CEReactions=NotNeeded] attribute DOMString preload;
-  defineReadWriteAttribute(preload, mPreload, rtString)
+  //defineReadWriteAttribute(preload, mPreload, rtString)
+  rtProperty(preload, getPreload, setPreload, rtString);
+  rtError getPreload(rtString &v) const;
+  rtError setPreload(rtString const &v);
 
   //readonly attribute TimeRanges buffered;
-  defineReadOnlyAttribute(buffered, &mBuffered, rtObjectRef)
+  //defineReadOnlyAttribute(buffered, &mBuffered, rtObjectRef)
+  rtReadOnlyProperty(buffered, getBuffered, rtObjectRef);
+  rtError getBuffered(rtObjectRef &v) const;
 
   rtMethodNoArgAndNoReturn("load", load)
   rtError load();
 
   //DOMString canPlayType(DOMString type);
   rtMethod1ArgAndReturn("canPlayType", canPlayType, rtString, bool)
-    rtError canPlayType(const rtString &type, bool &ret);
+  rtError canPlayType(const rtString &type, bool &ret);
 
   // ready state
   //const unsigned short HAVE_NOTHING = 0;
@@ -100,43 +118,67 @@ public:
   //const unsigned short HAVE_FUTURE_DATA = 3;
   //const unsigned short HAVE_ENOUGH_DATA = 4;
   //readonly attribute unsigned short readyState;
-  defineReadOnlyAttribute(readyState, mReadyState, int)
+  /*defineReadOnlyAttribute(readyState, mReadyState, int)*/
+  rtReadOnlyProperty(readyState, getReadyState, int);
+  rtError getReadyState(int &v) const;
 
   //readonly attribute boolean seeking;
-  defineReadWriteAttribute(seeking, mSeeking, bool)
+  //defineReadWriteAttribute(seeking, mSeeking, bool)
+  rtReadOnlyProperty(seeking, getSeeking, bool);
+  rtError getSeeking(bool &v) const;
 
   // playback state
   //[ImplementedAs=currentTimeForBindings] attribute unrestricted double currentTime;
-  defineReadWriteAttribute(currentTime, mCurrentTime, double)
+  //defineReadWriteAttribute(currentTime, mCurrentTime, double)
+  rtProperty(currentTime, getCurrentTime, setCurrentTime, double);
+  rtError getCurrentTime(double &v) const;
+  rtError setCurrentTime(double const &v);
 
   //readonly attribute unrestricted double duration;
-  defineReadOnlyAttribute(duration, mDuration, double)
+  //defineReadOnlyAttribute(duration, mDuration, double)
+  rtReadOnlyProperty(duration, getDuration, double);
+  rtError getDuration(double &v) const;
 
   //Date getStartDate();
 
   //readonly attribute boolean paused;
-  defineReadOnlyAttribute(paused, mPaused, bool)
+  //defineReadOnlyAttribute(paused, mPaused, bool)
+  rtReadOnlyProperty(paused, getPaused, bool);
+  rtError getPaused(bool &v) const;
 
   //attribute unrestricted double defaultPlaybackRate;
   defineReadWriteAttribute(defaultPlaybackRate, mDefaultPlaybackRate, double)
 
   //attribute unrestricted double playbackRate;
-  defineReadWriteAttribute(playbackRate, mPlaybackRate, double)
+  //defineReadWriteAttribute(playbackRate, mPlaybackRate, double)
+  rtProperty(playbackRate, getPlaybackRate, setPlaybackRate, double);
+  rtError getPlaybackRate(double &v) const;
+  rtError setPlaybackRate(double const &v);
 
   //readonly attribute TimeRanges played;
-  defineReadOnlyAttribute(played, &mPlayed, rtObjectRef)
+  //defineReadOnlyAttribute(played, &mPlayed, rtObjectRef)
+  rtReadOnlyProperty(played, getPlayed, rtObjectRef);
+  rtError getPlayed(rtObjectRef &v) const;
 
   //readonly attribute TimeRanges seekable;
-  defineReadOnlyAttribute(seekable, &mSeekable, rtObjectRef)
+  //defineReadOnlyAttribute(seekable, &mSeekable, rtObjectRef)
+  rtReadOnlyProperty(seekable, getSeekable, rtObjectRef);
+  rtError getSeekable(rtObjectRef &v) const;
 
   //readonly attribute boolean ended;
   defineReadOnlyAttribute(ended, mEnded, bool)
 
   //[CEReactions=NotNeeded, Reflect] attribute boolean autoplay;
-  defineReadWriteAttribute(autoplay, mAutoplay, bool)
+  //defineReadWriteAttribute(autoplay, mAutoplay, bool)
+  rtProperty(autoplay, getAutoplay, setAutoplay, bool);
+  rtError getAutoplay(bool &v) const;
+  rtError setAutoplay(bool const &v);
 
   //[CEReactions=NotNeeded, Reflect] attribute boolean loop;
-  defineReadWriteAttribute(loop, mLoop, bool)
+  //defineReadWriteAttribute(loop, mLoop, bool)
+  rtProperty(loop, getLoop, setLoop, bool);
+  rtError getLoop(bool &v) const;
+  rtError setLoop(bool const &v);
 
   rtMethodNoArgAndNoReturn("play", play)
   rtError play();
@@ -152,10 +194,16 @@ public:
   defineReadWriteAttribute(controls, mControls, bool)
 
   //attribute double volume;
-  defineReadWriteAttribute(volume, mVolume, double)
+  //defineReadWriteAttribute(volume, mVolume, double)
+  rtProperty(volume, getVolume, setVolume, double);
+  rtError getVolume(double &v) const;
+  rtError setVolume(double const &v);
 
   //attribute boolean muted;
-  defineReadWriteAttribute(muted, mMuted, bool)
+  //defineReadWriteAttribute(muted, mMuted, bool)
+  rtProperty(muted, getMuted, setMuted, bool);
+  rtError getMuted(bool &v) const;
+  rtError setMuted(bool const &v);
 
   //[CEReactions=NotNeeded, Reflect=muted] attribute boolean defaultMuted;
   defineReadWriteAttribute(defaultMuted, mDefaultMuted, bool)
@@ -174,21 +222,21 @@ public:
   //HTMLVideoElement.idl
   //[CEReactions=NotNeeded, Reflect] attribute unsigned long width;
   rtProperty(width, getWidth, setWidth, int);
-  rtError getWidth(int &v) const { v = mWidth; return RT_OK; }
-  rtError setWidth(int v) { mWidth = v; return RT_OK; }
+  rtError getWidth(int &v) const;
+  rtError setWidth(int v);
 
   //[CEReactions=NotNeeded, Reflect] attribute unsigned long height;
   rtProperty(height, getHeight, setHeight, int);
-  rtError getHeight(int &v) const { v = mHeight; return RT_OK; }
-  rtError setHeight(int v) { mHeight = v; return RT_OK; }
+  rtError getHeight(int &v) const;
+  rtError setHeight(int v);
 
   //readonly attribute unsigned long videoWidth;
   rtReadOnlyProperty(videoWidth, getVideoWidth, int);
-  rtError getVideoWidth(int &v) const { v = mVideoWidth; return RT_OK; }
+  rtError getVideoWidth(int &v) const;
 
   //readonly attribute unsigned long videoHeight;
   rtReadOnlyProperty(videoHeight, getVideoHeight, int);
-  rtError getVideoHeight(int &v) const { v = mVideoHeight; return RT_OK; }
+  rtError getVideoHeight(int &v) const;
 
   //[CEReactions=NotNeeded, Reflect, URL] attribute USVString poster;
   rtProperty(poster, getPoster, setPoster, rtString);
@@ -241,6 +289,8 @@ public:
   void onNewFrame(void *buffer, int w, int h, int stride, int pixel_stride);
 
   static void onRepaint(void *context, void *data);
+
+  WebCore::HTMLVideoElement &getWebKitVideoElement();
 
 private:
 

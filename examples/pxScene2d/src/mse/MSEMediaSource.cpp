@@ -1,6 +1,7 @@
 #include "MSEWebKitDocument.h"
 #include "MSEMediaSource.h"
 #include "MSESourceBuffer.h"
+#include "MSESourceBufferList.h"
 #include "MSEWebKitEventEmitter.h"
 #include "MSEUtils.h"
 
@@ -12,6 +13,7 @@
 // webkit-includes
 #include "WebCore/config.h"
 #include "MediaSource.h"
+#include "SourceBufferList.h"
 #include "HTMLVideoElement.h"
 #include "WebCore/fileapi/Blob.h"
 #include "WebCore/dom/Event.h"
@@ -47,68 +49,82 @@ MSEMediaSource::~MSEMediaSource()
 
 rtError MSEMediaSource::getSourceBuffers(rtObjectRef &v)
 {
-  v = &mBufferList;
+  auto ret = new MSESourceBufferList();
+  auto sourceBufferList = getWebKitMediaSource().sourceBuffers();
+  for (int i = 0; i < sourceBufferList->length(); ++i) {
+    ret->add(new MSESourceBuffer(getWebKitMediaSource(), *sourceBufferList->item(i)));
+  }
+  v = ret;
   return RT_OK;
 }
 
 rtError MSEMediaSource::getActiveSourceBuffers(rtObjectRef &v)
 {
-  v = &mActiveBufferList;
+  ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(activeSourceBufferList);
+  //v = &mActiveBufferList;
   return RT_OK;
 }
 
 rtError MSEMediaSource::getReadyState(rtString &v) const
 {
-  v = mReadyState;
+  auto val = getWebKitMediaSource().readyState();
+  switch (val) {
+  case WebCore::MediaSource::ReadyState::Closed: v = "closed"; break;
+  case WebCore::MediaSource::ReadyState::Open: v = "open"; break;
+  case WebCore::MediaSource::ReadyState::Ended: v = "ended"; break;
+  }
   return RT_OK;
 }
 
 rtError MSEMediaSource::getDuration(double &v) const
 {
-  v = mDuration;
+  v = getWebKitMediaSource().duration().toDouble();
   return RT_OK;
 }
 
 rtError MSEMediaSource::setDuration(double const &v)
 {
-  mDuration = v;
+  getWebKitMediaSource().setDuration(v);
   return RT_OK;
 }
 
 rtError MSEMediaSource::addSourceBuffer(rtString type, rtObjectRef &buffer)
 {
-  MSESourceBuffer *sourceBuffer = new MSESourceBuffer(mMediaSourceImpl->mMediaSource.get(), type);
+  MSESourceBuffer *sourceBuffer = new MSESourceBuffer(getWebKitMediaSource(), type);
   buffer = sourceBuffer;
   return RT_OK;
 }
 
 rtError MSEMediaSource::clearLiveSeekableRange()
 {
-  // TODO
+  getWebKitMediaSource().clearLiveSeekableRange();
   return RT_OK;
 }
 
 rtError MSEMediaSource::endOfStream(rtString reason)
 {
   rtLogWarn("endOfStream with reason = %s", reason.cString());
+  auto code = reason == "decode" ? WebCore::MediaSource::EndOfStreamError::Decode : WebCore::MediaSource::EndOfStreamError::Network;
+  getWebKitMediaSource().endOfStream(code);
   return RT_OK;
 }
 
 rtError MSEMediaSource::removeSourceBuffer(rtObjectRef buffer)
 {
-  // TODO
+  MSESourceBuffer *sourceBuffer = dynamic_cast<MSESourceBuffer*>(buffer.ptr());
+  getWebKitMediaSource().removeSourceBuffer(sourceBuffer->getWebkitSourceBuffer());
   return RT_OK;
 }
 
 rtError MSEMediaSource::setLiveSeekableRange(double start, double end)
 {
-  // TODO
+  getWebKitMediaSource().setLiveSeekableRange(start, end);
   return RT_OK;
 }
 
-rtError MSEMediaSource::isTypeSupported(rtString reason, bool &ret)
+rtError MSEMediaSource::isTypeSupported(rtString type, bool &ret)
 {
-  ret = false;
+  ret = WebCore::MediaSource::isTypeSupported(type.cString());
   return RT_OK;
 }
 

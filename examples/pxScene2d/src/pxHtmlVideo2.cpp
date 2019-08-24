@@ -26,6 +26,7 @@
 #include "WebCore/fileapi/Blob.h"
 #include "WebCore/dom/Event.h"
 #include "WebCore/dom/EventNames.h"
+#include "WebCore/html/TimeRanges.h"
 #include <gst/gst.h>
 #include <gst/video/video.h>
 #endif
@@ -178,41 +179,232 @@ rtError pxHtmlVideo2::attachMediaSource(rtObjectRef mediaSourceArg)
   mVideoImpl->mVideoElement->setSrcObject(WebCore::MediaProvider(RefPtr(&mediaSource->getWebKitMediaSource())));
 }
 
+rtError pxHtmlVideo2::detachMediaSource()
+{
+  mVideoImpl->mVideoElement->detachMediaSource();
+  return RT_OK;
+}
 
 rtError pxHtmlVideo2::load()
 {
+  getWebKitVideoElement().load();
   return RT_OK;
 }
 
 rtError pxHtmlVideo2::canPlayType(const rtString &type, bool &ret)
 {
+  ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(canPlayType);
   ret = false;
   return RT_OK;
 }
 
 rtError pxHtmlVideo2::play()
 {
-  mVideoImpl->mVideoElement->play();
+  getWebKitVideoElement().play();
   return RT_OK;
 }
 
 rtError pxHtmlVideo2::pause()
 {
+  getWebKitVideoElement().pause();
   return RT_OK;
 }
 
 rtError pxHtmlVideo2::fastSeek(double time)
 {
+  ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(fastSeek);
   return RT_OK;
 }
+
+//rtError pxHtmlVideo2::getVideoWidth(int &v) const
+//{
+//  v = getWebKitVideoElement().videoWidth();
+//  return RT_OK;
+//}
+//
+//rtError pxHtmlVideo2::getVideoHeight(int &v) const
+//{
+//  v = getWebKitVideoElement().videoHeight();
+//  return RT_OK;
+//}
 
 void pxHtmlVideo2::onWebkitEvent(const std::string &name)
 {
   mEmit.send(rtString(name.c_str()));
 }
 
+WebCore::HTMLVideoElement &pxHtmlVideo2::getWebKitVideoElement()
+{
+  return mVideoImpl->mVideoElement.get();
+}
+
+rtError pxHtmlVideo2::getError(rtObjectRef &v) const
+{
+  ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(getError);
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getMuted(bool &v) const
+{
+  v = getWebKitVideoElement().muted();
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::setMuted(bool const &v)
+{
+  getWebKitVideoElement().setMuted(v);
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getWidth(int &v) const
+{
+  ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(width);
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::setWidth(int v)
+{
+  ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(width);
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getVideoWidth(int &v) const
+{
+  v = getWebKitVideoElement().videoWidth();
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getVideoHeight(int &v) const
+{
+  v = getWebKitVideoElement().videoHeight();
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getSeeking(bool &v) const
+{
+  v = getWebKitVideoElement().seeking();
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getPaused(bool &v) const
+{
+  v = getWebKitVideoElement().paused();
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getBuffered(rtObjectRef &v) const
+{
+  v = new MSETimeRanges(getWebKitVideoElement().buffered());
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getNodeName(rtString &v) const
+{
+  v = "VIDEO";
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getSeekable(rtObjectRef &v) const
+{
+  v = new MSETimeRanges(getWebKitVideoElement().seekable());
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getPlayed(rtObjectRef &v) const
+{
+  v = new MSETimeRanges(getWebKitVideoElement().played());
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getReadyState(int &v) const
+{
+  v = getWebKitVideoElement().readyState();
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getDuration(double &v) const
+{
+  v = getWebKitVideoElement().duration();
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getVolume(double &v) const
+{
+  v = getWebKitVideoElement().volume();
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::setVolume(double const &v)
+{
+  getWebKitVideoElement().setVolume(v);
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getAutoplay(bool &v) const
+{
+  v = getWebKitVideoElement().autoplay();
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::setAutoplay(bool const &v)
+{
+  // TODO
+  //ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(autoplay);
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getCurrentTime(double &v) const
+{
+  v = getWebKitVideoElement().currentTime();
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::setCurrentTime(double const &v)
+{
+  getWebKitVideoElement().setCurrentTime(v);
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getPlaybackRate(double &v) const
+{
+  v = getWebKitVideoElement().playbackRate();
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::setPlaybackRate(double const &v)
+{
+  getWebKitVideoElement().setPlaybackRate(v);
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getLoop(bool &v) const
+{
+  v = getWebKitVideoElement().loop();
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::setLoop(bool const &v)
+{
+  getWebKitVideoElement().setLoop(v);
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::getPreload(rtString &v) const
+{
+  v = getWebKitVideoElement().preload().characters8();
+  return RT_OK;
+}
+
+rtError pxHtmlVideo2::setPreload(rtString const &v)
+{
+  getWebKitVideoElement().setPreload(v.cString());
+  return RT_OK;
+}
+
 rtDefineObject(pxHtmlVideo2, pxObject);
 rtDefineMethod(pxHtmlVideo2, attachMediaSource)
+rtDefineMethod(pxHtmlVideo2, detachMediaSource)
+rtDefineProperty(pxHtmlVideo2, nodeName)
 rtDefineProperty(pxHtmlVideo2, error)
 rtDefineProperty(pxHtmlVideo2, src)
 rtDefineProperty(pxHtmlVideo2, currentSrc)

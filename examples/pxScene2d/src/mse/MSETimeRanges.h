@@ -5,9 +5,17 @@
 #include <vector>
 #include <utility>
 
+namespace WebCore
+{
+  class TimeRanges;
+}
+
 class MSETimeRanges : public rtObject {
 public:
   rtDeclareObject(MSETimeRanges, rtObject);
+
+  MSETimeRanges() {}
+  MSETimeRanges(const WebCore::TimeRanges&);
 
   //readonly attribute unsigned long length;
   rtReadOnlyProperty(length, length, int);
@@ -21,7 +29,7 @@ public:
   rtMethod1ArgAndReturn("end", end, int, double);
   rtError end(int index, double &v) const;
 
-private:
+public:
   std::vector<std::pair<double, double>> mRanges;
 };
 

@@ -22,7 +22,7 @@ px.import({scene: "px:scene.1.js",
         parent: scene.root
     });
 
-    var mediaSource = createMediaSource();
+    var mediaSource = createMSEMediaSource();
     video.attachMediaSource(mediaSource);
 
     mediaSource.addEventListener('sourceopen', onMediaSourceOpen);
