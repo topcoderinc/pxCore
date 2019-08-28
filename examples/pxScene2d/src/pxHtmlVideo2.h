@@ -166,7 +166,9 @@ public:
   rtError getSeekable(rtObjectRef &v) const;
 
   //readonly attribute boolean ended;
-  defineReadOnlyAttribute(ended, mEnded, bool)
+  //defineReadOnlyAttribute(ended, mEnded, bool)
+  rtReadOnlyProperty(ended, getEnded, bool);
+  rtError getEnded(bool &v) const;
 
   //[CEReactions=NotNeeded, Reflect] attribute boolean autoplay;
   //defineReadWriteAttribute(autoplay, mAutoplay, bool)

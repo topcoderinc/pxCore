@@ -310,6 +310,12 @@ rtError pxHtmlVideo2::getSeekable(rtObjectRef &v) const
   return RT_OK;
 }
 
+rtError pxHtmlVideo2::getEnded(bool &v) const
+{
+  v = getWebKitVideoElement().ended();
+  return RT_OK;
+}
+
 rtError pxHtmlVideo2::getPlayed(rtObjectRef &v) const
 {
   v = new MSETimeRanges(getWebKitVideoElement().played());

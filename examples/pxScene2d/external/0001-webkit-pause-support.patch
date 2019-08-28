@@ -1,0 +1,52 @@
+From f78b24672b1e726c2d283d2109242c4fba50a9a2 Mon Sep 17 00:00:00 2001
+From: Alexey Kuts <kruntuid@gmail.com>
+Date: Thu, 29 Aug 2019 02:44:35 +0300
+Subject: [PATCH] 	pause support
+
+---
+ Source/WebCore/html/HTMLMediaElement.cpp | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/Source/WebCore/html/HTMLMediaElement.cpp b/Source/WebCore/html/HTMLMediaElement.cpp
+index 2cd0351ed77..009fbd50316 100644
+--- a/Source/WebCore/html/HTMLMediaElement.cpp
++++ b/Source/WebCore/html/HTMLMediaElement.cpp
+@@ -3655,8 +3655,10 @@ void HTMLMediaElement::pause()
+     if (m_waitingToEnterFullscreen)
+         m_waitingToEnterFullscreen = false;
+ 
++    /*
+     if (!m_mediaSession->playbackPermitted())
+         return;
++        */
+ 
+     if (processingUserGestureForMedia())
+         removeBehaviorRestrictionsAfterFirstUserGesture(MediaElementSession::RequireUserGestureToControlControlsManager);
+@@ -3669,6 +3671,7 @@ void HTMLMediaElement::pauseInternal()
+ {
+     ALWAYS_LOG(LOGIDENTIFIER);
+ 
++    /*
+     if (isSuspended()) {
+         ALWAYS_LOG(LOGIDENTIFIER, "returning because context is suspended");
+         return;
+@@ -3683,13 +3686,14 @@ void HTMLMediaElement::pauseInternal()
+         ALWAYS_LOG(LOGIDENTIFIER, "returning because of interruption");
+         return;
+     }
++    */
+ 
+     // 4.8.10.9. Playing the media resource
+     if (!m_player || m_networkState == NETWORK_EMPTY) {
+         // Unless the restriction on media requiring user action has been lifted
+         // don't trigger loading if a script calls pause().
+-        if (!m_mediaSession->playbackPermitted())
+-            return;
++        //if (!m_mediaSession->playbackPermitted())
++            //return;
+         selectMediaResource();
+     }
+ 
+-- 
+2.17.1
+

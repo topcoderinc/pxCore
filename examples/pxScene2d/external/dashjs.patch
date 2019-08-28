@@ -1,6 +1,6 @@
-diff -ruN dash.js-3.0.0-new/src/streaming/controllers/MediaSourceController.js dash.js-3.0.0/src/streaming/controllers/MediaSourceController.js
---- dash.js-3.0.0-new/src/streaming/controllers/MediaSourceController.js	2019-06-29 03:08:44.000000000 +0300
-+++ dash.js-3.0.0/src/streaming/controllers/MediaSourceController.js	2019-08-24 01:54:41.517494966 +0300
+diff -ruN old.dash.js-3.0.0/src/streaming/controllers/MediaSourceController.js dash.js-3.0.0/src/streaming/controllers/MediaSourceController.js
+--- old.dash.js-3.0.0/src/streaming/controllers/MediaSourceController.js	2019-06-29 03:08:44.000000000 +0300
++++ dash.js-3.0.0/src/streaming/controllers/MediaSourceController.js	2019-08-24 13:54:18.215306987 +0300
 @@ -48,7 +48,8 @@
          let hasMediaSource = ('MediaSource' in window);
  
@@ -28,9 +28,9 @@ diff -ruN dash.js-3.0.0-new/src/streaming/controllers/MediaSourceController.js d
      }
  
      function detachMediaSource(videoModel) {
-diff -ruN dash.js-3.0.0-new/src/streaming/controllers/StreamController.js dash.js-3.0.0/src/streaming/controllers/StreamController.js
---- dash.js-3.0.0-new/src/streaming/controllers/StreamController.js	2019-06-29 03:08:44.000000000 +0300
-+++ dash.js-3.0.0/src/streaming/controllers/StreamController.js	2019-08-24 11:31:29.712621942 +0300
+diff -ruN old.dash.js-3.0.0/src/streaming/controllers/StreamController.js dash.js-3.0.0/src/streaming/controllers/StreamController.js
+--- old.dash.js-3.0.0/src/streaming/controllers/StreamController.js	2019-06-29 03:08:44.000000000 +0300
++++ dash.js-3.0.0/src/streaming/controllers/StreamController.js	2019-08-24 13:54:18.215306987 +0300
 @@ -523,7 +523,7 @@
              if (!mediaSource) return;
  
@@ -40,9 +40,9 @@ diff -ruN dash.js-3.0.0-new/src/streaming/controllers/StreamController.js dash.j
              mediaSource.removeEventListener('sourceopen', onMediaSourceOpen);
              mediaSource.removeEventListener('webkitsourceopen', onMediaSourceOpen);
              setMediaDuration();
-diff -ruN dash.js-3.0.0-new/src/streaming/models/VideoModel.js dash.js-3.0.0/src/streaming/models/VideoModel.js
---- dash.js-3.0.0-new/src/streaming/models/VideoModel.js	2019-06-29 03:08:44.000000000 +0300
-+++ dash.js-3.0.0/src/streaming/models/VideoModel.js	2019-08-24 01:57:15.212235068 +0300
+diff -ruN old.dash.js-3.0.0/src/streaming/models/VideoModel.js dash.js-3.0.0/src/streaming/models/VideoModel.js
+--- old.dash.js-3.0.0/src/streaming/models/VideoModel.js	2019-06-29 03:08:44.000000000 +0300
++++ dash.js-3.0.0/src/streaming/models/VideoModel.js	2019-08-24 13:54:18.215306987 +0300
 @@ -153,11 +153,18 @@
      function setSource(source) {
          if (element) {
@@ -62,9 +62,9 @@ diff -ruN dash.js-3.0.0-new/src/streaming/models/VideoModel.js dash.js-3.0.0/src
          }
      }
  
-diff -ruN dash.js-3.0.0-new/src/streaming/net/HTTPLoader.js dash.js-3.0.0/src/streaming/net/HTTPLoader.js
---- dash.js-3.0.0-new/src/streaming/net/HTTPLoader.js	2019-06-29 03:08:44.000000000 +0300
-+++ dash.js-3.0.0/src/streaming/net/HTTPLoader.js	2019-08-24 13:12:29.419111599 +0300
+diff -ruN old.dash.js-3.0.0/src/streaming/net/HTTPLoader.js dash.js-3.0.0/src/streaming/net/HTTPLoader.js
+--- old.dash.js-3.0.0/src/streaming/net/HTTPLoader.js	2019-06-29 03:08:44.000000000 +0300
++++ dash.js-3.0.0/src/streaming/net/HTTPLoader.js	2019-08-24 13:54:18.215306987 +0300
 @@ -182,7 +182,7 @@
                  handleLoaded(true);
  
@@ -74,9 +74,21 @@ diff -ruN dash.js-3.0.0-new/src/streaming/net/HTTPLoader.js dash.js-3.0.0/src/st
                  }
  
                  if (config.complete) {
-diff -ruN dash.js-3.0.0-new/src/streaming/utils/Capabilities.js dash.js-3.0.0/src/streaming/utils/Capabilities.js
---- dash.js-3.0.0-new/src/streaming/utils/Capabilities.js	2019-06-29 03:08:44.000000000 +0300
-+++ dash.js-3.0.0/src/streaming/utils/Capabilities.js	2019-08-24 11:41:38.715057221 +0300
+diff -ruN old.dash.js-3.0.0/src/streaming/utils/BoxParser.js dash.js-3.0.0/src/streaming/utils/BoxParser.js
+--- old.dash.js-3.0.0/src/streaming/utils/BoxParser.js	2019-06-29 03:08:44.000000000 +0300
++++ dash.js-3.0.0/src/streaming/utils/BoxParser.js	2019-08-29 01:53:29.019546633 +0300
+@@ -58,7 +58,7 @@
+             data.fileStart = 0;
+         }
+ 
+-        let parsedFile = ISOBoxer.parseBuffer(data);
++        let parsedFile = ISOBoxer.parseBuffer(data.buffer);
+         let dashIsoFile = IsoFile(context).create();
+ 
+         dashIsoFile.setData(parsedFile);
+diff -ruN old.dash.js-3.0.0/src/streaming/utils/Capabilities.js dash.js-3.0.0/src/streaming/utils/Capabilities.js
+--- old.dash.js-3.0.0/src/streaming/utils/Capabilities.js	2019-06-29 03:08:44.000000000 +0300
++++ dash.js-3.0.0/src/streaming/utils/Capabilities.js	2019-08-24 13:54:18.215306987 +0300
 @@ -61,7 +61,7 @@
      }
  

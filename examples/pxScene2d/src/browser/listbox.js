@@ -47,7 +47,10 @@ px.import({ scene: 'px:scene.1.js',
         // PUBLIC methods
         //
         this.addItem     = addItem;
+        this.getItem     = getItem;
+        this.getItemsLength     = getItemsLength;
         this.removeItem      = removeItem;
+        this.clear = clear;
         this.selectedItem = selectedItem;
         this.selectedItemList = selectedItemList;
 
@@ -248,6 +251,16 @@ px.import({ scene: 'px:scene.1.js',
           }
         }
 
+        function getItem(idx)
+        {
+          return items[idx];
+        }
+
+        function getItemsLength()
+        {
+          return items.length;
+        }
+
         /* add item to the list */
         function addItem(data)
         {
@@ -314,6 +327,23 @@ px.import({ scene: 'px:scene.1.js',
             delete itemdetails[data].text;
             delete itemdetails[data];
           }
+        }
+
+        function clear()
+        {
+          items = [];
+          itemdetails = {};
+          totalItems = 0;
+          visibleStartIndex = 0;
+          visibleEndIndex = -1;
+          activeItemIndex = -1;
+          numItems = 0;
+            /*
+          numItems = 0;
+          activeItemIndex = -1;
+          visibleStartIndex = 0;
+          visibleEndIndex = -1;
+          */
         }
 
         /* return the selected item when user selected only one item */
