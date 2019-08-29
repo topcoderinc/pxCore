@@ -8,9 +8,10 @@ px.import({scene: "px:scene.1.js",
     var scene = imports.scene;
     var keys = imports.keys;
     var root = scene.root;
-    var videoWidth = 640;
-    var videoHeight = 480;
     var listBoxOffsetY = 128;
+    var videoWidth = 640;
+    var progressHeight = 48;
+    var videoHeight = root.h - listBoxOffsetY - progressHeight;
 
     var video;
     var player;
@@ -27,7 +28,7 @@ px.import({scene: "px:scene.1.js",
             t: 'video',
             x: 0,
             y: listBoxOffsetY,
-            w: videoWidth, //root.w,
+            w: root.w,
             h: videoHeight, //root.h,
             parent: scene.root
         });
@@ -35,7 +36,7 @@ px.import({scene: "px:scene.1.js",
         //videoUrl = "https://dash.akamaized.net/envivio/EnvivioDash3/manifest.mpd";
         player = global.dashjs.MediaPlayer().create();
         player.updateSettings({ 'debug': { 'logLevel': global.dashjs.Debug.LOG_LEVEL_DEBUG } });
-        player.updateSettings({ 'streaming': { 'abr': { 'autoSwitchBitrate': { video: false } } } });
+        playerSetVideoAutoswitch(true);
         player.initialize(video, videoUrl, true);
         player.on('error', function(e) {
             console.log('onerror');
@@ -47,13 +48,18 @@ px.import({scene: "px:scene.1.js",
         addVideoEventListeners();
     }
 
+    function playerSetVideoAutoswitch(val)
+    {
+        player.updateSettings({ 'streaming': { 'abr': { 'autoSwitchBitrate': { video: val } } } });
+    }
+
     //reinitPlayer();
 
     // >>> progress
     var playRes = scene.create({t: 'imageResource', url: 'browser/images/icons8-play-24.png'});
     var pauseRes = scene.create({t: 'imageResource', url: 'browser/images/icons8-pause-24.png'});
 
-    var progressRect = scene.create({t: 'rect', x: 0, y: listBoxOffsetY + videoHeight, w: root.w, h: 48, fillColor: 0xAfAfAf3f, parent: root});
+    var progressRect = scene.create({t: 'rect', x: 0, y: listBoxOffsetY + videoHeight, w: root.w, h: progressHeight , fillColor: 0xAfAfAf3f, parent: root});
 
     var currentTxt = scene.create({
         t: 'text',
@@ -149,7 +155,10 @@ px.import({scene: "px:scene.1.js",
             } else {
                 var bitRateIndex = getBitrateItemIndex();
                 if (bitRateIndex != prevBitrateIndex) {
-                    player.setQualityFor('video', bitRateIndex);
+                    playerSetVideoAutoswitch(bitRateIndex == 0);
+                    if (bitRateIndex != 0) {
+                        player.setQualityFor('video', bitRateIndex - 1);
+                    }
                     prevBitrateIndex = bitRateIndex;
                 }
             }
@@ -256,6 +265,7 @@ px.import({scene: "px:scene.1.js",
             var arr = player.getBitrateInfoListFor('video');
             bitrateListBox       = new imports.ListBox( {     parent: root, x: 3 * videoWidth / 2,   y: 0, w: 200, h: listBoxOffsetY, visible:true, numItems:7 });
             bitrateListBox.visible = true;
+            bitrateListBox.addItem('autoswitch');
             for (var i = 0; i < arr.length; ++i) {
                 var elem = arr[i];
                 var elemStr = Math.floor(elem.bitrate / 1000) + ' kbps';
@@ -282,4 +292,13 @@ px.import({scene: "px:scene.1.js",
             video.removeEventListener(evt);
         }
     }
+
+    scene.on("onResize", function (e) {
+        videoHeight = root.h - listBoxOffsetY - progressHeight;
+        progressRect.y = listBoxOffsetY + videoHeight;
+        if (video) {
+            video.w = root.w;
+            video.h = videoHeight;
+        }
+    });
 });
