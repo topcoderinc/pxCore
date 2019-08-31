@@ -217,7 +217,7 @@ then
    ./Tools/gtk/install-dependencies
    ./Tools/Scripts/build-webkit --gtk --debug --media-source --video --video-track --system-malloc --cmakeargs ' -DUSE_WPE_RENDERER=OFF -DUSE_WOFF2=OFF -DUSE_OPENJPEG=OFF -DENABLE_INTROSPECTION=OFF -DENABLE_BUBBLEWRAP_SANDBOX=OFF'  --no-web-crypto --no-web-rtc --no-media-stream  --no-spellcheck --web-audio
    cd ..
-elif [ "$(uname)" != "Darwin" ]; then
+elif [ "$(uname)" == "Darwin" ]; then
    git clone https://github.com/WebKit/webkit.git
    cd webkit
    git checkout ad02ed4fc62ca969b96ea99fdedef3a9153914d4
