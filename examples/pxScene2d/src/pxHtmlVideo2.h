@@ -292,7 +292,7 @@ public:
 
   static void onRepaint(void *context, void *data);
 
-  WebCore::HTMLVideoElement &getWebKitVideoElement();
+  WebCore::HTMLVideoElement &getWebKitVideoElement() const;
 
 private:
 

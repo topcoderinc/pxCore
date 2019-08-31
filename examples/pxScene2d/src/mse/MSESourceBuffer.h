@@ -107,7 +107,7 @@ public:
   rtMethod1ArgAndNoReturn("changeType", changeType, rtString);
   rtError changeType(const rtString &type);
 
-  WebCore::SourceBuffer &getWebkitSourceBuffer();
+  WebCore::SourceBuffer &getWebkitSourceBuffer() const;
 
 protected:
   float mAppendWindowEnd;

@@ -47,7 +47,7 @@ MSEMediaSource::~MSEMediaSource()
   }
 }
 
-rtError MSEMediaSource::getSourceBuffers(rtObjectRef &v)
+rtError MSEMediaSource::getSourceBuffers(rtObjectRef &v) const
 {
   auto ret = new MSESourceBufferList();
   auto sourceBufferList = getWebKitMediaSource().sourceBuffers();
@@ -58,7 +58,7 @@ rtError MSEMediaSource::getSourceBuffers(rtObjectRef &v)
   return RT_OK;
 }
 
-rtError MSEMediaSource::getActiveSourceBuffers(rtObjectRef &v)
+rtError MSEMediaSource::getActiveSourceBuffers(rtObjectRef &v) const
 {
   ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(activeSourceBufferList);
   //v = &mActiveBufferList;
@@ -143,7 +143,7 @@ void MSEMediaSource::onSourceClose()
   mEmit.send("sourceclose");
 }
 
-WebCore::MediaSource &MSEMediaSource::getWebKitMediaSource()
+WebCore::MediaSource &MSEMediaSource::getWebKitMediaSource() const
 {
   return mMediaSourceImpl->mMediaSource.get();
 }

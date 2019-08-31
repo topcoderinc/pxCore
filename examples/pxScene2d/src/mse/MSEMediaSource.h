@@ -29,12 +29,12 @@ public:
   // All the source buffers created by this object.
   //readonly attribute SourceBufferList sourceBuffers;
   rtReadOnlyProperty(sourceBuffers, getSourceBuffers, rtObjectRef);
-  rtError getSourceBuffers(rtObjectRef &v);
+  rtError getSourceBuffers(rtObjectRef &v) const;
 
   // Subset of sourceBuffers that provide data for the selected/enabled tracks.
   // readonly attribute SourceBufferList activeSourceBuffers;
   rtReadOnlyProperty(activeSourceBuffers, getActiveSourceBuffers, rtObjectRef);
-  rtError getActiveSourceBuffers(rtObjectRef &v);
+  rtError getActiveSourceBuffers(rtObjectRef &v) const;
 
   //attribute unrestricted double duration;
   rtProperty(duration, getDuration, setDuration, double);
@@ -90,7 +90,7 @@ public:
 
   //void onEvent(const char *event);
 
-  WebCore::MediaSource &getWebKitMediaSource();
+  WebCore::MediaSource &getWebKitMediaSource() const;
 
 protected:
   MSEMediaSourceImpl *mMediaSourceImpl;

@@ -117,7 +117,7 @@ rtError MSESourceBuffer::remove(double start, double end)
   return RT_OK;
 }
 
-WebCore::SourceBuffer &MSESourceBuffer::getWebkitSourceBuffer()
+WebCore::SourceBuffer &MSESourceBuffer::getWebkitSourceBuffer() const
 {
   return mSourceBufferImpl->getSourceBuffer();
 }

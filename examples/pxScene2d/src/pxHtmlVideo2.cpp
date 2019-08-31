@@ -233,7 +233,7 @@ void pxHtmlVideo2::onWebkitEvent(const std::string &name)
   mEmit.send(rtString(name.c_str()));
 }
 
-WebCore::HTMLVideoElement &pxHtmlVideo2::getWebKitVideoElement()
+WebCore::HTMLVideoElement &pxHtmlVideo2::getWebKitVideoElement() const
 {
   return mVideoImpl->mVideoElement.get();
 }
@@ -397,7 +397,7 @@ rtError pxHtmlVideo2::setLoop(bool const &v)
 
 rtError pxHtmlVideo2::getPreload(rtString &v) const
 {
-  v = getWebKitVideoElement().preload().characters8();
+  v = (const char*)getWebKitVideoElement().preload().characters8();
   return RT_OK;
 }
 
