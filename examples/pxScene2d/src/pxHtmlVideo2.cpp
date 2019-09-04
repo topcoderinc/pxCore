@@ -177,6 +177,7 @@ rtError pxHtmlVideo2::attachMediaSource(rtObjectRef mediaSourceArg)
 {
   MSEMediaSource *mediaSource = dynamic_cast<MSEMediaSource*>(mediaSourceArg.ptr());
   mVideoImpl->mVideoElement->setSrcObject(WebCore::MediaProvider(RefPtr(&mediaSource->getWebKitMediaSource())));
+  return RT_OK;
 }
 
 rtError pxHtmlVideo2::detachMediaSource()
