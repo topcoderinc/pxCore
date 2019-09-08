@@ -91,6 +91,7 @@ static uv_work_t nodeLoopReq;
 #include <wtf/RunLoop.h>
 #include <WebCore/page/ProcessWarming.h>
 #include <WebCore/platform/Timer.h>
+#include <WebCore/LogInitialization.h>
 #include <wtf/Threading.h>
 #include <gst/gst.h>
 extern "C" {
@@ -472,7 +473,8 @@ protected:
 #endif
 #ifdef ENABLE_SPARK_VIDEO
     WebCore::TimerBase::fireTimersInNestedEventLoop();
-    g_main_context_iteration(g_main_context_default(), false);
+    GMainContext* context = WTF::RunLoop::main().mainContext();
+    g_main_context_iteration(context, false);
 #endif
   }
 
@@ -757,6 +759,7 @@ if (s && (strcmp(s,"1") == 0))
   gst_init(NULL, NULL);
   WTF::initializeMainThread();
   WTF::RunLoop::initializeMainRunLoop();
+  WebCore::initializeLogChannelsIfNecessary();
   WebCore::ProcessWarming::prewarmGlobally();
   WTF::RunLoop::main();
 #endif
