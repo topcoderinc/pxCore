@@ -1,22 +1,23 @@
-From 180207868c7861fe85a4d0fa324ee87ae7c3c6d6 Mon Sep 17 00:00:00 2001
+From c89021ba2ae1a8a5a0160fb5e0d8ca346299afa9 Mon Sep 17 00:00:00 2001
 From: Admin <admin@Mac-Admin.local>
-Date: Sat, 31 Aug 2019 15:04:24 +0300
-Subject: [PATCH] 	osx webkit fixes
+Date: Tue, 10 Sep 2019 10:01:31 +0300
+Subject: [PATCH] 	new patch
 
 ---
- Source/WTF/CMakeLists.txt                     |  2 +-
- Source/WebCore/html/HTMLMediaElement.cpp      | 47 ++++++++++++++---
- Source/WebCore/html/HTMLMediaElement.h        |  5 ++
- Source/WebCore/page/CaptionUserPreferences.h  |  2 +-
- Source/WebCore/page/Crypto.cpp                |  5 +-
- Source/WebCore/platform/graphics/FontCache.h  |  2 +-
- .../WebCore/platform/graphics/MediaPlayer.cpp |  6 +++
- .../WebCore/platform/graphics/MediaPlayer.h   |  5 ++
- .../gstreamer/MediaPlayerPrivateGStreamer.cpp |  8 +--
- .../MediaPlayerPrivateGStreamerBase.cpp       | 50 +++++++++++++++++++
- Source/cmake/OptionsGTK.cmake                 |  2 +-
- Tools/gtk/install-dependencies                |  8 +--
- 12 files changed, 121 insertions(+), 21 deletions(-)
+ Source/WTF/CMakeLists.txt                          |  2 +-
+ Source/WebCore/html/HTMLMediaElement.cpp           | 47 ++++++++++++++++----
+ Source/WebCore/html/HTMLMediaElement.h             |  5 +++
+ Source/WebCore/page/CaptionUserPreferences.h       |  2 +-
+ Source/WebCore/page/Crypto.cpp                     |  5 ++-
+ Source/WebCore/platform/graphics/FontCache.h       |  2 +-
+ Source/WebCore/platform/graphics/MediaPlayer.cpp   |  6 +++
+ Source/WebCore/platform/graphics/MediaPlayer.h     |  5 +++
+ .../WebCore/platform/graphics/glx/GLContextGLX.cpp |  3 ++
+ .../gstreamer/MediaPlayerPrivateGStreamer.cpp      |  9 ++--
+ .../gstreamer/MediaPlayerPrivateGStreamerBase.cpp  | 50 ++++++++++++++++++++++
+ Source/cmake/OptionsGTK.cmake                      |  4 +-
+ Tools/gtk/install-dependencies                     |  8 ++--
+ 13 files changed, 126 insertions(+), 22 deletions(-)
 
 diff --git a/Source/WTF/CMakeLists.txt b/Source/WTF/CMakeLists.txt
 index 7c615c5501c..d20608e9f48 100644
@@ -306,8 +307,29 @@ index e9df9458787..305cbb87ea6 100644
  #if PLATFORM(IOS_FAMILY) || (PLATFORM(MAC) && ENABLE(VIDEO_PRESENTATION_MODE))
      void setVideoFullscreenLayer(PlatformLayer*, WTF::Function<void()>&& completionHandler = [] { });
      void setVideoFullscreenFrame(FloatRect);
+diff --git a/Source/WebCore/platform/graphics/glx/GLContextGLX.cpp b/Source/WebCore/platform/graphics/glx/GLContextGLX.cpp
+index 97b10bdefe5..18b8b768d09 100644
+--- a/Source/WebCore/platform/graphics/glx/GLContextGLX.cpp
++++ b/Source/WebCore/platform/graphics/glx/GLContextGLX.cpp
+@@ -211,6 +211,8 @@ std::unique_ptr<GLContextGLX> GLContextGLX::createWindowContext(GLNativeWindowTy
+ 
+ std::unique_ptr<GLContextGLX> GLContextGLX::createPbufferContext(PlatformDisplay& platformDisplay, GLXContext sharingContext)
+ {
++    return nullptr;
++#if 0
+     static const int fbConfigAttributes[] = {
+         GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT,
+         GLX_RENDER_TYPE, GLX_RGBA_BIT,
+@@ -246,6 +248,7 @@ std::unique_ptr<GLContextGLX> GLContextGLX::createPbufferContext(PlatformDisplay
+         return nullptr;
+ 
+     return std::unique_ptr<GLContextGLX>(new GLContextGLX(platformDisplay, WTFMove(context), WTFMove(pbuffer)));
++#endif
+ }
+ 
+ std::unique_ptr<GLContextGLX> GLContextGLX::createPixmapContext(PlatformDisplay& platformDisplay, GLXContext sharingContext)
 diff --git a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp
-index 6d7105e9a1a..30b5e0ad93e 100644
+index 6d7105e9a1a..738e5844f8e 100644
 --- a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp
 +++ b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp
 @@ -494,7 +494,7 @@ MediaTime MediaPlayerPrivateGStreamer::platformDuration() const
@@ -328,12 +350,13 @@ index 6d7105e9a1a..30b5e0ad93e 100644
                      // souphttpsrc sets a string for Content-Length, so
                      // handle it here, until we remove the webkit+ protocol
                      // prefix from webkitwebsrc.
-@@ -2468,7 +2468,9 @@ void MediaPlayerPrivateGStreamer::createGSTPlayBin(const URL& url, const String&
+@@ -2468,7 +2468,10 @@ void MediaPlayerPrivateGStreamer::createGSTPlayBin(const URL& url, const String&
      g_object_set(m_pipeline.get(), "text-sink", m_textAppSink.get(), nullptr);
  #endif
  
 -    g_object_set(m_pipeline.get(), "video-sink", createVideoSink(), "audio-sink", createAudioSink(), nullptr);
-+    g_object_set(m_pipeline.get(), "video-sink", createVideoSink(), nullptr); //"audio-sink", createAudioSink(), nullptr);
++    g_object_set(m_pipeline.get(), "video-sink", createVideoSink(), nullptr);
++    g_object_set(m_pipeline.get(), "audio-sink", createAudioSink(), nullptr);
 +    //GstElement* videoSink = gst_element_factory_make("glimagesink", "glimagesink");
 +    //g_object_set (m_pipeline.get(), "video-sink", videoSink, NULL);
  
@@ -422,7 +445,7 @@ index 91e17899582..160283ade13 100644
  
  void MediaPlayerPrivateGStreamerBase::ensureGLVideoSinkContext()
 diff --git a/Source/cmake/OptionsGTK.cmake b/Source/cmake/OptionsGTK.cmake
-index 1f36ab4c577..fef9b4cd4c0 100644
+index 1f36ab4c577..f66f0999a91 100644
 --- a/Source/cmake/OptionsGTK.cmake
 +++ b/Source/cmake/OptionsGTK.cmake
 @@ -82,7 +82,7 @@ WEBKIT_OPTION_DEFINE(ENABLE_QUARTZ_TARGET "Whether to enable support for the Qua
@@ -434,6 +457,15 @@ index 1f36ab4c577..fef9b4cd4c0 100644
  WEBKIT_OPTION_DEFINE(USE_LIBSECRET "Whether to enable the persistent credential storage using libsecret." PUBLIC ON)
  WEBKIT_OPTION_DEFINE(USE_OPENJPEG "Whether to enable support for JPEG2000 images." PUBLIC ON)
  WEBKIT_OPTION_DEFINE(USE_WOFF2 "Whether to enable support for WOFF2 Web Fonts." PUBLIC ON)
+@@ -396,7 +396,7 @@ set(JavaScriptCore_PKGCONFIG_FILE ${CMAKE_BINARY_DIR}/Source/JavaScriptCore/java
+ set(WebKit2_PKGCONFIG_FILE ${CMAKE_BINARY_DIR}/Source/WebKit/webkit2gtk-${WEBKITGTK_API_VERSION}.pc)
+ set(WebKit2WebExtension_PKGCONFIG_FILE ${CMAKE_BINARY_DIR}/Source/WebKit/webkit2gtk-web-extension-${WEBKITGTK_API_VERSION}.pc)
+ 
+-set(JavaScriptCore_LIBRARY_TYPE SHARED)
++set(JavaScriptCore_LIBRARY_TYPE STATIC)
+ set(SHOULD_INSTALL_JS_SHELL ON)
+ 
+ # Add a typelib file to the list of all typelib dependencies. This makes it easy to
 diff --git a/Tools/gtk/install-dependencies b/Tools/gtk/install-dependencies
 index 3d180fc2431..98ac54d654c 100755
 --- a/Tools/gtk/install-dependencies
@@ -454,5 +486,5 @@ index 3d180fc2431..98ac54d654c 100755
  function printNotSupportedMessageAndExit() {
      echo
 -- 
-2.20.1 (Apple Git-117)
+2.15.1 (Apple Git-101)
 
