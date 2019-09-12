@@ -224,7 +224,7 @@ elif [ "$(uname)" == "Darwin" ]; then
    git apply < ../0001-osx-webkit-fixes.patch
    sudo port install webkit-gtk
    sudo port install 'gstreamer1-*'
-   ./Tools/Scripts/build-webkit --gtk --debug --media-source --video --video-track --cmakeargs ' -DUSE_WPE_RENDERER=OFF -DUSE_WOFF2=OFF -DUSE_OPENJPEG=OFF -DENABLE_INTROSPECTION=OFF -DENABLE_BUBBLEWRAP_SANDBOX=OFF -DCMAKE_EXE_LINKER_FLAGS="-L /usr/local/lib" -DCMAKE_MODULE_LINKER_FLAGS="-L /usr/local/lib" -DCMAKE_SHARED_LINKER_FLAGS="-L /usr/local/lib"  '  --no-web-crypto --no-web-rtc --no-media-stream  --no-spellcheck --web-audio
+   ./Tools/Scripts/build-webkit --gtk --debug --media-source --video --video-track --cmakeargs ' -DUSE_WPE_RENDERER=OFF -DUSE_WOFF2=OFF -DUSE_OPENJPEG=OFF -DENABLE_INTROSPECTION=OFF -DENABLE_BUBBLEWRAP_SANDBOX=OFF -DCMAKE_EXE_LINKER_FLAGS="-L /opt/local/lib" -DCMAKE_MODULE_LINKER_FLAGS="-L /opt/local/lib" -DCMAKE_SHARED_LINKER_FLAGS="-L /opt/local/lib"  '  --no-web-crypto --no-web-rtc --no-media-stream  --no-spellcheck --web-audio
    cd ..
 fi
 

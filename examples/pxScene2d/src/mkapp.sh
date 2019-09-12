@@ -80,6 +80,7 @@ fi
 
 cp macstuff/spark.sh $bundleBin
 cp macstuff/EngineRunner $bundleBin
+cp dash_sources.json $bundleRes
 
 # Minify JS into Bundle...
 #
@@ -92,6 +93,7 @@ cp -a rcvrcore/* $bundleRes/rcvrcore
 #
 ${minJS} videoPlayer.js $bundleRes/videoPlayer.js
 ${minJS} mse_video_player.js $bundleRes/mse_video_player.js
+${minJS} mse_demo_video_only.js $bundleRes/mse_demo_video_only.js
 ${minJS} init.js $bundleRes/init.js
 ${minJS} shell.js $bundleRes/shell.js
 ${minJS} browser.js $bundleRes/browser.js
@@ -110,6 +112,9 @@ cp -a duk_modules $bundleRes/duk_modules
 cp -a node_modules $bundleRes/node_modules
 # Copy v8 modules
 cp -a v8_modules $bundleRes/v8_modules
+
+rm $bundleRes/node_modules/dash.all.debug.pxcore.js
+cp $externalDir/dash.js-3.0.0/dist/dash.all.debug.pxcore.js $bundleRes/node_modules
 
 
 # Copy OTHER to Resources...

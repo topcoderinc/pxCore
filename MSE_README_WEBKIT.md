@@ -1,9 +1,6 @@
 # Spark - MSE Webkit port  
   
-tested on ubuntu 18.04 LTS 64 bit  
-g++ (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0  
-  
-# Build steps:  
+# Build steps ubuntu (tested on ubuntu 18.04 LTS  64 bit):  
   
 apt update  
   
@@ -23,14 +20,33 @@ mkdir temp
 cd temp  
 cmake ..  
 make  
+
+# Build steps macos (tested on highsierra)
+1) install xcode 9.4
+2) xcode-select --install
+3) install homebrew (brew.sh)
+4) install macports (macports.org)
+5) sudo port install webkit-gtk xorg-server webkit-gtk3
+6) sudo port install gtk3 quilt cmake nodejs12
+7) sudo port install wget pkgconfig openssl libffi libuv npm6
+8) brew install caskroom/cask/java openssl libffi libuv
+9) cd examples/pxScene2d/external/  
+bash build.sh  
+10) 
+cd ../../..  
+mkdir temp  
+cd temp  
+cmake -DCMAKE_EXE_LINKER_FLAGS=" -L /opt/local/lib " ..  
+make
+
+# Testing
   
 cd ../examples/pxScene2d/src  
-  
 
 ./Spark mse_demo_video_only.js  
 
 ./Spark mse_demo_video_audio.js   
-  
+
 # Troubleshooting:  
   
 - run with envvar GST_DEBUG="*:2" to troubleshoot gstreamer  
