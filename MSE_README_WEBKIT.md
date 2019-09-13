@@ -21,26 +21,26 @@ cd temp
 cmake ..  
 make  
 
-# Build steps macos (tested on highsierra and mojave)
-1) install xcode 9.4
-2) xcode-select --install
-3) install homebrew (brew.sh)
-4) install macports (macports.org)
-5) sudo port install webkit-gtk xorg-server webkit-gtk3
-6) sudo port install gtk3 quilt cmake nodejs12
-7) sudo port install wget pkgconfig openssl libffi libuv npm6
-8) brew install openssl libffi libuv
-   brew cask install java
+# Build steps macos (tested on highsierra and mojave)  
+1) install xcode 9.4  
+2) xcode-select --install  
+3) install homebrew (brew.sh)  
+4) install macports (macports.org)  
+5) sudo port install webkit-gtk xorg-server webkit-gtk3  
+6) sudo port install gtk3 quilt cmake nodejs12  
+7) sudo port install wget pkgconfig openssl libffi libuv npm6  
+8) brew install openssl libffi libuv  
+   brew cask install java  
 sudo chmod -R $(whoami) /opt/local
 
 9) cd examples/pxScene2d/external/  
-bash build.sh  
-10) 
-cd ../../..  
-mkdir temp  
-cd temp  
-cmake -DCMAKE_EXE_LINKER_FLAGS=" -L /opt/local/lib " ..  
-make
+bash build.sh    
+10)   
+cd ../../..   
+mkdir temp    
+cd temp    
+cmake -DCMAKE_EXE_LINKER_FLAGS=" -L /opt/local/lib " ..    
+make  
 
 # Testing
   
