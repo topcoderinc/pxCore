@@ -62,4 +62,3 @@ cd ../examples/pxScene2d/src
 - in macos 2 libglib can be linked twice (if you see in spark log "g_object_get_is_valid_property: object class '(null)' has no property named 'audio-sink'") - (check this by "otool -L Spark" it should output one line) - if not - remove /usr/local/opt
 - black screen no video playing - in dash.js log if "codec is not installed" line found - install gstreamer1-gst-libav and gstreamer1-gst-plugins-* installed
 - black screen no video playing - try to run with LIBGL_ALWAYS_SOFTWARE=1 (actually try to run LIBGL_ALWAYS_SOFTWARE glxinfo and LIBGL_ALWAYS_SOFTWARE=1 glxgears - they must work)
-- black screen no video playing - try to run with LIBGL_ALWAYS_SOFTWARE=1 (actually try to run LIBGL_ALWAYS_SOFTWARE glxinfo and LIBGL_ALWAYS_SOFTWARE=1 glxgears - they must work)
