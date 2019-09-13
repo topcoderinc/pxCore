@@ -30,7 +30,9 @@ make
 6) sudo port install gtk3 quilt cmake nodejs12
 7) sudo port install wget pkgconfig openssl libffi libuv npm6
 8) brew install caskroom/cask/java openssl libffi libuv
-   sudo chmod -R $(whoami) /opt/local
+
+sudo chmod -R $(whoami) /opt/local
+
 9) cd examples/pxScene2d/external/  
 bash build.sh  
 10) 
