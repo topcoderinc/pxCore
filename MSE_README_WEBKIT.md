@@ -30,6 +30,7 @@ make
 6) sudo port install gtk3 quilt cmake nodejs12
 7) sudo port install wget pkgconfig openssl libffi libuv npm6
 8) brew install caskroom/cask/java openssl libffi libuv
+   sudo chmod -R $(whoami) /opt/local
 9) cd examples/pxScene2d/external/  
 bash build.sh  
 10) 
@@ -46,6 +47,8 @@ cd ../examples/pxScene2d/src
 ./Spark mse_demo_video_only.js  
 
 ./Spark mse_demo_video_audio.js   
+
+./Spark mse_video_player.js
 
 # Troubleshooting:  
   
