@@ -21,7 +21,7 @@ cd temp
 cmake ..  
 make  
 
-# Build steps macos (tested on highsierra)
+# Build steps macos (tested on highsierra and mojave)
 1) install xcode 9.4
 2) xcode-select --install
 3) install homebrew (brew.sh)
