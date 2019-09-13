@@ -29,8 +29,8 @@ make
 5) sudo port install webkit-gtk xorg-server webkit-gtk3
 6) sudo port install gtk3 quilt cmake nodejs12
 7) sudo port install wget pkgconfig openssl libffi libuv npm6
-8) brew install caskroom/cask/java openssl libffi libuv
-
+8) brew install openssl libffi libuv
+   brew cask install java
 sudo chmod -R $(whoami) /opt/local
 
 9) cd examples/pxScene2d/external/  
