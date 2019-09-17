@@ -55,6 +55,18 @@ global.Promise = Promise = require('bluebird');
 global.process = process = require('process');
 global.pako = pako = require('pako');
 }
+else {
+fetch = require('node-fetch');
+XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+dashjs = require('dash.all.debug.pxcore.js');
+DOMParser = require('dom-parser.js').DOMParser;
+window = {};
+window.console = console;
+window.MediaSource = 1;
+window.fetch = fetch;
+window.performance = { now: function() {return 0;} };
+window.DOMParser = DOMParser;
+}
 
 var AppSceneContext = require('rcvrcore/AppSceneContext');
 var RPCController = require('rcvrcore/rpcController');
@@ -65,6 +77,7 @@ global.loadUrl = function loadUrl(url) {
   var ctx = new AppSceneContext({        scene: getScene("scene.1"),
                                      makeReady: this.makeReady,
                                   getContextID: this.getContextID,
+                          createMSEMediaSource: this.createMSEMediaSource,
                                     packageUrl: url,
                                  rpcController: new RPCController() } );
 
@@ -111,6 +124,10 @@ else {
         */
         else if (ext=='.js' || ext=='.jar') {
             // Do nothing and let the url fall through
+        }
+        else if (ext == '.mp4' || ext == '.m4v' || ext == '.avi') {
+            // Do nothing and let the url fall through
+            url = 'videoPlayer.js?url=' + encodeURIComponent(url)
         }
         else {
             // TODO Do a HTTP head check to see if we can get a mimetype/contenttype for routing

@@ -46,6 +46,7 @@ function AppSceneContext(params) {
 
   this.getContextID = params.getContextID;
   this.makeReady = params.makeReady;
+  this.createMSEMediaSource = params.createMSEMediaSource;
   this.innerscene = params.scene;
   this.rpcController = params.rpcController;
   if( params.packageUrl.indexOf('?') !== -1 ) {
@@ -368,8 +369,10 @@ AppSceneContext.prototype.runScriptInNewVMContext = function (packageUri, module
         console: console,
         theNamedContext: "Sandbox: " + uri,
         Buffer: Buffer,
+        DOMParser: DOMParser,
         process: processWrap,
         require: requireMethod,
+        createMSEMediaSource: createMSEMediaSource,
         global: globalWrap,
         setTimeout: function (callback, after, arg1, arg2, arg3) {
           //pass the timers list to callback function on timeout
@@ -421,7 +424,6 @@ AppSceneContext.prototype.runScriptInNewVMContext = function (packageUri, module
         print: print,
         getScene: getScene,
         makeReady: makeReady,
-        getContextID: getContextID
       }; // end sandbox
     }
     else

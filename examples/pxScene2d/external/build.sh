@@ -95,19 +95,19 @@ fi
 
 #--------- FT
 
-if [ ! -e ./ft/objs/.libs/libfreetype.6.dylib ] ||
-   [ "$(uname)" != "Darwin" ]
-then
-
-  banner "FT"
-
-  cd ft
-  export LIBPNG_LIBS="-L../png/.libs -lpng16"
-  ./configure --with-png=no
-  make all "-j${make_parallel}"
-  cd ..
-
-fi
+#if [ ! -e ./ft/objs/.libs/libfreetype.6.dylib ] ||
+#   [ "$(uname)" != "Darwin" ]
+#then
+#
+#  banner "FT"
+#
+#  cd ft
+#  export LIBPNG_LIBS="-L../png/.libs -lpng16"
+#  ./configure --with-png=no
+#  make all "-j${make_parallel}"
+#  cd ..
+#
+#fi
 
 #--------- JPG
 
@@ -172,9 +172,7 @@ fi
 
 #--------- LIBNODE
 
-if [ ! -e node/libnode.dylib ] ||
-   [ "$(uname)" != "Darwin" ]
-then
+if [ ! -e node/libnode.dylib ] ; then
 
   banner "NODE"
 
@@ -186,12 +184,10 @@ then
   ln -sf out/Release/libnode.48.dylib libnode.48.dylib
   ln -sf libnode.48.dylib libnode.dylib
   cd ..
-
 fi
 
 #--------- uWebSockets
-if [ ! -e ./uWebSockets/libuWS.dylib ] ||
-   [ "$(uname)" != "Darwin" ]
+if [ ! -e ./uWebSockets/libuWS.dylib ]
 then
 
   banner "uWEBSOCKETS"
@@ -205,7 +201,6 @@ then
 
   make
   cd ..
-
 fi
 #--------
 
@@ -235,4 +230,30 @@ then
 fi
 
 #--------
+# webkit
+if [ "$(uname)" == "Linux" ]
+then
+   git clone https://github.com/WebKit/webkit.git
+   cd webkit
+   git checkout ad02ed4fc62ca969b96ea99fdedef3a9153914d4
+   git apply < ../0001-webkit_mse_fix.patch
+   git apply < ../0001-webkit-pause-support.patch
+   ./Tools/gtk/install-dependencies
+   ./Tools/Scripts/build-webkit --gtk --debug --media-source --video --video-track --system-malloc --cmakeargs ' -DUSE_WPE_RENDERER=OFF -DUSE_WOFF2=OFF -DUSE_OPENJPEG=OFF -DENABLE_INTROSPECTION=OFF -DENABLE_BUBBLEWRAP_SANDBOX=OFF'  --no-web-crypto --no-web-rtc --no-media-stream  --no-spellcheck --web-audio
+   cd ..
+elif [ "$(uname)" == "Darwin" ]; then
+   git clone https://github.com/WebKit/webkit.git
+   cd webkit
+   git checkout ad02ed4fc62ca969b96ea99fdedef3a9153914d4
+   git apply < ../0001-osx-webkit-fixes.patch
+   sudo port install webkit-gtk
+   sudo port install 'gstreamer1-*'
+   ./Tools/Scripts/build-webkit --gtk --debug --media-source --video --video-track --cmakeargs ' -DUSE_WPE_RENDERER=OFF -DUSE_WOFF2=OFF -DUSE_OPENJPEG=OFF -DENABLE_INTROSPECTION=OFF -DENABLE_BUBBLEWRAP_SANDBOX=OFF -DCMAKE_EXE_LINKER_FLAGS="-L /opt/local/lib" -DCMAKE_MODULE_LINKER_FLAGS="-L /opt/local/lib" -DCMAKE_SHARED_LINKER_FLAGS="-L /opt/local/lib"  '  --no-web-crypto --no-web-rtc --no-media-stream  --no-spellcheck --web-audio
+   cd ..
+fi
 
+# dash
+if [ ! -e dash.js-3.0.0/dist/dash.all.debug.pxcore.js ]
+then
+    bash buildDashJS.sh
+fi

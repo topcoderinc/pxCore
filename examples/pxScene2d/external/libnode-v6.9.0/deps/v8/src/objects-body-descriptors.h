@@ -96,11 +96,6 @@ class FixedBodyDescriptor final : public BodyDescriptorBase {
     Heap* heap = obj->GetHeap();
     IterateBodyImpl<StaticVisitor>(heap, obj, start_offset, end_offset);
   }
-
-  template <typename StaticVisitor>
-  static inline void IterateBody(HeapObject* obj, int object_size) {
-    IterateBody(obj);
-  }
 };
 
 

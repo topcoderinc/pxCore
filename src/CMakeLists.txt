@@ -270,7 +270,7 @@ if (PXCORE_ETAG_AVOID_NONSTALE)
     add_definitions(-DPX_ETAG_AVOID_NONSTALE)
 endif (PXCORE_ETAG_AVOID_NONSTALE)
 
-set(RTCORE_FILES utf8.c rtString.cpp rtLog.cpp rtValue.cpp rtError.cpp ioapi_mem.c)
+set(RTCORE_FILES utf8.c rtBuffer.cpp rtString.cpp rtLog.cpp rtValue.cpp rtError.cpp ioapi_mem.c)
 
 set(RTCORE_FILES ${RTCORE_FILES} rtPromise.cpp)
 

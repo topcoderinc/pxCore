@@ -1,0 +1,823 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ASCIICType.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Assertions.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\AutomaticThread.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\BitVector.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CPUTime.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ClockType.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CompilationThread.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ConcurrentPtrHashSet.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CountingLock.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CrossThreadCopier.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CrossThreadTaskHandler.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CryptographicUtilities.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CryptographicallyRandomNumber.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CurrentTime.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\DataLog.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\DateMath.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\FastBitVector.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\FastMalloc.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\FilePrintStream.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\FileSystem.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\FunctionDispatcher.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Gigacage.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\GlobalVersion.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\GregorianDateTime.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\HashTable.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\HexNumber.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\JSONValues.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\JSValueMalloc.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Language.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Lock.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\LockedPrintStream.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Logger.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MD5.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MainThread.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MediaTime.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MemoryPressureHandler.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MetaAllocator.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\MonotonicTime.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\NumberOfCores.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\OSRandomSource.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ObjectIdentifier.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\PageBlock.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ParallelHelperPool.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ParallelJobsGeneric.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ParkingLot.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\PrintStream.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ProcessPrivilege.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RAMSize.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RandomDevice.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RandomNumber.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ReadWriteLock.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RefCountedLeakCounter.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\RunLoop.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SHA1.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Seconds.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\SixCharacterHash.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StackBounds.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StackPointer.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StackStats.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StackTrace.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\StringPrintStream.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ThreadGroup.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\ThreadMessage.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\Threading.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\TimeWithDynamicClockType.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\TimingScope.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\URL.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\URLHelpers.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\URLParser.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\UUID.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\WTFAssertions.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\WallTime.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\WordLock.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\WorkQueue.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\WorkerPool.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa.cpp" />
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\bignum-dtoa.cc">
+      <Filter>dtoa</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\bignum.cc">
+      <Filter>dtoa</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\cached-powers.cc">
+      <Filter>dtoa</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\diy-fp.cc">
+      <Filter>dtoa</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\double-conversion.cc">
+      <Filter>dtoa</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\fast-dtoa.cc">
+      <Filter>dtoa</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\fixed-dtoa.cc">
+      <Filter>dtoa</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\dtoa\strtod.cc">
+      <Filter>dtoa</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\persistence\PersistentCoders.cpp">
+      <Filter>persistence</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\persistence\PersistentDecoder.cpp">
+      <Filter>persistence</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\persistence\PersistentEncoder.cpp">
+      <Filter>persistence</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\ASCIILiteral.cpp">
+      <Filter>text</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\AtomString.cpp">
+      <Filter>text</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\AtomStringImpl.cpp">
+      <Filter>text</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\AtomStringTable.cpp">
+      <Filter>text</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\Base64.cpp">
+      <Filter>text</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\CString.cpp">
+      <Filter>text</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\ExternalStringImpl.cpp">
+      <Filter>text</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\LineEnding.cpp">
+      <Filter>text</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\StringBuilder.cpp">
+      <Filter>text</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\StringBuilderJSON.cpp">
+      <Filter>text</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\StringImpl.cpp">
+      <Filter>text</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\StringView.cpp">
+      <Filter>text</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\SymbolImpl.cpp">
+      <Filter>text</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\SymbolRegistry.cpp">
+      <Filter>text</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\TextBreakIterator.cpp">
+      <Filter>text</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\TextStream.cpp">
+      <Filter>text</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\WTFString.cpp">
+      <Filter>text</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\icu\UTextProvider.cpp">
+      <Filter>text\icu</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\icu\UTextProviderLatin1.cpp">
+      <Filter>text\icu</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\icu\UTextProviderUTF16.cpp">
+      <Filter>text\icu</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\threads\BinarySemaphore.cpp">
+      <Filter>threads</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\threads\Signals.cpp">
+      <Filter>threads</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\unicode\CollatorDefault.cpp">
+      <Filter>unicode</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\unicode\UTF8Conversion.cpp">
+      <Filter>unicode</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\unicode\icu\CollatorICU.cpp">
+      <Filter>unicode\icu</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\win\StringWin.cpp">
+      <Filter>text\win</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\text\win\TextBreakIteratorInternalICUWin.cpp">
+      <Filter>text\win</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\win\CPUTimeWin.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\win\DbgHelperWin.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\win\FileSystemWin.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\win\LanguageWin.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\win\MainThreadWin.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\win\MemoryFootprintWin.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\win\MemoryPressureHandlerWin.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\win\OSAllocatorWin.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\win\PathWalker.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\win\RunLoopWin.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\win\ThreadSpecificWin.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\win\ThreadingWin.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\win\WorkQueueWin.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\cmakeconfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\alphaindex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\basictz.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\calendar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\choicfmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\coleitr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\coll.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\compactdecimalformat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\curramt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\currpinf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\currunit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\datefmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\dcfmtsym.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\decimfmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\dtfmtsym.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\dtitvfmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\dtitvinf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\dtptngen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\dtrule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\fieldpos.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\fmtable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\format.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\fpositer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\gender.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\gregocal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\listformatter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\measfmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\measunit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\measure.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\msgfmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\nounit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\numberformatter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\numberrangeformatter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\numfmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\numsys.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\plurfmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\plurrule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\rbnf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\rbtz.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\regex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\region.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\reldatefmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\scientificnumberformatter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\search.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\selfmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\simpletz.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\smpdtfmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\sortkey.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\stsearch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\tblcoll.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\timezone.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\tmunit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\tmutamt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\tmutfmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\translit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\tzfmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\tznames.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\tzrule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\tztrans.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ucal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ucol.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ucoleitr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ucsdet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\udat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\udateintervalformat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\udatpg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ufieldpositer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uformattable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ugender.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ulistformatter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ulocdata.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\umsg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\unirepl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\unum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\unumberformatter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\unumsys.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\upluralrules.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uregex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uregion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ureldatefmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\usearch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uspoof.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\utmscale.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\utrans.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\vtzone.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\appendable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\brkiter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\bytestream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\bytestriebuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\bytestrie.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\caniter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\casemap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\char16ptr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\chariter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\dbbi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\docmain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\dtintrv.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\edits.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\enumset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\errorcode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\filteredbrk.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\icudataver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\icuplug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\idna.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\localpointer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\locdspnm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\locid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\messagepattern.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\normalizer2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\normlzr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\parseerr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\parsepos.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\platform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ptypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\putil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\rbbi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\rep.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\resbund.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\schriter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\simpleformatter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\std_string.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\strenum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\stringoptions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\stringpiece.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\stringtriebuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\symtable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ubidi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ubiditransform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ubrk.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ucasemap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ucat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uchar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ucharstriebuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ucharstrie.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uchriter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uclean.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ucnv_cb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ucnv_err.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ucnv.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ucnvsel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uconfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ucpmap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ucptrie.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ucurr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\udata.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\udisplaycontext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uenum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uidna.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uiter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uldnames.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uloc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\umachine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\umisc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\umutablecptrie.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\unifilt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\unifunct.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\unimatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uniset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\unistr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\unorm2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\unorm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uobject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\urename.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\urep.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uscript.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\usetiter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ushape.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\usprep.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ustring.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ustringtrie.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\utext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\utf16.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\utf32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\utf8.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\utf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\utf_old.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\utrace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\utypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uvernum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\uversion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ustdio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WinCairoRequirements\installed\x86-windows-webkit\include\unicode\ustream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\_tc_video\examples\pxScene2d\external\webkitWTF\Source\WTF\wtf\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="text\icu">
+      <UniqueIdentifier>{3999FC22-BB5B-3B13-B831-2E961A8DF713}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="text\win">
+      <UniqueIdentifier>{F38D3D9D-283D-3EA7-A0FC-73708253A0EF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{74D942BB-6FC1-3844-B372-C9F6AE8B3A7B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dtoa">
+      <UniqueIdentifier>{726E3495-5042-3F77-870E-ED48E8CA4210}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="persistence">
+      <UniqueIdentifier>{AD5A455B-9F4F-3BBB-BD07-B5EDE7E13512}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="text">
+      <UniqueIdentifier>{CC3782B8-DB66-3057-9B77-E518E498A462}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="threads">
+      <UniqueIdentifier>{DFDF04BD-039C-3B45-8FA1-85C5903A2D01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="unicode">
+      <UniqueIdentifier>{629D423B-CBB2-3FFD-8EB4-8113FBB15BF8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="win">
+      <UniqueIdentifier>{9E0D612E-0CEF-37DE-A8F3-2A09CF319946}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="unicode\icu">
+      <UniqueIdentifier>{15EB8EC6-4683-32FA-9623-F17B648FB59E}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -35,6 +35,7 @@ cp $externalDir/curl/lib/.libs/libcurl.4.dylib $bundleLib
 cp $externalDir/libnode-v6.9.0/out/Release/libnode*.dylib $bundleLib
 cp $externalDir/ft/objs/.libs/libfreetype.6.dylib $bundleLib
 cp $externalDir/jpg/.libs/libjpeg.9.dylib $bundleLib
+cp $externalDir/webkit/WebKitBuild/Debug/lib/*dylib $bundleLib
 #Avoid copying v8 artifacts if not generated
 if [ -e $externalDir/v8/out.gn ]; then
  cp $externalDir/v8/out.gn/x64.release/*.bin $bundleBin
@@ -79,6 +80,7 @@ fi
 
 cp macstuff/spark.sh $bundleBin
 cp macstuff/EngineRunner $bundleBin
+cp dash_sources.json $bundleRes
 
 # Minify JS into Bundle...
 #
@@ -89,12 +91,16 @@ cp -a rcvrcore/* $bundleRes/rcvrcore
 
 # NOTE" jsMin.sh will default to a 'min' name with 1 arg.  E.g.  "jsMin.sh INPUT.js"  >> INPUT.min.js
 #
+${minJS} videoPlayer.js $bundleRes/videoPlayer.js
+${minJS} mse_video_player.js $bundleRes/mse_video_player.js
+${minJS} mse_demo_video_only.js $bundleRes/mse_demo_video_only.js
 ${minJS} init.js $bundleRes/init.js
 ${minJS} shell.js $bundleRes/shell.js
 ${minJS} browser.js $bundleRes/browser.js
 ${minJS} about.js $bundleRes/about.js
 ${minJS} mime.js $bundleRes/mime.js
 ${minJS} browser/editbox.js $bundleRes/browser/editbox.js
+${minJS} browser/listbox.js $bundleRes/browser/listbox.js
 #./jsMinFolder.sh browser $bundleRes/browser
 
 # Copy MIME files...
@@ -106,6 +112,9 @@ cp -a duk_modules $bundleRes/duk_modules
 cp -a node_modules $bundleRes/node_modules
 # Copy v8 modules
 cp -a v8_modules $bundleRes/v8_modules
+
+rm $bundleRes/node_modules/dash.all.debug.pxcore.js
+cp $externalDir/dash.js-3.0.0/dist/dash.all.debug.pxcore.js $bundleRes/node_modules
 
 
 # Copy OTHER to Resources...

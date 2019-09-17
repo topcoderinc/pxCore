@@ -91,3 +91,8 @@ cd build
 cmake ..
 cmake --build . --config Release -- /m
 cd ..
+
+cd webkitWTF
+CALL cmake -D PORT=Win -D ICU_DIR=%cd%\icu\share\cmake\icu .
+CALL cmake --build . --config Release
+cd ..

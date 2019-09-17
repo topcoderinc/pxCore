@@ -11,7 +11,7 @@ externalLibs=$externalDir/png/.libs/:$externalDir/jpg/.libs/:$externalDir/curl/l
 PathD=$externalLibs:$externalDir/libnode-v6.9.0/out/Debug/obj.target
 PathR=$externalLibs:$externalDir/libnode-v6.9.0/out/Release/obj.target
 
-export LD_LIBRARY_PATH=$PathR
+export LD_LIBRARY_PATH=$PathR:/usr/local/lib
 
 export NODE_PATH=.
 

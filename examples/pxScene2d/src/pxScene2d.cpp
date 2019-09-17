@@ -40,6 +40,12 @@
 #include "pxTextBox.h"
 #include "pxImage.h"
 
+#ifdef ENABLE_SPARK_VIDEO
+#include "pxHtmlVideo2.h"
+#include "mse/MSEWebKitDocument.h"
+#include "mse/MSEMediaSource.h"
+#endif
+
 #ifdef PX_SERVICE_MANAGER
 #include "pxServiceManager.h"
 #endif //PX_SERVICE_MANAGER
@@ -530,7 +536,9 @@ pxScene2d::pxScene2d(bool top, pxScriptView* scriptView)
   // 
   // capabilities.animations.durations = 2
   //
-  // capabilities.events.drag_n_drop    = 2   // additional Drag'n'Drop events 
+  // capabilities.events.drag_n_drop    = 2   // additional Drag'n'Drop events
+  //
+  // capabilities.video.player         = 1
 
   mCapabilityVersions = new rtMapObject;
 
@@ -600,6 +608,12 @@ pxScene2d::pxScene2d(bool top, pxScriptView* scriptView)
   mCapabilityVersions.set("events", userCapabilities);
   userCapabilities.set("drag_n_drop", (gPlatformOS == "macOS") ? 2 : 1);
 
+#ifdef ENABLE_SPARK_VIDEO
+  rtObjectRef videoCapabilities = new rtMapObject;
+  videoCapabilities.set("player", 1);
+  mCapabilityVersions.set("video", videoCapabilities);
+#endif //ENABLE_SPARK_VIDEO
+
   //////////////////////////////////////////////////////
 }
 
@@ -627,6 +641,8 @@ rtError pxScene2d::dispose()
     // pass false to make onSceneTerminate asynchronous
     mEmit.send("onSceneTerminate", e);
     mEmit->clearListeners();
+
+    MSEWebkitDocument::dispose();
 
     mRoot     = NULL;
     mInfo     = NULL;
@@ -704,6 +720,8 @@ rtError pxScene2d::create(rtObjectRef p, rtObjectRef& o)
     e = createExternal(p,o);
   else if (!strcmp("wayland",t.cString()))
     e = createWayland(p,o);
+  else if (!strcmp("video",t.cString()))
+    e = createVideo(p,o);
   else if (!strcmp("object",t.cString()))
     e = createObject(p,o);
   else
@@ -1017,6 +1035,19 @@ rtError pxScene2d::createWayland(rtObjectRef p, rtObjectRef& o)
   rtLogWarn("Type 'wayland' is deprecated; use 'external' instead.\n");
   UNUSED_PARAM(p);
   return this->createExternal(p, o);
+}
+
+rtError pxScene2d::createVideo(rtObjectRef p, rtObjectRef& o)
+{
+#ifdef ENABLE_SPARK_VIDEO
+  o = new pxHtmlVideo2(this);
+  o.set(p);
+  o.send("init");
+  return RT_OK;
+#else
+  rtLogError("Type 'video' is not supported");
+  return RT_FAIL;
+#endif //ENABLE_SPARK_VIDEO
 }
 
 void pxScene2d::draw()
@@ -3012,11 +3043,13 @@ void pxScriptView::runScript()
     mGetScene = new rtFunctionCallback(getScene,  this);
     mMakeReady = new rtFunctionCallback(makeReady, this);
     mGetContextID = new rtFunctionCallback(getContextID, this);
+    mCreateMediaSourceFunc = new rtFunctionCallback(createMediaSourceFunc, this);
 
     mCtx->add("print", mPrintFunc.getPtr());
     mCtx->add("getScene", mGetScene.getPtr());
     mCtx->add("makeReady", mMakeReady.getPtr());
     mCtx->add("getContextID", mGetContextID.getPtr());
+    mCtx->add("createMSEMediaSource", mCreateMediaSourceFunc.getPtr());
 
 #ifdef RUNINMAIN
     mReady = new rtPromise();
@@ -3143,6 +3176,11 @@ rtError pxScriptView::getScene(int numArgs, const rtValue* args, rtValue* result
   return RT_FAIL;
 }
 
+rtError pxScriptView::createMediaSourceFunc(int numArgs, const rtValue* args, rtValue* result, void* ctx)
+{
+  *result = new MSEMediaSource();
+  return RT_OK;
+}
 
 #if 1
 rtError pxScriptView::getContextID(int /*numArgs*/, const rtValue* /*args*/, rtValue* result, void* /*ctx*/)

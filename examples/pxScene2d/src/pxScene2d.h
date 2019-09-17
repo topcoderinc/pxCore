@@ -666,6 +666,8 @@ protected:
 
   static rtError getContextID(int /*numArgs*/, const rtValue* /*args*/, rtValue* result, void* /*ctx*/);
 
+  static rtError createMediaSourceFunc(int /*numArgs*/, const rtValue* /*args*/, rtValue* result, void* ctx);
+
   virtual void onSize(int32_t w, int32_t h)
   {
     mWidth = w;
@@ -816,6 +818,7 @@ protected:
   rtRef<rtFunctionCallback> mGetScene;
   rtRef<rtFunctionCallback> mMakeReady;
   rtRef<rtFunctionCallback> mGetContextID;
+  rtRef<rtFunctionCallback> mCreateMediaSourceFunc;
 
 #ifdef ENABLE_RT_NODE
   rtScriptContextRef mCtx;
@@ -1001,6 +1004,7 @@ public:
   rtError createScene(rtObjectRef p,rtObjectRef& o);
   rtError createExternal(rtObjectRef p, rtObjectRef& o);
   rtError createWayland(rtObjectRef p, rtObjectRef& o);
+  rtError createVideo(rtObjectRef p, rtObjectRef& o);
 
   rtError clock(double & time);
   rtError logDebugMetrics();
