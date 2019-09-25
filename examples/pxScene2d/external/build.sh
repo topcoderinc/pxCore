@@ -233,3 +233,9 @@ if [ ! -e dash.js-3.0.0/dist/dash.all.debug.pxcore.js ]
 then
     bash buildDashJS.sh
 fi
+
+# shaka
+if [ ! -e shaka-player/dist/shaka-player.compiled.debug.js ]
+then
+    bash buildShakaJS.sh
+fi

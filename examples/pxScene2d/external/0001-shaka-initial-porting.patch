@@ -1,0 +1,344 @@
+From c7d4f8e02a5eb3970f37515ba9487fc508fa5659 Mon Sep 17 00:00:00 2001
+From: Alexey Kuts <kruntuid@gmail.com>
+Date: Wed, 25 Sep 2019 21:35:36 +0300
+Subject: [PATCH] 	ported to pxcore
+
+---
+ build/build.py                   | 10 ++++++----
+ build/check.py                   | 22 +++++++++++-----------
+ lib/dash/mpd_utils.js            |  4 +++-
+ lib/media/media_source_engine.js | 13 ++++++-------
+ lib/net/http_xhr_plugin.js       |  5 ++---
+ lib/player.js                    | 30 +++---------------------------
+ lib/util/platform.js             | 12 ++++++------
+ lib/util/xml_utils.js            |  4 ++--
+ 8 files changed, 39 insertions(+), 61 deletions(-)
+
+diff --git a/build/build.py b/build/build.py
+index 5b7997c4..7d45002e 100755
+--- a/build/build.py
++++ b/build/build.py
+@@ -56,11 +56,13 @@ shaka_version = shakaBuildHelpers.calculate_version()
+ common_closure_opts = [
+     '--language_out', 'ECMASCRIPT3',
+ 
+-    '--jscomp_error=*',
++    #'--jscomp_error=*',
+ 
+     # Turn off complaints like:
+     #   "Private property foo_ is never modified, use the @const annotation"
+     '--jscomp_off=jsdocMissingConst',
++    '--jscomp_off=undefinedVars',
++    '--jscomp_off=undefinedNames',
+ 
+     '--extra_annotation_name=listens',
+     '--extra_annotation_name=exportDoc',
+@@ -81,7 +83,7 @@ common_closure_defines = [
+ debug_closure_opts = [
+     # Don't use a wrapper script in debug mode so all the internals are visible
+     # on the global object.
+-    '-O', 'SIMPLE',
++    '-O', 'ADVANCED',
+ ]
+ debug_closure_defines = [
+     '-D', 'goog.DEBUG=true',
+@@ -96,7 +98,7 @@ release_closure_opts = [
+ release_closure_defines = [
+     '-D', 'goog.DEBUG=false',
+     '-D', 'goog.asserts.ENABLE_ASSERTS=false',
+-    '-D', 'shaka.log.MAX_LOG_LEVEL=0',
++    '-D', 'shaka.log.MAX_LOG_LEVEL=4',
+     '-D', 'shaka.Player.version="%s"' % shaka_version,
+ ]
+ 
+@@ -282,7 +284,7 @@ class Build(object):
+     if is_debug:
+       closure_opts += debug_closure_opts + debug_closure_defines
+       # The output wrapper is only used in the release build.
+-      closure.add_wrapper = False
++      # closure.add_wrapper = False
+     else:
+       closure_opts += release_closure_opts + release_closure_defines
+ 
+diff --git a/build/check.py b/build/check.py
+index b50a9269..b6e36f77 100755
+--- a/build/check.py
++++ b/build/check.py
+@@ -61,17 +61,17 @@ def get_lint_files():
+   return main_sources + tool_sources
+ 
+ 
+-@_Check('js_lint')
+-def check_js_lint(args):
+-  """Runs the JavaScript linter."""
+-  # TODO: things not enforced: property doc requirements
+-  logging.info('Linting JavaScript...')
+-
+-  base = shakaBuildHelpers.get_source_base()
+-  config_path = os.path.join(base, '.eslintrc.js')
+-
+-  linter = compiler.Linter(get_lint_files(), config_path)
+-  return linter.lint(fix=args.fix, force=args.force)
++#@_Check('js_lint')
++#def check_js_lint(args):
++#  """Runs the JavaScript linter."""
++#  # TODO: things not enforced: property doc requirements
++#  logging.info('Linting JavaScript...')
++#
++#  base = shakaBuildHelpers.get_source_base()
++#  config_path = os.path.join(base, '.eslintrc.js')
++#
++#  linter = compiler.Linter(get_lint_files(), config_path)
++#  return linter.lint(fix=args.fix, force=args.force)
+ 
+ 
+ @_Check('css_lint')
+diff --git a/lib/dash/mpd_utils.js b/lib/dash/mpd_utils.js
+index fe917dfc..50abd1b2 100644
+--- a/lib/dash/mpd_utils.js
++++ b/lib/dash/mpd_utils.js
+@@ -514,6 +514,7 @@ shaka.dash.MpdUtils = class {
+     }
+ 
+     const childOperations = [];
++    /*
+     for (const child of Array.from(element.childNodes)) {
+       if (child instanceof Element) {
+         const resolveToZeroString = 'urn:mpeg:dash:resolve-to-zero:2013';
+@@ -528,11 +529,12 @@ shaka.dash.MpdUtils = class {
+ 
+           // Replace the child with its processed form.
+           childOperations.push(shaka.dash.MpdUtils.processXlinks(
+-              /** @type {!Element} */ (child), retryParameters, failGracefully,
++              (child), retryParameters, failGracefully,
+               baseUri, networkingEngine, linkDepth));
+         }
+       }
+     }
++    */
+ 
+     return shaka.util.AbortableOperation.all(childOperations).chain(() => {
+       return element;
+diff --git a/lib/media/media_source_engine.js b/lib/media/media_source_engine.js
+index 6e4c6a3c..89b29f50 100644
+--- a/lib/media/media_source_engine.js
++++ b/lib/media/media_source_engine.js
+@@ -105,12 +105,11 @@ shaka.media.MediaSourceEngine = class {
+    * @return {!MediaSource}
+    */
+   createMediaSource(p) {
+-    const mediaSource = new MediaSource();
++    const mediaSource = createMSEMediaSource();
+ 
+     // Set up MediaSource on the video element.
+     this.eventManager_.listenOnce(mediaSource, 'sourceopen', p.resolve);
+-    this.video_.src =
+-        shaka.media.MediaSourceEngine.createObjectURL(mediaSource);
++    this.video_.attachMediaSource(mediaSource);
+ 
+     return mediaSource;
+   }
+@@ -126,7 +125,7 @@ shaka.media.MediaSourceEngine = class {
+         stream.mimeType, stream.codecs);
+     const extendedMimeType = shaka.util.MimeUtils.getExtendedType(stream);
+     return shaka.text.TextEngine.isTypeSupported(fullMimeType) ||
+-        MediaSource.isTypeSupported(extendedMimeType) ||
++        createMSEMediaSource().isTypeSupported(extendedMimeType) ||
+         shaka.media.Transmuxer.isSupported(fullMimeType, stream.type);
+   }
+ 
+@@ -179,7 +178,7 @@ shaka.media.MediaSourceEngine = class {
+         if (shaka.text.TextEngine.isTypeSupported(type)) {
+           support[type] = true;
+         } else {
+-          support[type] = MediaSource.isTypeSupported(type) ||
++          support[type] = createMSEMediaSource().isTypeSupported(type) ||
+                           shaka.media.Transmuxer.isSupported(type);
+         }
+       } else {
+@@ -303,7 +302,7 @@ shaka.media.MediaSourceEngine = class {
+       if (contentType == ContentType.TEXT) {
+         this.reinitText(mimeType);
+       } else {
+-        if ((forceTransmuxTS || !MediaSource.isTypeSupported(mimeType)) &&
++        if ((forceTransmuxTS || !createMSEMediaSource().isTypeSupported(mimeType)) &&
+             shaka.media.Transmuxer.isSupported(mimeType, contentType)) {
+           this.transmuxers_[contentType] = new shaka.media.Transmuxer();
+           mimeType =
+@@ -1041,7 +1040,7 @@ shaka.media.MediaSourceEngine = class {
+  *
+  * @type {function(?):string}
+  */
+-shaka.media.MediaSourceEngine.createObjectURL = window.URL.createObjectURL;
++//shaka.media.MediaSourceEngine.createObjectURL = window.URL.createObjectURL;
+ 
+ 
+ /**
+diff --git a/lib/net/http_xhr_plugin.js b/lib/net/http_xhr_plugin.js
+index 87259403..8e151585 100644
+--- a/lib/net/http_xhr_plugin.js
++++ b/lib/net/http_xhr_plugin.js
+@@ -60,8 +60,7 @@ shaka.net.HttpXHRPlugin = class {
+             uri, requestType));
+       };
+       xhr.onload = (event) => {
+-        const target = event.target;
+-        goog.asserts.assert(target, 'XHR onload has no target!');
++        const target = xhr;
+         // Since IE and Edge incorrectly return the header with a leading new
+         // line character ('\n'), we trim the header here.
+         const headerLines = target.getAllResponseHeaders().trim().split('\r\n');
+@@ -74,7 +73,7 @@ shaka.net.HttpXHRPlugin = class {
+ 
+         try {
+           const response = shaka.net.HttpPluginUtils.makeResponse(headers,
+-              target.response, target.status, uri, target.responseURL,
++              target.response, target.status, uri, uri,
+               requestType);
+           resolve(response);
+         } catch (error) {
+diff --git a/lib/player.js b/lib/player.js
+index 5792694c..a24aad76 100644
+--- a/lib/player.js
++++ b/lib/player.js
+@@ -464,12 +464,6 @@ shaka.Player = class extends shaka.util.FakeEventTarget {
+ 
+     this.networkingEngine_ = this.createNetworkingEngine();
+ 
+-    // If the browser comes back online after being offline, then try to play
+-    // again.
+-    this.eventManager_.listen(window, 'online', () => {
+-      this.retryStreaming();
+-    });
+-
+     /** @private {shaka.routing.Node} */
+     this.detachNode_ = {name: 'detach'};
+     /** @private {shaka.routing.Node} */
+@@ -1338,13 +1332,7 @@ shaka.Player = class extends shaka.util.FakeEventTarget {
+         new shaka.media.MuxJSClosedCaptionParser() :
+         new shaka.media.NoopCaptionParser();
+ 
+-    // When changing text visibility we need to update both the text displayer
+-    // and streaming engine because we don't always stream text. To ensure that
+-    // text displayer and streaming engine are always in sync, wait until they
+-    // are both initialized before setting the initial value.
+-    const TextDisplayerFactory = this.config_.textDisplayFactory;
+-    const textDisplayer = new TextDisplayerFactory();
+-    this.lastTextFactory_ = TextDisplayerFactory;
++    const textDisplayer = null;
+ 
+     const mediaSourceEngine = this.createMediaSourceEngine(
+         has.mediaElement, closedCaptionsParser, textDisplayer);
+@@ -2388,19 +2376,7 @@ shaka.Player = class extends shaka.util.FakeEventTarget {
+         this.chooseStreamsAndSwitch_(period);
+       }
+     }
+-    if (this.mediaSourceEngine_) {
+-      const TextDisplayerFactory = this.config_.textDisplayFactory;
+-      if (this.lastTextFactory_ != TextDisplayerFactory) {
+-        const displayer = new TextDisplayerFactory();
+-        this.mediaSourceEngine_.setTextDisplayer(displayer);
+-        this.lastTextFactory_ = TextDisplayerFactory;
+-
+-        if (this.streamingEngine_) {
+-          // Reload the text stream, so the cues will load again.
+-          this.streamingEngine_.reloadTextStream();
+-        }
+-      }
+-    }
++
+     if (this.abrManager_) {
+       this.abrManager_.configure(this.config_.abr);
+       // Simply enable/disable ABR with each call, since multiple calls to these
+@@ -4595,7 +4571,7 @@ shaka.Player = class extends shaka.util.FakeEventTarget {
+    * @private
+    */
+   shouldStreamText_() {
+-    return this.config_.streaming.alwaysStreamText || this.isTextTrackVisible();
++    return false;
+   }
+ 
+   /**
+diff --git a/lib/util/platform.js b/lib/util/platform.js
+index 2ae6bb8c..b0812ff6 100644
+--- a/lib/util/platform.js
++++ b/lib/util/platform.js
+@@ -34,6 +34,7 @@ shaka.util.Platform = class {
+    * @return {boolean}
+    */
+   static supportsMediaSource() {
++      /*
+     // Browsers that lack a media source implementation will have no reference
+     // to |window.MediaSource|. Platforms that we see having problematic media
+     // source implementations will have this reference removed via a polyfill.
+@@ -45,6 +46,7 @@ shaka.util.Platform = class {
+     if (!MediaSource.isTypeSupported) {
+       return false;
+     }
++    */
+ 
+     return true;
+   }
+@@ -56,8 +58,7 @@ shaka.util.Platform = class {
+    * @return {boolean}
+    */
+   static supportsMediaType(mimeType) {
+-    const video = shaka.util.Platform.anyMediaElement_();
+-    return video.canPlayType(mimeType) != '';
++    return true;
+   }
+ 
+   /**
+@@ -133,7 +134,7 @@ shaka.util.Platform = class {
+    * @return {boolean}
+    */
+   static isApple() {
+-    return !!navigator.vendor && navigator.vendor.includes('Apple');
++    return false;
+   }
+ 
+   /**
+@@ -142,7 +143,7 @@ shaka.util.Platform = class {
+    * @return {boolean}
+    */
+   static isMobile() {
+-    return /(?:iPhone|iPad|iPod|Android)/.test(navigator.userAgent);
++    return false;
+   }
+ 
+   /**
+@@ -155,8 +156,7 @@ shaka.util.Platform = class {
+    * @private
+    */
+   static userAgentContains_(key) {
+-    const userAgent = navigator.userAgent || '';
+-    return userAgent.includes(key);
++    return false;
+   }
+ 
+   /**
+diff --git a/lib/util/xml_utils.js b/lib/util/xml_utils.js
+index a2b47c62..f8b4e63b 100644
+--- a/lib/util/xml_utils.js
++++ b/lib/util/xml_utils.js
+@@ -68,7 +68,7 @@ shaka.util.XmlUtils = class {
+    */
+   static findChildren(elem, name) {
+     return Array.from(elem.childNodes).filter((child) => {
+-      return child instanceof Element && child.tagName == name;
++      return child.tagName && child.tagName == name;
+     });
+   }
+ 
+@@ -82,7 +82,7 @@ shaka.util.XmlUtils = class {
+    */
+   static findChildrenNS(elem, ns, name) {
+     return Array.from(elem.childNodes).filter((child) => {
+-      return child instanceof Element && child.localName == name &&
++      return child.localName && child.namespaceURI && child.localName == name &&
+           child.namespaceURI == ns;
+     });
+   }
+-- 
+2.17.1
+

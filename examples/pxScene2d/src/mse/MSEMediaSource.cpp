@@ -60,7 +60,7 @@ rtError MSEMediaSource::getSourceBuffers(rtObjectRef &v) const
 
 rtError MSEMediaSource::getActiveSourceBuffers(rtObjectRef &v) const
 {
-  ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(activeSourceBufferList);
+  //ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(activeSourceBufferList);
   //v = &mActiveBufferList;
   return RT_OK;
 }

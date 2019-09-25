@@ -124,29 +124,25 @@ WebCore::SourceBuffer &MSESourceBuffer::getWebkitSourceBuffer() const
 
 rtError MSESourceBuffer::getAppendWindowEnd(float &v) const
 {
-  ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(appendWindowEnd);
-  v = mAppendWindowEnd;
+  v = mSourceBufferImpl->getSourceBuffer().appendWindowEnd();
   return RT_OK;
 }
 
 rtError MSESourceBuffer::setAppendWindowEnd(float const &v)
 {
-  ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(appendWindowEnd);
-  mAppendWindowEnd = v;
+  mSourceBufferImpl->getSourceBuffer().setAppendWindowEnd(v);
   return RT_OK;
 }
 
 rtError MSESourceBuffer::getAppendWindowStart(float &v) const
 {
-  ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(appendWindowStart);
-  v = mAppendWindowStart;
+  v = mSourceBufferImpl->getSourceBuffer().appendWindowStart();
   return RT_OK;
 }
 
 rtError MSESourceBuffer::setAppendWindowStart(float const &v)
 {
-  ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(appendWindowStart);
-  mAppendWindowStart = v;
+  mSourceBufferImpl->getSourceBuffer().setAppendWindowStart(v);
   return RT_OK;
 }
 

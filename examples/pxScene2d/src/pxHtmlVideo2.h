@@ -76,22 +76,22 @@ public:
 
   // network state
   //[CEReactions=NotNeeded, Reflect, URL] attribute USVString src;
-  defineReadWriteAttribute(src, mSrc, rtString)
+  //defineReadWriteAttribute(src, mSrc, rtString)
 
   //attribute MediaProvider? srcObject;
 
   //[URL] readonly attribute USVString currentSrc;
-  defineReadOnlyAttribute(currentSrc, mCurrentSrc, rtString)
+  //defineReadOnlyAttribute(currentSrc, mCurrentSrc, rtString)
 
   //[CEReactions=NotNeeded] attribute DOMString? crossOrigin;
-  defineReadWriteAttribute(crossOrigin, mCrossOrigin, rtString)
+  //defineReadWriteAttribute(crossOrigin, mCrossOrigin, rtString)
 
   //const unsigned short NETWORK_EMPTY = 0;
   //const unsigned short NETWORK_IDLE = 1;
   //const unsigned short NETWORK_LOADING = 2;
   //const unsigned short NETWORK_NO_SOURCE = 3;
   //readonly attribute unsigned short networkState;
-  defineReadOnlyAttribute(networkState, mNetworkState, int)
+  //defineReadOnlyAttribute(networkState, mNetworkState, int)
 
   //[CEReactions=NotNeeded] attribute DOMString preload;
   //defineReadWriteAttribute(preload, mPreload, rtString)
@@ -147,7 +147,7 @@ public:
   rtError getPaused(bool &v) const;
 
   //attribute unrestricted double defaultPlaybackRate;
-  defineReadWriteAttribute(defaultPlaybackRate, mDefaultPlaybackRate, double)
+  //defineReadWriteAttribute(defaultPlaybackRate, mDefaultPlaybackRate, double)
 
   //attribute unrestricted double playbackRate;
   //defineReadWriteAttribute(playbackRate, mPlaybackRate, double)
@@ -193,7 +193,7 @@ public:
 
   // controls
   //[CEReactions=NotNeeded] attribute boolean controls;
-  defineReadWriteAttribute(controls, mControls, bool)
+  //defineReadWriteAttribute(controls, mControls, bool)
 
   //attribute double volume;
   //defineReadWriteAttribute(volume, mVolume, double)
@@ -208,16 +208,16 @@ public:
   rtError setMuted(bool const &v);
 
   //[CEReactions=NotNeeded, Reflect=muted] attribute boolean defaultMuted;
-  defineReadWriteAttribute(defaultMuted, mDefaultMuted, bool)
+  //defineReadWriteAttribute(defaultMuted, mDefaultMuted, bool)
 
   //[Conditional=VIDEO_TRACK, ImplementedAs=ensureAudioTracks] readonly attribute AudioTrackList audioTracks;
-  defineReadOnlyAttribute(audioTracks, &mAudioTracks, rtObjectRef)
+  //defineReadOnlyAttribute(audioTracks, &mAudioTracks, rtObjectRef)
 
   //[Conditional=VIDEO_TRACK, ImplementedAs=ensureVideoTracks] readonly attribute VideoTrackList videoTracks;
-  defineReadOnlyAttribute(videoTracks, &mVideoTracks, rtObjectRef)
+  //defineReadOnlyAttribute(videoTracks, &mVideoTracks, rtObjectRef)
 
   //[Conditional=VIDEO_TRACK, ImplementedAs=ensureTextTracks] readonly attribute TextTrackList textTracks;
-  defineReadOnlyAttribute(textTracks, &mTextTracks, rtObjectRef)
+  //defineReadOnlyAttribute(textTracks, &mTextTracks, rtObjectRef)
 
   //[Conditional=VIDEO_TRACK, MayThrowException] TextTrack addTextTrack(DOMString kind, optional DOMString label = "", optional DOMString language = "");
 

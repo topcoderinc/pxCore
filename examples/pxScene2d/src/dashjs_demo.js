@@ -15,6 +15,14 @@ px.import({scene: "px:scene.1.js",
         parent: scene.root
     });
 
+    var timerCb = function()
+      {
+        video.play();
+        setTimeout(timerCb, 1000);
+      };
+
+    timerCb();
+
     var url = "https://dash.akamaized.net/envivio/EnvivioDash3/manifest.mpd";
     //var url = "http://www.bok.net/dash/tears_of_steel/cleartext/stream.mpd";
     //var url = "https://bitmovin-a.akamaihd.net/content/MI201109210084_1/mpds/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.mpd";

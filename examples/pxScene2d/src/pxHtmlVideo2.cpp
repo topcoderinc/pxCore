@@ -194,7 +194,7 @@ rtError pxHtmlVideo2::load()
 
 rtError pxHtmlVideo2::canPlayType(const rtString &type, bool &ret)
 {
-  ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(canPlayType);
+  //ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(canPlayType);
   ret = false;
   return RT_OK;
 }
@@ -213,7 +213,7 @@ rtError pxHtmlVideo2::pause()
 
 rtError pxHtmlVideo2::fastSeek(double time)
 {
-  ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(fastSeek);
+  //ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(fastSeek);
   return RT_OK;
 }
 
@@ -241,7 +241,7 @@ WebCore::HTMLVideoElement &pxHtmlVideo2::getWebKitVideoElement() const
 
 rtError pxHtmlVideo2::getError(rtObjectRef &v) const
 {
-  ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(getError);
+  //ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(getError);
   return RT_OK;
 }
 
@@ -259,13 +259,13 @@ rtError pxHtmlVideo2::setMuted(bool const &v)
 
 rtError pxHtmlVideo2::getWidth(int &v) const
 {
-  ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(width);
+  //ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(width);
   return RT_OK;
 }
 
 rtError pxHtmlVideo2::setWidth(int v)
 {
-  ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(width);
+  //ASSERT_FIELD_ACCESS_NOT_IMPLEMENTED(width);
   return RT_OK;
 }
 
@@ -413,10 +413,10 @@ rtDefineMethod(pxHtmlVideo2, attachMediaSource)
 rtDefineMethod(pxHtmlVideo2, detachMediaSource)
 rtDefineProperty(pxHtmlVideo2, nodeName)
 rtDefineProperty(pxHtmlVideo2, error)
-rtDefineProperty(pxHtmlVideo2, src)
-rtDefineProperty(pxHtmlVideo2, currentSrc)
-rtDefineProperty(pxHtmlVideo2, crossOrigin)
-rtDefineProperty(pxHtmlVideo2, networkState)
+//rtDefineProperty(pxHtmlVideo2, src)
+//rtDefineProperty(pxHtmlVideo2, currentSrc)
+//rtDefineProperty(pxHtmlVideo2, crossOrigin)
+//rtDefineProperty(pxHtmlVideo2, networkState)
 rtDefineProperty(pxHtmlVideo2, preload)
 rtDefineProperty(pxHtmlVideo2, buffered)
 rtDefineProperty(pxHtmlVideo2, readyState)
@@ -424,20 +424,20 @@ rtDefineProperty(pxHtmlVideo2, seeking)
 rtDefineProperty(pxHtmlVideo2, currentTime)
 rtDefineProperty(pxHtmlVideo2, duration)
 rtDefineProperty(pxHtmlVideo2, paused)
-rtDefineProperty(pxHtmlVideo2, defaultPlaybackRate)
+//rtDefineProperty(pxHtmlVideo2, defaultPlaybackRate)
 rtDefineProperty(pxHtmlVideo2, playbackRate)
 rtDefineProperty(pxHtmlVideo2, played)
 rtDefineProperty(pxHtmlVideo2, seekable)
 rtDefineProperty(pxHtmlVideo2, ended)
 rtDefineProperty(pxHtmlVideo2, autoplay)
 rtDefineProperty(pxHtmlVideo2, loop)
-rtDefineProperty(pxHtmlVideo2, controls)
+//rtDefineProperty(pxHtmlVideo2, controls)
 rtDefineProperty(pxHtmlVideo2, volume)
 rtDefineProperty(pxHtmlVideo2, muted)
-rtDefineProperty(pxHtmlVideo2, defaultMuted)
-rtDefineProperty(pxHtmlVideo2, audioTracks)
-rtDefineProperty(pxHtmlVideo2, videoTracks)
-rtDefineProperty(pxHtmlVideo2, textTracks)
+//rtDefineProperty(pxHtmlVideo2, defaultMuted)
+//rtDefineProperty(pxHtmlVideo2, audioTracks)
+//rtDefineProperty(pxHtmlVideo2, videoTracks)
+//rtDefineProperty(pxHtmlVideo2, textTracks)
 rtDefineMethod(pxHtmlVideo2, load)
 rtDefineMethod(pxHtmlVideo2, canPlayType)
 rtDefineMethod(pxHtmlVideo2, play)
