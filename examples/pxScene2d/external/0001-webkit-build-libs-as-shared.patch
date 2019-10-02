@@ -1,0 +1,26 @@
+From 4dcce261734ee32e79f43ee519f02a29d0d41e4b Mon Sep 17 00:00:00 2001
+From: Alexey Kuts <kruntuid@gmail.com>
+Date: Thu, 3 Oct 2019 01:07:33 +0300
+Subject: [PATCH] 	build libs as shared
+
+---
+ Source/cmake/OptionsGTK.cmake | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/Source/cmake/OptionsGTK.cmake b/Source/cmake/OptionsGTK.cmake
+index 1f36ab4c577..a5a8640d45d 100644
+--- a/Source/cmake/OptionsGTK.cmake
++++ b/Source/cmake/OptionsGTK.cmake
+@@ -397,6 +397,9 @@ set(WebKit2_PKGCONFIG_FILE ${CMAKE_BINARY_DIR}/Source/WebKit/webkit2gtk-${WEBKIT
+ set(WebKit2WebExtension_PKGCONFIG_FILE ${CMAKE_BINARY_DIR}/Source/WebKit/webkit2gtk-web-extension-${WEBKITGTK_API_VERSION}.pc)
+ 
+ set(JavaScriptCore_LIBRARY_TYPE SHARED)
++set(WebCore_LIBRARY_TYPE SHARED)
++set(WebCore_LIBRARY_TYPE SHARED)
++set(WTF_LIBRARY_TYPE SHARED)
+ set(SHOULD_INSTALL_JS_SHELL ON)
+ 
+ # Add a typelib file to the list of all typelib dependencies. This makes it easy to
+-- 
+2.17.1
+
