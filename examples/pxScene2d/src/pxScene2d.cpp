@@ -3004,18 +3004,14 @@ void pxScriptView::runScript()
     mMakeReady = new rtFunctionCallback(makeReady, this);
     mGetContextID = new rtFunctionCallback(getContextID, this);
 
-#ifdef ENABLE_SPARK_VIDEO
     mCreateMediaSourceFunc = new rtFunctionCallback(createMediaSourceFunc, this);
-#endif
 
     mCtx->add("print", mPrintFunc.getPtr());
     mCtx->add("getScene", mGetScene.getPtr());
     mCtx->add("makeReady", mMakeReady.getPtr());
     mCtx->add("getContextID", mGetContextID.getPtr());
 
-#ifdef ENABLE_SPARK_VIDEO
     mCtx->add("createMSEMediaSource", mCreateMediaSourceFunc.getPtr());
-#endif
 
 #ifdef RUNINMAIN
     mReady = new rtPromise();
@@ -3134,13 +3130,13 @@ rtError pxScriptView::getScene(int numArgs, const rtValue* args, rtValue* result
 }
 
 
-#ifdef ENABLE_SPARK_VIDEO
 rtError pxScriptView::createMediaSourceFunc(int numArgs, const rtValue* args, rtValue* result, void* ctx)
 {
+#ifdef ENABLE_SPARK_VIDEO
   *result = new MSEMediaSource();
+#endif
   return RT_OK;
 }
-#endif
 
 #if 1
 rtError pxScriptView::getContextID(int /*numArgs*/, const rtValue* /*args*/, rtValue* result, void* /*ctx*/)

@@ -10,6 +10,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(PXCOREDIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 set(EXTDIR "${CMAKE_CURRENT_SOURCE_DIR}/../external")
+set(AAMPDIR "${EXTDIR}/aamp/aamp")
 include(${PXCOREDIR}/cmake/CommOpts.cmake)
 include(${PXCOREDIR}/cmake/CommDeps.cmake)
 include(${PXCOREDIR}/cmake/NodeDeps.cmake)
@@ -65,6 +66,7 @@ option(BUILD_WITH_PXOBJECT_TRACKING "BUILD_WITH_PXOBJECT_TRACKING" OFF)
 option(SPARK_ENABLE_OPTIMIZED_UPDATE "SPARK_ENABLE_OPTIMIZED_UPDATE" OFF)
 option(SPARK_ENABLE_VIDEO "SPARK_ENABLE_VIDEO" ON)
 option(SPARK_ENABLE_VIDEO_PUNCHTHROUGH "SPARK_ENABLE_VIDEO_PUNCHTHROUGH" OFF)
+option(SPARK_ENABLE_AAMP "SPARK_ENABLE_AAMP" ON)
 
 if(WIN32)
     option(PXSCENE_COMPILE_WARNINGS_AS_ERRORS "PXSCENE_COMPILE_WARNINGS_AS_ERRORS" OFF)
@@ -85,6 +87,11 @@ set(PXSCENE_DEFINITIONS )
 set(PXSCENE_ADDITIONAL_RESOURCES )
 set(PXSCENE_INSTALLER 0)
 
+if (BUILD_WITH_GIF)
+message("Building with GIF support")
+set(PLATFORM_LIBRARIES ${PLATFORM_LIBRARIES} gif)
+add_definitions(-DSUPPORT_GIF)
+endif (BUILD_WITH_GIF)
 ##
 ## APPLE BUILDS
 ##
@@ -604,6 +611,50 @@ endif (BUILD_WITH_PXOBJECT_TRACKING)
 
 set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} ${PXSCENE_LINKER_OPTIONS})
 link_directories(${PXSCENE_LINK_DIRECTORIES})
+
+if (SPARK_ENABLE_AAMP)
+    set(PXSCENE_APP_FILES ${PXSCENE_APP_FILES} aamp/pxAAMPPlayer.cpp)
+
+    if (APPLE)
+        find_package(PkgConfig REQUIRED)
+        set(MAC_OPT /usr/local/opt)
+        set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${MAC_OPT}/libffi/lib/pkgconfig:${MAC_OPT}/openssl/lib/pkgconfig")
+        pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
+        pkg_check_modules(GSTREAMERBASE REQUIRED gstreamer-app-1.0)
+        pkg_check_modules(LibXml2 REQUIRED libxml-2.0)
+        pkg_check_modules(LIBDASH REQUIRED libdash)
+        set(PXSCENE_APP_FILES ${PXSCENE_APP_FILES} aamp/mac/AAMPView.mm)
+    endif (APPLE)
+
+    include_directories(AFTER ${AAMPDIR} ${GSTREAMER_INCLUDE_DIRS} /usr/local/include)
+    set(ENV{LIBRARY_PATH} "$ENV{LIBRARY_PATH}:/usr/local/lib/:${MAC_OPT}/openssl/lib:${MAC_OPT}/gstreamer/lib:${MAC_OPT}/glib/lib:${MAC_OPT}/gettext/lib:${MAC_OPT}/gst-plugins-base/lib:${MAC_OPT}/ossp-uuid/lib")
+
+    set(PXSCENE_LINK_LIBRARIES
+            ${PXSCENE_LINK_LIBRARIES}
+            ${LibXml2_LIBRARIES}
+            curl
+            ${LIBDASH_LIBRARIES}
+            ${GSTREAMER_LIBRARIES}
+            ${GSTREAMERBASE_LIBRARIES}
+            curl
+            abr
+            gstvideo-1.0
+            )
+    if (APPLE)
+        set(PXSCENE_LINK_LIBRARIES ${PXSCENE_LINK_LIBRARIES} ${AAMPDIR}/build/libaamp.a)
+    else ()
+        set(PXSCENE_LINK_LIBRARIES ${PXSCENE_LINK_LIBRARIES} ${AAMPDIR}/build/libaamp.so -lcurl -lssl -lcrypto)
+    endif (APPLE)
+
+    link_directories(/usr/local/lib/
+            /usr/local/lib/
+            /usr/local/opt/openssl/lib
+            /usr/local/opt/gstreamer/lib
+            /usr/local/opt/glib/lib
+            /usr/local/opt/gettext/lib
+            /usr/local/opt/gst-plugins-base/lib
+            /usr/local/opt/ossp-uuid/lib)
+endif (SPARK_ENABLE_AAMP)
 
 ##
 ## SPARK app

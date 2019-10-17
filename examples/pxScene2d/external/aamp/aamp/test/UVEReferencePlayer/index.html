@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<!--
+/*
+ * If not stated otherwise in this file or this component's license file the
+ * following copyright and licenses apply:
+ *
+ * Copyright 2018 RDK Management
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+-->
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>UVE Reference Player</title>
+    <link rel="stylesheet" href="UVERefPlayerStyle.css">
+    <script src="UVEMediaPlayer.js"></script>
+    <script src="UVEPlayerUI.js"></script>
+    <script src="UVERefPlayer.js"></script>
+</head>
+
+<body>
+    <div id="videoContainer"  class="container">
+        <!-- Video -->
+        <video id="dummyVideo" class="videoPlayer">
+            <source src="http://localhost/placeholder" type="video/ave">
+        </video>
+        <!-- Buffering Widget -->
+        <div  id="bufferWidget">
+          <div class="loader"></div>
+          <p id="buff"><b> BUFFERING </b></p>
+          <div class="balls">
+            <div class="ball1"></div>
+            <div class="ball2"></div>
+            <div class="ball3"></div>
+          </div>
+        </div>
+        <div id="controlDiv">
+          <!-- Video Controls -->
+          <div id="videoControlsDiv">
+              <button class="button" id="playOrPauseButton"><img id="playOrPauseIcon" src="icons/play.png"></button>
+              <button class="button" id="rewindButton"><img class="flipImg" src="icons/fastForward.png"></button>
+              <button class="button" id="skipBackwardButton"><img class="flipImg" src="icons/skipForward.png"></button>
+              <nobr id="currentDuration"></nobr>
+                <div id="seekBarOuter">
+                  <div id="seekBar"></div>
+                </div>
+              <nobr id="totalDuration"></nobr>
+              <button class="button" id="skipForwardButton"><img src="icons/skipForward.png"></button>
+              <button class="button" id="fastForwardButton"><img src="icons/fastForward.png"></button>
+              <button class="button" id="muteVideoButton"><img id="muteIcon" src="icons/unMute.png"></button>
+              <button class="button" id="ccToggleButton"><img id="ccIcon" src="icons/ccOff.png"></button>
+          </div>
+        </div>
+        <div id="controlDivNext">
+          <!-- Video Controls -->
+          <div id="videoControlsDivNext">
+		      <label id="settingText">Video Quality:</label>
+              <select id="settingButton">
+                <option value="" selected>Auto</option>
+              </select>
+              <select id="videoURLs">
+              </select>
+              <button class="button" id="loadButton">Load</button>
+              <button class="button" id="deleteButton">Delete</button>
+              <label>
+                  <button class="round-button" id="helpButton"><img src="icons/help.png"></button>
+              </label>
+          </div>
+        </div>
+    </div>
+
+    <!-- The Help Modal -->
+    <div id="myModal" class="modal">
+      <!-- Help Modal content -->
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Help</h3>
+        </div>
+        <div class="modal-body">
+          <pre>Left Key     - Navigate to Left</pre>
+          <pre>Right Key    - Navigate to Right</pre>
+          <pre>Up Key       - Move to Top Nav bar</pre>
+          <pre>Down Key     - Move to Bottom Nav bar</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- The Delete Modal -->
+    <div id="deleteModal" class="modal">
+      <!-- Delete Modal content -->
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Deleted</h3>
+        </div>
+        <div class="modal-body">
+          <p id="deleteContent"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- The Overlay Modal -->
+    <div id="overlayModal" class="overModal">
+      <!-- Overlay Modal content -->
+      <div class="overlay-modal-content">
+        <div class="overlay-modal-body">
+          <p>STATE: <nobr id="playState" class="overlay-inside">PLAYING</nobr></p>
+          <p>POSITION: <nobr id="testPosition"  class="overlay-inside">0</nobr></p>
+          <p>SPEED: <nobr id="speedX"  class="overlay-inside">0</nobr></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- The Fast Forward Modal -->
+    <div id="ffModal" class="circle">
+      <img id="ffIMG" src="icons/fastForward.png">
+    </div>
+    <p id="ffSpeed"></p>
+</body>
+
+</html>

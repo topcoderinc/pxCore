@@ -662,9 +662,7 @@ protected:
 
   static rtError getContextID(int /*numArgs*/, const rtValue* /*args*/, rtValue* result, void* /*ctx*/);
 
-#ifdef ENABLE_SPARK_VIDEO 
   static rtError createMediaSourceFunc(int /*numArgs*/, const rtValue* /*args*/, rtValue* result, void* ctx);
-#endif
 
   virtual void onSize(int32_t w, int32_t h)
   {

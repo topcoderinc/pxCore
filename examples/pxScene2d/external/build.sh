@@ -240,3 +240,8 @@ if [ ! -e shaka-player/dist/shaka-player.compiled.debug.js ]
 then
     bash buildShakaJS.sh
 fi
+
+# aamp
+cd aamp
+./build-aamp.sh
+cd ..
