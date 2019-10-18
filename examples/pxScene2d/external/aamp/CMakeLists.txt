@@ -100,7 +100,7 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../gst-pipeline/build/)
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../extlibs/lib)
 #link_directories(${CJSON_LIBRARY_DIRS})
 
-set(LIBAAMP_SOURCES base16.cpp fragmentcollector_hls.cpp fragmentcollector_mpd.cpp streamabstraction.cpp _base64.cpp drm/ave/drm.cpp main_aamp.cpp aampgstplayer.cpp tsprocessor.cpp  aamplogging.cpp AampCacheHandler.cpp metrics/HTTPStatistics.cpp metrics/LicnStatistics.cpp metrics/FragmentStatistics.cpp metrics/VideoStat.cpp metrics/ProfileInfo.cpp # drm/aes/aamp_aes.cpp
+set(LIBAAMP_SOURCES base16.cpp fragmentcollector_hls.cpp fragmentcollector_mpd.cpp streamabstraction.cpp _base64.cpp drm/ave/drm.cpp main_aamp.cpp aampgstplayer.cpp tsprocessor.cpp  aamplogging.cpp AampCacheHandler.cpp metrics/HTTPStatistics.cpp metrics/LicnStatistics.cpp metrics/FragmentStatistics.cpp metrics/VideoStat.cpp metrics/ProfileInfo.cpp drm/aes/aamp_aes.cpp
         )
 
 if(CMAKE_CONTENT_METADATA_IPDVR_ENABLED)
@@ -112,8 +112,8 @@ elseif(CMAKE_USE_SECCLIENT)
 	set(SEC_CLIENT_LIB -lSecClient )
 endif()
 
-#set(LIBAAMP_DEFINES "${LIBAAMP_DEFINES} -DAAMP_VANILLA_AES_SUPPORT ${USE_MAC_FOR_RANDOM_GEN}")
-set(LIBAAMP_DEFINES "${LIBAAMP_DEFINES} ${USE_MAC_FOR_RANDOM_GEN}")
+set(LIBAAMP_DEFINES "${LIBAAMP_DEFINES} -DAAMP_VANILLA_AES_SUPPORT ${USE_MAC_FOR_RANDOM_GEN}")
+#set(LIBAAMP_DEFINES "${LIBAAMP_DEFINES} ${USE_MAC_FOR_RANDOM_GEN}")
 
 if(CMAKE_USE_RDK_PLUGINS)
 	message("CMAKE_USE_RDK_PLUGINS set")

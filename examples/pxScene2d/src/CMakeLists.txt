@@ -637,10 +637,8 @@ if (SPARK_ENABLE_AAMP)
             ${GSTREAMERBASE_LIBRARIES}
             dash
             curl
-            curlpp
             aamp
             curl
-            curlpp
             abr
             gstvideo-1.0
             )
