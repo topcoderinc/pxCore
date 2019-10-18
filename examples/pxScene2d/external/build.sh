@@ -242,7 +242,27 @@ then
     bash buildShakaJS.sh
 fi
 
+# libdash
+if [ ! -e extlibs/lib/libdash.so ]
+then
+    bash ./libdash/libdash/build.sh
+fi
+
+# aampabr
+if [ ! -e extlibs/lib/libabr.so ]
+then
+    bash ./aampabr/build.sh
+fi
+
+# gst-pipeline
+if [ ! -e extlibs/lib/libaamp.so ]
+then
+    bash ./aamp/build.sh
+fi
+
 # aamp
-cd aamp
-./build-aamp.sh
-cd ..
+if [ ! -e extlibs/lib/libaamp.so ]
+then
+    bash ./aamp/build.sh
+fi
+

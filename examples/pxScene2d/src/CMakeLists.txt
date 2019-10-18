@@ -10,7 +10,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(PXCOREDIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 set(EXTDIR "${CMAKE_CURRENT_SOURCE_DIR}/../external")
-set(AAMPDIR "${EXTDIR}/aamp/aamp")
+set(EXTLIBS "${CMAKE_CURRENT_SOURCE_DIR}/../external/extlibs")
 include(${PXCOREDIR}/cmake/CommOpts.cmake)
 include(${PXCOREDIR}/cmake/CommDeps.cmake)
 include(${PXCOREDIR}/cmake/NodeDeps.cmake)
@@ -523,7 +523,7 @@ elseif (CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
 
     link_directories(${WEBKIT_BUILD_ROOT}/lib)
 
-    SET(WEBKIT_HELPER_LIBS gdk-3 gtk-3 gdk-3 pangocairo-1.0 pango-1.0 atk-1.0 cairo-gobject cairo gdk_pixbuf-2.0 gio-2.0 gobject-2.0 glib-2.0 gdk-3 gstpbutils-1.0 gstapp-1.0 gstbase-1.0 gstreamer-1.0 EGL png16 m pthread json-glib-1.0 gio-2.0 atk-1.0 gobject-2.0 glib-2.0 gstvideo-1.0 gstaudio-1.0 gsttag-1.0 cairo GL X11 Xcomposite Xdamage wayland-egl gpg-error wayland-client harfbuzz gcrypt webpmux webpdemux webp jpeg gstgl-1.0 gstvideo-1.0 gstbase-1.0 fontconfig gstreamer-1.0 gobject-2.0 glib-2.0 xml2 gobject-2.0 glib-2.0 webp xslt xml2 harfbuzz-icu harfbuzz-gobject gobject-2.0 glib-2.0 harfbuzz sqlite3 hyphen soup-2.4 gio-2.0 gobject-2.0 glib-2.0 secret-1 dl icui18n icuuc z gstfft-1.0)
+    SET(WEBKIT_HELPER_LIBS gdk-3 gtk-3 gdk-3 pangocairo-1.0 pango-1.0 atk-1.0 cairo-gobject cairo gdk_pixbuf-2.0 gio-2.0 gobject-2.0 glib-2.0 gdk-3 gstpbutils-1.0 gstapp-1.0 gstbase-1.0 gstreamer-1.0 EGL png16 m pthread json-glib-1.0 gio-2.0 atk-1.0 gobject-2.0 glib-2.0 gstvideo-1.0 gstaudio-1.0 gsttag-1.0 cairo GL X11 Xcomposite Xdamage wayland-egl gpg-error wayland-client harfbuzz gcrypt webpmux webpdemux webp jpeg gstgl-1.0 gstvideo-1.0 gstbase-1.0 fontconfig gstreamer-1.0 gobject-2.0 glib-2.0 xml2 gobject-2.0 glib-2.0 webp xslt xml2 harfbuzz-icu harfbuzz-gobject gobject-2.0 glib-2.0 harfbuzz sqlite3 hyphen soup-2.4 gio-2.0 gobject-2.0 glib-2.0 secret-1 dl icui18n icuuc z gstfft-1.0 cjson)
 
     set(PXSCENE_LINK_LIBRARIES -Wl,--as-needed -Wl,--gc-sections -Wl,--no-export-dynamic ${PXSCENE_LINK_LIBRARIES} 
                 ${WEBKIT_HELPER_LIBS} WTFGTK WebCoreGTK PAL javascriptcoregtk-4.0
@@ -613,7 +613,7 @@ set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} ${PXSCENE_LINKER_OPTIONS})
 link_directories(${PXSCENE_LINK_DIRECTORIES})
 
 if (SPARK_ENABLE_AAMP)
-    set(PXSCENE_APP_FILES ${PXSCENE_APP_FILES} aamp/pxAAMPPlayer.cpp)
+    set(PXSCENE_APP_FILES ${PXSCENE_APP_FILES} pxAAMPVideo.cpp)
 
     if (APPLE)
         find_package(PkgConfig REQUIRED)
@@ -626,25 +626,24 @@ if (SPARK_ENABLE_AAMP)
         set(PXSCENE_APP_FILES ${PXSCENE_APP_FILES} aamp/mac/AAMPView.mm)
     endif (APPLE)
 
-    include_directories(AFTER ${AAMPDIR} ${GSTREAMER_INCLUDE_DIRS} /usr/local/include)
+    include_directories(AFTER ${GSTREAMER_INCLUDE_DIRS} /usr/local/include ${EXTLIBS}/include)
     set(ENV{LIBRARY_PATH} "$ENV{LIBRARY_PATH}:/usr/local/lib/:${MAC_OPT}/openssl/lib:${MAC_OPT}/gstreamer/lib:${MAC_OPT}/glib/lib:${MAC_OPT}/gettext/lib:${MAC_OPT}/gst-plugins-base/lib:${MAC_OPT}/ossp-uuid/lib")
 
     set(PXSCENE_LINK_LIBRARIES
             ${PXSCENE_LINK_LIBRARIES}
             ${LibXml2_LIBRARIES}
-            curl
             ${LIBDASH_LIBRARIES}
             ${GSTREAMER_LIBRARIES}
             ${GSTREAMERBASE_LIBRARIES}
+            dash
             curl
+            curlpp
+            aamp
+            curl
+            curlpp
             abr
             gstvideo-1.0
             )
-    if (APPLE)
-        set(PXSCENE_LINK_LIBRARIES ${PXSCENE_LINK_LIBRARIES} ${AAMPDIR}/build/libaamp.a)
-    else ()
-        set(PXSCENE_LINK_LIBRARIES ${PXSCENE_LINK_LIBRARIES} ${AAMPDIR}/build/libaamp.so -lcurl -lssl -lcrypto)
-    endif (APPLE)
 
     link_directories(/usr/local/lib/
             /usr/local/lib/
@@ -653,7 +652,8 @@ if (SPARK_ENABLE_AAMP)
             /usr/local/opt/glib/lib
             /usr/local/opt/gettext/lib
             /usr/local/opt/gst-plugins-base/lib
-            /usr/local/opt/ossp-uuid/lib)
+            /usr/local/opt/ossp-uuid/lib
+            ${EXTLIBS}/lib)
 endif (SPARK_ENABLE_AAMP)
 
 ##

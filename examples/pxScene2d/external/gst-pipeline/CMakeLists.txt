@@ -1,4 +1,5 @@
 cmake_minimum_required (VERSION 2.6)
+
 project (gstpipeline)
 
 find_package(PkgConfig REQUIRED)
@@ -9,3 +10,6 @@ pkg_check_modules(GSTREAMERBASE REQUIRED gstreamer-app-1.0)
 include_directories(${GSTREAMER_INCLUDE_DIRS})
 
 add_library(gstpipeline px_gst_pipeline.cpp)
+
+install(FILES px_gst_pipeline.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+install(TARGETS gstpipeline LIBRARY)
