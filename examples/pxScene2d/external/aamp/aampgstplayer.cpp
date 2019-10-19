@@ -36,7 +36,6 @@
 #include <atomic>
 #include "px_gst_pipeline.h"
 
-
 #ifdef __APPLE__
 	#include "gst/video/videooverlay.h"
 	guintptr (*gCbgetWindowContentView)() = NULL;
@@ -122,7 +121,7 @@ struct AAMPGstPlayerPriv
 	media_stream stream[AAMP_TRACK_COUNT];
 	//GstElement *pipeline; //GstPipeline used for playback.
 	//GstBus *bus; //Bus for receiving GstEvents from pipeline.
-    pxGstPipeline *pipeline;
+    pxGstPipeline *px_pipeline;
 	int current_rate; 
 	guint64 total_bytes;
 	gint n_audio; //Number of audio tracks.
@@ -867,7 +866,7 @@ static gboolean buffering_timeout (gpointer data)
 		else if (bytes > DEFAULT_BUFFERING_QUEUED_BYTES_MIN || frames > DEFAULT_BUFFERING_QUEUED_FRAMES_MIN || privateContext->buffering_timeout_cnt-- == 0)
 		{
 			logprintf("%s: Set pipeline state to %s - buffering_timeout_cnt %u  bytes %u  frames %u\n", __FUNCTION__, gst_element_state_get_name(_this->privateContext->buffering_target_state), (_this->privateContext->buffering_timeout_cnt+1), bytes, frames);
-			gst_element_set_state (_this->privateContext->pipeline->pipeline(), _this->privateContext->buffering_target_state);
+			gst_element_set_state (_this->privateContext->px_pipeline->pipeline(), _this->privateContext->buffering_target_state);
 			_this->privateContext->buffering_in_progress = false;
 		}
 	}
@@ -931,7 +930,7 @@ static gboolean bus_message(GstBus * bus, GstMessage * msg, AAMPGstPlayer * _thi
 		GstState old_state, new_state, pending_state;
 		gst_message_parse_state_changed(msg, &old_state, &new_state, &pending_state);
 
-		isPlaybinStateChangeEvent = (GST_MESSAGE_SRC(msg) == GST_OBJECT(_this->privateContext->pipeline->pipeline()));
+		isPlaybinStateChangeEvent = (GST_MESSAGE_SRC(msg) == GST_OBJECT(_this->privateContext->px_pipeline->pipeline()));
 
 		if (gpGlobalConfig->logging.gst || isPlaybinStateChangeEvent)
 		{
@@ -964,7 +963,7 @@ static gboolean bus_message(GstBus * bus, GstMessage * msg, AAMPGstPlayer * _thi
 
 				if (gpGlobalConfig->logging.gst )
 				{
-					GST_DEBUG_BIN_TO_DOT_FILE((GstBin *)_this->privateContext->pipeline->pipeline(), GST_DEBUG_GRAPH_SHOW_ALL, "myplayer");
+					GST_DEBUG_BIN_TO_DOT_FILE((GstBin *)_this->privateContext->px_pipeline->pipeline(), GST_DEBUG_GRAPH_SHOW_ALL, "myplayer");
 					// output graph to .dot format which can be visualized with Graphviz tool if:
 					// gstreamer is configured with --gst-enable-gst-debug
 					// and "gst" is enabled in aamp.cfg
@@ -982,7 +981,7 @@ static gboolean bus_message(GstBus * bus, GstMessage * msg, AAMPGstPlayer * _thi
 					/*
 					brcmvideosink doesn't sets the rectangle property correct by default
 					gst-inspect-1.0 brcmvideosink
-					g_object_get(_this->privateContext->pipeline, "video-sink", &videoSink, NULL); - reports NULL
+					g_object_get(_this->privateContext->px_pipeline->pipeline(), "video-sink", &videoSink, NULL); - reports NULL
 					note: alternate "window-set" works as well
 					*/
 					_this->privateContext->video_sink = (GstElement *) msg->src;
@@ -1082,8 +1081,8 @@ static gboolean bus_message(GstBus * bus, GstMessage * msg, AAMPGstPlayer * _thi
 	case GST_MESSAGE_CLOCK_LOST:
 		logprintf("GST_MESSAGE_CLOCK_LOST\n");
 		// get new clock - needed?
-		gst_element_set_state(_this->privateContext->pipeline->pipeline(), GST_STATE_PAUSED);
-		gst_element_set_state(_this->privateContext->pipeline->pipeline(), GST_STATE_PLAYING);
+		gst_element_set_state(_this->privateContext->px_pipeline->pipeline(), GST_STATE_PAUSED);
+		gst_element_set_state(_this->privateContext->px_pipeline->pipeline(), GST_STATE_PLAYING);
 		break;
 
 #ifdef TRACE
@@ -1278,33 +1277,32 @@ bool AAMPGstPlayer::CreatePipeline()
 	bool ret = false;
 	logprintf("%s(): Creating gstreamer pipeline\n", __FUNCTION__);
 
-	if (privateContext->pipeline)
+	if (privateContext->px_pipeline)
 	{
 		DestroyPipeline();
 	}
 
-    privateContext->pipeline = new pxGstPipeline();
-    privateContext->pipeline->Configure("AAMPGstPlayerPipeline");
+    privateContext->px_pipeline = new pxGstPipeline();
+    privateContext->px_pipeline->Configure("AAMPGstPlayerPipeline");
 
-	if (privateContext->pipeline)
+	if (privateContext->px_pipeline)
 	{
-        if (privateContext->pipeline->bus())
+		if (privateContext->px_pipeline->bus())
 		{
-			privateContext->busWatchId = privateContext->pipeline->setBusOnMessageCb((GstBusFunc)bus_message, this);
-#ifdef USE_GST1
-            privateContext->pipeline->setBusSyncHandlerCb((GstBusSyncHandler) bus_sync_handler, this);
-#else
-            privateContext->pipeline->setBusSyncHandlerCb((GstBusSyncHandler) bus_sync_handler, this);
-#endif
+			privateContext->busWatchId = 
+                privateContext->px_pipeline->setBusOnMessageCb((GstBusFunc) bus_message, this);
+
+            privateContext->px_pipeline->setBusSyncHandlerCb((GstBusSyncHandler) bus_sync_handler, this);
+
 			privateContext->buffering_enabled = gpGlobalConfig->gstreamerBufferingBeforePlay;
 			privateContext->buffering_in_progress = false;
 			privateContext->buffering_timeout_cnt = DEFAULT_BUFFERING_MAX_CNT;
 			privateContext->buffering_target_state = GST_STATE_NULL;
 #ifdef INTELCE
 			privateContext->buffering_enabled = false;
-			logprintf("%s buffering_enabled forced 0, INTELCE\n", GST_ELEMENT_NAME(privateContext->pipeline->pipeline()));
+			logprintf("%s buffering_enabled forced 0, INTELCE\n", GST_ELEMENT_NAME(privateContext->px_pipeline->pipeline()));
 #else
-			logprintf("%s buffering_enabled %u\n", GST_ELEMENT_NAME(privateContext->pipeline->pipeline()), privateContext->buffering_enabled);
+			logprintf("%s buffering_enabled %u\n", GST_ELEMENT_NAME(privateContext->px_pipeline->pipeline()), privateContext->buffering_enabled);
 #endif
 			ret = true;
 		}
@@ -1327,15 +1325,17 @@ bool AAMPGstPlayer::CreatePipeline()
  */
 void AAMPGstPlayer::DestroyPipeline()
 {
-	if (privateContext->pipeline)
-	{
-        privateContext->pipeline->Destroy();
-	}
 	if (privateContext->busWatchId != 0)
 	{
 		g_source_remove(privateContext->busWatchId);
 		privateContext->busWatchId = 0;
 	}
+	if (privateContext->px_pipeline)
+	{
+        privateContext->px_pipeline->Destroy();
+        privateContext->px_pipeline = NULL;
+	}
+
     //video decoder handle will change with new pipeline
     privateContext->decoderHandleNotified = false;
 
@@ -1487,7 +1487,7 @@ void AAMPGstPlayer::TearDownStream(MediaType mediaType)
 	if ((stream->format != FORMAT_INVALID) && (stream->format != FORMAT_NONE))
 	{
 		logprintf("AAMPGstPlayer::TearDownStream: mediaType %d \n", (int)mediaType);
-		if (privateContext->pipeline)
+		if (privateContext->px_pipeline->pipeline())
 		{
 			privateContext->buffering_in_progress = false;   /* stopping pipeline, don't want to change state if GST_MESSAGE_ASYNC_DONE message comes in */
 			/* set the playbin state to NULL before detach it */
@@ -1496,13 +1496,13 @@ void AAMPGstPlayer::TearDownStream(MediaType mediaType)
 				logprintf("AAMPGstPlayer::TearDownStream: Failed to set NULL state for sinkbin\n");
 			}
 
-			if (stream->sinkbin && (!gst_bin_remove(GST_BIN(privateContext->pipeline->pipeline()), GST_ELEMENT(stream->sinkbin))))
+			if (stream->sinkbin && (!gst_bin_remove(GST_BIN(privateContext->px_pipeline->pipeline()), GST_ELEMENT(stream->sinkbin))))
 			{
 				logprintf("AAMPGstPlayer::TearDownStream:  Unable to remove sinkbin from pipeline\n");
 			}
 			if (stream->using_playersinkbin)
 			{
-				if (!gst_bin_remove(GST_BIN(privateContext->pipeline->pipeline()), GST_ELEMENT(stream->source)))
+				if (!gst_bin_remove(GST_BIN(privateContext->px_pipeline->pipeline()), GST_ELEMENT(stream->source)))
 				{
 					logprintf("AAMPGstPlayer::TearDownStream:  Unable to remove source from pipeline\n");
 				}
@@ -1607,7 +1607,7 @@ static int AAMPGstPlayer_SetupStream(AAMPGstPlayer *_this, int streamId)
 			g_object_set(stream->sinkbin, "video-sink", vidsink, NULL);
 		}
 #endif
-		gst_bin_add(GST_BIN(_this->privateContext->pipeline->pipeline()), stream->sinkbin);
+		gst_bin_add(GST_BIN(_this->privateContext->px_pipeline->pipeline()), stream->sinkbin);
 		gint flags;
 		g_object_get(stream->sinkbin, "flags", &flags, NULL);
 		logprintf("playbin flags1: 0x%x\n", flags); // 0x617 on settop
@@ -1625,7 +1625,7 @@ static int AAMPGstPlayer_SetupStream(AAMPGstPlayer *_this, int streamId)
 	else
 	{
 		stream->source = AAMPGstPlayer_GetAppSrc(_this,stream->format);
-		gst_bin_add(GST_BIN(_this->privateContext->pipeline->pipeline()), stream->source);
+		gst_bin_add(GST_BIN(_this->privateContext->px_pipeline->pipeline()), stream->source);
 		gst_element_sync_state_with_parent(stream->source);
 		stream->sinkbin = gst_element_factory_make("playersinkbin", NULL);
 		if (NULL == stream->sinkbin)
@@ -1634,7 +1634,7 @@ static int AAMPGstPlayer_SetupStream(AAMPGstPlayer *_this, int streamId)
 			return -1;
 		}
 		g_signal_connect(stream->sinkbin, "event-callback", G_CALLBACK(AAMPGstPlayer_PlayersinkbinCB), _this);
-		gst_bin_add(GST_BIN(_this->privateContext->pipeline->pipeline()), stream->sinkbin);
+		gst_bin_add(GST_BIN(_this->privateContext->px_pipeline->pipeline()), stream->sinkbin);
 		gst_element_link(stream->source, stream->sinkbin);
 		gst_element_sync_state_with_parent(stream->sinkbin);
 
@@ -1773,8 +1773,8 @@ void AAMPGstPlayer::Send(MediaType mediaType, const void *ptr, size_t len0, doub
 #ifdef TRACE_VID_PTS
 	if (mediaType == eMEDIATYPE_VIDEO && privateContext->rate != AAMP_NORMAL_PLAY_RATE)
 	{
-		logprintf("AAMPGstPlayer %s : rate %d fpts %f pts %llu pipeline->stream_time %lu ", (mediaType == eMEDIATYPE_VIDEO)?"vid":"aud", privateContext->rate, fpts, (unsigned long long)pts, GST_PIPELINE(this->privateContext->pipeline->pipeline())->stream_time);
-		GstClock* clock = gst_pipeline_get_clock(GST_PIPELINE(this->privateContext->pipeline->pipeline()));
+		logprintf("AAMPGstPlayer %s : rate %d fpts %f pts %llu pipeline->stream_time %lu ", (mediaType == eMEDIATYPE_VIDEO)?"vid":"aud", privateContext->rate, fpts, (unsigned long long)pts, GST_PIPELINE(this->privateContext->px_pipeline->pipeline())->stream_time);
+		GstClock* clock = gst_pipeline_get_clock(GST_PIPELINE(this->privateContext->px_pipeline->pipeline()));
 		if (clock)
 		{
 			GstClockTime curr = gst_clock_get_time(clock);
@@ -1867,8 +1867,8 @@ void AAMPGstPlayer::Send(MediaType mediaType, GrowableBuffer* pBuffer, double fp
 #ifdef TRACE_VID_PTS
 	if (mediaType == eMEDIATYPE_VIDEO && privateContext->rate != AAMP_NORMAL_PLAY_RATE)
 	{
-		logprintf("AAMPGstPlayer %s : rate %d fpts %f pts %llu pipeline->stream_time %lu ", (mediaType == eMEDIATYPE_VIDEO)?"vid":"aud", privateContext->rate, fpts, (unsigned long long)pts, GST_PIPELINE(this->privateContext->pipeline->pipeline())->stream_time);
-		GstClock* clock = gst_pipeline_get_clock(GST_PIPELINE(this->privateContext->pipeline->pipeline()));
+		logprintf("AAMPGstPlayer %s : rate %d fpts %f pts %llu pipeline->stream_time %lu ", (mediaType == eMEDIATYPE_VIDEO)?"vid":"aud", privateContext->rate, fpts, (unsigned long long)pts, GST_PIPELINE(this->privateContext->px_pipeline->pipeline())->stream_time);
+		GstClock* clock = gst_pipeline_get_clock(GST_PIPELINE(this->privateContext->px_pipeline->pipeline()));
 		if (clock)
 		{
 			GstClockTime curr = gst_clock_get_time(clock);
@@ -1951,7 +1951,7 @@ void AAMPGstPlayer::Configure(StreamOutputFormat format, StreamOutputFormat audi
 	privateContext->rate = aamp->rate;
 #endif
 
-	if (privateContext->pipeline == NULL)
+	if (privateContext->px_pipeline == NULL)
 	{
 		CreatePipeline();
 	}
@@ -2009,7 +2009,7 @@ void AAMPGstPlayer::Configure(StreamOutputFormat format, StreamOutputFormat audi
 	}
 	if(aamp->IsFragmentBufferingRequired())
 	{
-		if (gst_element_set_state(this->privateContext->pipeline->pipeline(), GST_STATE_PAUSED) == GST_STATE_CHANGE_FAILURE)
+		if (gst_element_set_state(this->privateContext->px_pipeline->pipeline(), GST_STATE_PAUSED) == GST_STATE_CHANGE_FAILURE)
 		{
 			logprintf("AAMPGstPlayer::%s %d > GST_STATE_PAUSED failed\n", __FUNCTION__, __LINE__);
 		}
@@ -2019,7 +2019,7 @@ void AAMPGstPlayer::Configure(StreamOutputFormat format, StreamOutputFormat audi
 	{
 		if (this->privateContext->buffering_enabled && format != FORMAT_NONE && format != FORMAT_INVALID && AAMP_NORMAL_PLAY_RATE == privateContext->rate)
 		{
-			if (gst_element_set_state(this->privateContext->pipeline->pipeline(), GST_STATE_PAUSED) == GST_STATE_CHANGE_FAILURE)
+			if (gst_element_set_state(this->privateContext->px_pipeline->pipeline(), GST_STATE_PAUSED) == GST_STATE_CHANGE_FAILURE)
 			{
 				logprintf("AAMPGstPlayer_Configure GST_STATE_PLAYING failed\n");
 			}
@@ -2030,7 +2030,7 @@ void AAMPGstPlayer::Configure(StreamOutputFormat format, StreamOutputFormat audi
 		}
 		else
 		{
-			if (gst_element_set_state(this->privateContext->pipeline->pipeline(), GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE)
+			if (gst_element_set_state(this->privateContext->px_pipeline->pipeline(), GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE)
 			{
 				logprintf("AAMPGstPlayer::%s %d > GST_STATE_PLAYING failed\n", __FUNCTION__, __LINE__);
 			}
@@ -2167,7 +2167,7 @@ void AAMPGstPlayer::Stop(bool keepLastFrame)
 		privateContext->firstFrameCallbackIdleTaskPending = false;
 		privateContext->firstFrameCallbackIdleTaskId = 0;
 	}
-	if (this->privateContext->pipeline)
+	if (this->privateContext->px_pipeline->pipeline())
 	{
 		GstState current;
 		GstState pending;
@@ -2175,11 +2175,11 @@ void AAMPGstPlayer::Stop(bool keepLastFrame)
 #ifndef INTELCE
 		DisconnectCallbacks();
 #endif
-		if(GST_STATE_CHANGE_FAILURE == gst_element_get_state(privateContext->pipeline->pipeline(), &current, &pending, 0))
+		if(GST_STATE_CHANGE_FAILURE == gst_element_get_state(privateContext->px_pipeline->pipeline(), &current, &pending, 0))
 		{
 			logprintf("AAMPGstPlayer::%s: Pipeline is in FAILURE state : current %s  pending %s\n", __FUNCTION__,gst_element_state_get_name(current), gst_element_state_get_name(pending));
 		}
-		gst_element_set_state(this->privateContext->pipeline->pipeline(), GST_STATE_NULL);
+		gst_element_set_state(this->privateContext->px_pipeline->pipeline(), GST_STATE_NULL);
 		logprintf("AAMPGstPlayer::%s: Pipeline state set to null\n", __FUNCTION__);
 	}
 #ifdef AAMP_MPD_DRM
@@ -2247,11 +2247,11 @@ void AAMPGstPlayer::DumpStatus(void)
 	gint64 pos, len;
 	GstFormat format = GST_FORMAT_TIME;
 #ifdef USE_GST1
-	if (gst_element_query_position(privateContext->pipeline->pipeline(), format, &pos) &&
-		gst_element_query_duration(privateContext->pipeline->pipeline(), format, &len))
+	if (gst_element_query_position(privateContext->px_pipeline->pipeline(), format, &pos) &&
+		gst_element_query_duration(privateContext->px_pipeline->pipeline(), format, &len))
 #else
-	if (gst_element_query_position(privateContext->pipeline->pipeline(), &format, &pos) &&
-		gst_element_query_duration(privateContext->pipeline->pipeline(), &format, &len))
+	if (gst_element_query_position(privateContext->px_pipeline->pipeline(), &format, &pos) &&
+		gst_element_query_duration(privateContext->px_pipeline->pipeline(), &format, &len))
 #endif
 	{
 		logprintf("Position: %" GST_TIME_FORMAT " / %" GST_TIME_FORMAT "\r",
@@ -2277,7 +2277,7 @@ static GstState validateStateWithMsTimeout( AAMPGstPlayer *_this, GstState state
 	do
 	{
 		if ((GST_STATE_CHANGE_SUCCESS
-				== gst_element_get_state(_this->privateContext->pipeline->pipeline(), &gst_current, &gst_pending, timeout * GST_MSECOND))
+				== gst_element_get_state(_this->privateContext->px_pipeline->pipeline(), &gst_current, &gst_pending, timeout * GST_MSECOND))
 				&& (gst_current == stateToValidate))
 		{
 			GST_WARNING(
@@ -2300,7 +2300,7 @@ static GstState validateStateWithMsTimeout( AAMPGstPlayer *_this, GstState state
  */
 void AAMPGstPlayer::Flush(void)
 {
-	if (privateContext->pipeline)
+	if (privateContext->px_pipeline->pipeline())
 	{
 		PauseAndFlush(false);
 	}
@@ -2315,14 +2315,14 @@ void AAMPGstPlayer::PauseAndFlush(bool playAfterFlush)
 {
 	aamp->SyncBegin();
 	logprintf("Entering AAMPGstPlayer::PauseAndFlush() pipeline state %s\n",
-			gst_element_state_get_name(GST_STATE(privateContext->pipeline->pipeline())));
+			gst_element_state_get_name(GST_STATE(privateContext->px_pipeline->pipeline())));
 	GstStateChangeReturn rc;
 	GstState stateBeforeFlush = GST_STATE_PAUSED;
 #ifndef USE_PLAYERSINKBIN
 	/*On pc, tsdemux requires null transition*/
 	stateBeforeFlush = GST_STATE_NULL;
 #endif
-	rc = gst_element_set_state(this->privateContext->pipeline->pipeline(), stateBeforeFlush);
+	rc = gst_element_set_state(this->privateContext->px_pipeline->pipeline(), stateBeforeFlush);
 	if (GST_STATE_CHANGE_ASYNC == rc)
 	{
 		if (GST_STATE_PAUSED != validateStateWithMsTimeout(this,GST_STATE_PAUSED, 50))
@@ -2335,9 +2335,9 @@ void AAMPGstPlayer::PauseAndFlush(bool playAfterFlush)
 		logprintf("AAMPGstPlayer_Flush - gst_element_set_state - FAILED rc %d\n", rc);
 	}
 #ifdef USE_GST1
-	gboolean ret = gst_element_send_event( GST_ELEMENT(privateContext->pipeline->pipeline()), gst_event_new_flush_start());
+	gboolean ret = gst_element_send_event( GST_ELEMENT(privateContext->px_pipeline->pipeline()), gst_event_new_flush_start());
 	if (!ret) logprintf("AAMPGstPlayer_Flush: flush start error\n");
-	ret = gst_element_send_event(GST_ELEMENT(privateContext->pipeline->pipeline()), gst_event_new_flush_stop(TRUE));
+	ret = gst_element_send_event(GST_ELEMENT(privateContext->px_pipeline->pipeline()), gst_event_new_flush_stop(TRUE));
 	if (!ret) logprintf("AAMPGstPlayer_Flush: flush stop error\n");
 #else
 	for (int iTrack = 0; iTrack < AAMP_TRACK_COUNT; iTrack++)
@@ -2358,7 +2358,7 @@ void AAMPGstPlayer::PauseAndFlush(bool playAfterFlush)
 #endif
 	if (playAfterFlush)
 	{
-		rc = gst_element_set_state(this->privateContext->pipeline->pipeline(), GST_STATE_PLAYING);
+		rc = gst_element_set_state(this->privateContext->px_pipeline->pipeline(), GST_STATE_PLAYING);
 
 		if (GST_STATE_CHANGE_ASYNC == rc)
 		{
@@ -2408,17 +2408,17 @@ long AAMPGstPlayer::GetPositionMilliseconds(void)
 	long rc = 0;
 	gint64 pos, len;
 	GstFormat format = GST_FORMAT_TIME;
-	if (privateContext->pipeline == NULL)
+	if (privateContext->px_pipeline->pipeline() == NULL)
 	{
 		logprintf("%s(): Pipeline is NULL\n", __FUNCTION__);
 		return rc;
 	}
 #ifdef USE_GST1
-	if (gst_element_query_position(privateContext->pipeline->pipeline(), format, &pos) &&
-		gst_element_query_duration(privateContext->pipeline->pipeline(), format, &len))
+	if (gst_element_query_position(privateContext->px_pipeline->pipeline(), format, &pos) &&
+		gst_element_query_duration(privateContext->px_pipeline->pipeline(), format, &len))
 #else
-	if (gst_element_query_position(privateContext->pipeline->pipeline(), &format, &pos) &&
-		gst_element_query_duration(privateContext->pipeline->pipeline(), &format, &len))
+	if (gst_element_query_position(privateContext->px_pipeline->pipeline(), &format, &pos) &&
+		gst_element_query_duration(privateContext->px_pipeline->pipeline(), &format, &len))
 #endif
 	{
 		rc = pos / 1e6;
@@ -2440,10 +2440,10 @@ bool AAMPGstPlayer::Pause( bool pause )
 
 	logprintf("entering AAMPGstPlayer_Pause\n");
 
-	if (privateContext->pipeline != NULL)
+	if (privateContext->px_pipeline->pipeline() != NULL)
 	{
 		GstState nextState = pause ? GST_STATE_PAUSED : GST_STATE_PLAYING;
-		gst_element_set_state(this->privateContext->pipeline->pipeline(), nextState);
+		gst_element_set_state(this->privateContext->px_pipeline->pipeline(), nextState);
 		privateContext->buffering_target_state = nextState;
 	}
 	else
@@ -2695,7 +2695,7 @@ void AAMPGstPlayer::Flush(double position, int rate)
 	}
 	else
 	{
-		if (privateContext->pipeline == NULL)
+		if (privateContext->px_pipeline->pipeline() == NULL)
 		{
 			logprintf("AAMPGstPlayer::%s:%d Pipeline is NULL\n", __FUNCTION__, __LINE__);
 			return;
@@ -2705,7 +2705,7 @@ void AAMPGstPlayer::Flush(double position, int rate)
 		GstState current, pending;
 		bool bPauseNeeded = false;
 
-		gst_element_get_state(privateContext->pipeline->pipeline(), &current, &pending, 100 * GST_MSECOND);
+		gst_element_get_state(privateContext->px_pipeline->pipeline(), &current, &pending, 100 * GST_MSECOND);
 
 		if (current != GST_STATE_PLAYING && current != GST_STATE_PAUSED)
 		{
@@ -2727,7 +2727,7 @@ void AAMPGstPlayer::Flush(double position, int rate)
 				 */
 				logprintf("AAMPGstPlayer::%s:%d Pipeline state change ( PAUSED -> PLAYING )\n", __FUNCTION__, __LINE__, gst_element_state_get_name(current), position);
 
-				if (gst_element_set_state(privateContext->pipeline->pipeline(), GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE)
+				if (gst_element_set_state(privateContext->px_pipeline->pipeline(), GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE)
 				{
 					logprintf("AAMPGstPlayer::%s:%d Pipeline state change (PLAYING) failed\n", __FUNCTION__, __LINE__);
 				}
@@ -2747,7 +2747,7 @@ void AAMPGstPlayer::Flush(double position, int rate)
 
 		AAMPLOG_INFO("AAMPGstPlayer::%s:%d Pipeline flush seek - start = %f\n", __FUNCTION__, __LINE__, position);
 
-		if (!gst_element_seek(privateContext->pipeline->pipeline(), 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH, GST_SEEK_TYPE_SET,
+		if (!gst_element_seek(privateContext->px_pipeline->pipeline(), 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH, GST_SEEK_TYPE_SET,
 				position * GST_SECOND, GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE))
 		{
 			logprintf("Seek failed\n");
@@ -2758,7 +2758,7 @@ void AAMPGstPlayer::Flush(double position, int rate)
 			/* Reseting Pipeline state to Paused from Playing */
 			logprintf("AAMPGstPlayer::%s:%d Pipeline state change ( PLAYING -> PAUSED )\n", __FUNCTION__, __LINE__, gst_element_state_get_name(current), position);
 
-			if (gst_element_set_state(privateContext->pipeline->pipeline(), GST_STATE_PAUSED) == GST_STATE_CHANGE_FAILURE)
+			if (gst_element_set_state(privateContext->px_pipeline->pipeline(), GST_STATE_PAUSED) == GST_STATE_CHANGE_FAILURE)
 			{
 				logprintf("AAMPGstPlayer::%s:%d Pipeline state change (PAUSED) failed\n", __FUNCTION__, __LINE__);
 			}
@@ -2881,7 +2881,7 @@ void AAMPGstPlayer::NotifyFragmentCachingComplete()
 	if(privateContext->pendingPlayState)
 	{
 		logprintf("AAMPGstPlayer::%s():%d Setting pipeline to PLAYING state \n", __FUNCTION__, __LINE__);
-		if (gst_element_set_state(privateContext->pipeline->pipeline(), GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE)
+		if (gst_element_set_state(privateContext->px_pipeline->pipeline(), GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE)
 		{
 			logprintf("AAMPGstPlayer_Configure GST_STATE_PLAYING failed\n");
 		}

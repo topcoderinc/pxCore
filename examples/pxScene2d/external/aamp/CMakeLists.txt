@@ -100,8 +100,7 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../gst-pipeline/build/)
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../extlibs/lib)
 #link_directories(${CJSON_LIBRARY_DIRS})
 
-set(LIBAAMP_SOURCES base16.cpp fragmentcollector_hls.cpp fragmentcollector_mpd.cpp streamabstraction.cpp _base64.cpp drm/ave/drm.cpp main_aamp.cpp aampgstplayer.cpp tsprocessor.cpp  aamplogging.cpp AampCacheHandler.cpp metrics/HTTPStatistics.cpp metrics/LicnStatistics.cpp metrics/FragmentStatistics.cpp metrics/VideoStat.cpp metrics/ProfileInfo.cpp drm/aes/aamp_aes.cpp
-        )
+set(LIBAAMP_SOURCES base16.cpp fragmentcollector_hls.cpp fragmentcollector_mpd.cpp streamabstraction.cpp _base64.cpp drm/ave/drm.cpp main_aamp.cpp aampgstplayer.cpp tsprocessor.cpp drm/aes/aamp_aes.cpp aamplogging.cpp AampCacheHandler.cpp metrics/HTTPStatistics.cpp metrics/LicnStatistics.cpp metrics/FragmentStatistics.cpp metrics/VideoStat.cpp metrics/ProfileInfo.cpp)
 
 if(CMAKE_CONTENT_METADATA_IPDVR_ENABLED)
 	message("CMAKE_CONTENT_METADATA_IPDVR_ENABLED set")
@@ -113,7 +112,6 @@ elseif(CMAKE_USE_SECCLIENT)
 endif()
 
 set(LIBAAMP_DEFINES "${LIBAAMP_DEFINES} -DAAMP_VANILLA_AES_SUPPORT ${USE_MAC_FOR_RANDOM_GEN}")
-#set(LIBAAMP_DEFINES "${LIBAAMP_DEFINES} ${USE_MAC_FOR_RANDOM_GEN}")
 
 if(CMAKE_USE_RDK_PLUGINS)
 	message("CMAKE_USE_RDK_PLUGINS set")
@@ -124,7 +122,7 @@ if(CMAKE_USE_RDK_PLUGINS)
 	endif()
 endif()
 
-set(LIBAAMP_DEPENDS ${OS_LD_FLAGS} ${GSTREAMERBASE_LIBRARIES} ${GSTREAMER_LIBRARIES} ${CURL_LIBRARIES} ${LIBDASH_LIBRARIES} ${LibXml2_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${OPENSSL_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${AAMP_CLI_LD_FLAGS} -ldl -labr -luuid ${SEC_CLIENT_LIB} -lcjson -lgstpipeline)
+set(LIBAAMP_DEPENDS ${OS_LD_FLAGS} ${GSTREAMERBASE_LIBRARIES} ${GSTREAMER_LIBRARIES} ${CURL_LIBRARIES} ${LIBDASH_LIBRARIES} ${LibXml2_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${OPENSSL_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${AAMP_CLI_LD_FLAGS} -ldl -labr -luuid ${SEC_CLIENT_LIB} -lcjson -lgstpipeline) #${CJSON_LIBRARIES})
 set(PLAYBINTEST_DEPENDS ${OS_LD_FLAGS} ${CMAKE_THREAD_LIBS_INIT} ${GSTREAMER_LIBRARIES})
 
 if(CMAKE_QT5WEBKIT_JSBINDINGS)
