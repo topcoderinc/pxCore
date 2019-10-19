@@ -46,6 +46,10 @@
 #include "mse/MSEMediaSource.h"
 #endif
 
+#ifdef ENABLE_SPARK_AAMP
+#include "pxAAMPVideo.h"
+#endif
+
 #ifdef PX_SERVICE_MANAGER
 #include "pxServiceManager.h"
 #endif //PX_SERVICE_MANAGER
@@ -707,6 +711,8 @@ rtError pxScene2d::create(rtObjectRef p, rtObjectRef& o)
     e = createWayland(p,o);
   else if (!strcmp("video",t.cString()))
     e = createVideo(p,o);
+  else if (!strcmp("aamp",t.cString()))
+    e = createAAMPVideo(p,o);
   else if (!strcmp("object",t.cString()))
     e = createObject(p,o);
   else
@@ -1033,6 +1039,19 @@ rtError pxScene2d::createVideo(rtObjectRef p, rtObjectRef& o)
   rtLogError("Type 'video' is not supported");
   return RT_FAIL;
 #endif //ENABLE_SPARK_VIDEO
+}
+
+rtError pxScene2d::createAAMPVideo(rtObjectRef p, rtObjectRef& o)
+{
+#ifdef ENABLE_SPARK_AAMP
+  o = new pxAAMPVideo(this);
+  o.set(p);
+  o.send("init");
+  return RT_OK;
+#else
+  rtLogError("Type 'aamp' is not supported");
+  return RT_FAIL;
+#endif //ENABLE_SPARK_AAMP
 }
 
 void pxScene2d::draw()

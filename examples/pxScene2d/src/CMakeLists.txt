@@ -615,6 +615,8 @@ link_directories(${PXSCENE_LINK_DIRECTORIES})
 if (SPARK_ENABLE_AAMP)
     set(PXSCENE_APP_FILES ${PXSCENE_APP_FILES} pxAAMPVideo.cpp)
 
+    add_definitions(-DENABLE_SPARK_AAMP)
+
     if (APPLE)
         find_package(PkgConfig REQUIRED)
         set(MAC_OPT /usr/local/opt)
