@@ -255,9 +255,9 @@ then
 fi
 
 # gst-pipeline
-if [ ! -e extlibs/lib/libaamp.so ]
+if [ ! -e gst-pipeline/build/libgstpipeline.a ]
 then
-    bash ./aamp/build.sh
+    bash ./gst-pipeline/build.sh
 fi
 
 # aamp

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cmake -DCMAKE_INSTALL_PREFIX=../extlibs/ .
+mkdir build
+cd build
+cmake ..
 make -j8
-make install
-
