@@ -55,6 +55,37 @@ global.Promise = Promise = require('bluebird');
 global.process = process = require('process');
 global.pako = pako = require('pako');
 }
+else {
+fetch = require('node-fetch');
+XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+dashjs = require('dash.all.debug.pxcore.js');
+DOMParser = require('dom-parser.js').DOMParser;
+window = {};
+window.XMLHttpRequest = XMLHttpRequest;
+window.console = console;
+window.Promise = Promise;
+window.Uint8Array = Uint8Array;
+window.MediaSource = 1;
+window.fetch = fetch;
+window.performance = { now: function() {return 0;} };
+window.DOMParser = DOMParser;
+window.setTimeout = require('timers').setTimeout;
+window.clearTimeout = require('timers').clearTimeout;
+window.parseInt = parseInt;
+navigator = {};
+navigator.appName = "shaka";
+navigator.appVersion = "1";
+navigator.appCodeName = "1";
+navigator.cookieEnabled = false;
+navigator.userAgent = "none";
+navigator.language = "en";
+navigator.userLanguage = "en";
+navigator.platform = "linux";
+navigator.online = "false";
+window.navigator = navigator;
+shaka = require('shaka-player.compiled.debug');
+document = {};
+}
 
 var AppSceneContext = require('rcvrcore/AppSceneContext');
 var RPCController = require('rcvrcore/rpcController');
@@ -65,6 +96,7 @@ global.loadUrl = function loadUrl(url) {
   var ctx = new AppSceneContext({        scene: getScene("scene.1"),
                                      makeReady: this.makeReady,
                                   getContextID: this.getContextID,
+                          createMSEMediaSource: this.createMSEMediaSource,
                                     packageUrl: url,
                                  rpcController: new RPCController() } );
 

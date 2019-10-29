@@ -41,8 +41,14 @@
 #include "pxImage.h"
 
 #ifdef ENABLE_SPARK_VIDEO
-#include "pxHtmlVideo.h"
-#endif //ENABLE_SPARK_VIDEO
+#include "pxHtmlVideo2.h"
+#include "mse/MSEWebKitDocument.h"
+#include "mse/MSEMediaSource.h"
+#endif
+
+#ifdef ENABLE_SPARK_AAMP
+#include "pxAAMPVideo.h"
+#endif
 
 #ifdef PX_SERVICE_MANAGER
 #include "pxServiceManager.h"
@@ -623,6 +629,10 @@ rtError pxScene2d::dispose()
     mEmit.send("onSceneTerminate", e);
     mEmit->clearListeners();
 
+#ifdef ENABLE_SPARK_VIDEO
+    MSEWebkitDocument::dispose();
+#endif
+
     mRoot     = NULL;
     mInfo     = NULL;
     mCapabilityVersions = NULL;
@@ -701,6 +711,8 @@ rtError pxScene2d::create(rtObjectRef p, rtObjectRef& o)
     e = createWayland(p,o);
   else if (!strcmp("video",t.cString()))
     e = createVideo(p,o);
+  else if (!strcmp("aamp",t.cString()))
+    e = createAAMPVideo(p,o);
   else if (!strcmp("object",t.cString()))
     e = createObject(p,o);
   else
@@ -1019,7 +1031,7 @@ rtError pxScene2d::createWayland(rtObjectRef p, rtObjectRef& o)
 rtError pxScene2d::createVideo(rtObjectRef p, rtObjectRef& o)
 {
 #ifdef ENABLE_SPARK_VIDEO
-  o = new pxHtmlVideo(this);
+  o = new pxHtmlVideo2(this);
   o.set(p);
   o.send("init");
   return RT_OK;
@@ -1027,6 +1039,19 @@ rtError pxScene2d::createVideo(rtObjectRef p, rtObjectRef& o)
   rtLogError("Type 'video' is not supported");
   return RT_FAIL;
 #endif //ENABLE_SPARK_VIDEO
+}
+
+rtError pxScene2d::createAAMPVideo(rtObjectRef p, rtObjectRef& o)
+{
+#ifdef ENABLE_SPARK_AAMP
+  o = new pxAAMPVideo(this);
+  o.set(p);
+  o.send("init");
+  return RT_OK;
+#else
+  rtLogError("Type 'aamp' is not supported");
+  return RT_FAIL;
+#endif //ENABLE_SPARK_AAMP
 }
 
 void pxScene2d::draw()
@@ -2998,10 +3023,14 @@ void pxScriptView::runScript()
     mMakeReady = new rtFunctionCallback(makeReady, this);
     mGetContextID = new rtFunctionCallback(getContextID, this);
 
+    mCreateMediaSourceFunc = new rtFunctionCallback(createMediaSourceFunc, this);
+
     mCtx->add("print", mPrintFunc.getPtr());
     mCtx->add("getScene", mGetScene.getPtr());
     mCtx->add("makeReady", mMakeReady.getPtr());
     mCtx->add("getContextID", mGetContextID.getPtr());
+
+    mCtx->add("createMSEMediaSource", mCreateMediaSourceFunc.getPtr());
 
 #ifdef RUNINMAIN
     mReady = new rtPromise();
@@ -3119,6 +3148,14 @@ rtError pxScriptView::getScene(int numArgs, const rtValue* args, rtValue* result
   return RT_FAIL;
 }
 
+
+rtError pxScriptView::createMediaSourceFunc(int numArgs, const rtValue* args, rtValue* result, void* ctx)
+{
+#ifdef ENABLE_SPARK_VIDEO
+  *result = new MSEMediaSource();
+#endif
+  return RT_OK;
+}
 
 #if 1
 rtError pxScriptView::getContextID(int /*numArgs*/, const rtValue* /*args*/, rtValue* result, void* /*ctx*/)

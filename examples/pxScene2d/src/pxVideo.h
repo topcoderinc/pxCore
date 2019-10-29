@@ -106,78 +106,41 @@ public:
   virtual rtError setPositionRelative(float seconds);
   virtual rtError requestStatus();
   virtual rtError setAdditionalAuth(rtObjectRef params);
-
+  
   virtual void draw();
 
   void updateYUVFrame(uint8_t *yuvBuffer, int size, int pixel_w, int pixel_h);
-  void updateYUVFrame_shader(uint8_t *yuvBuffer, int size, int pixel_w, int pixel_h);
 
 private:
-  GLuint LoadShader( GLenum type );
-  void InitYUVShaders();
   void InitPlayerLoop();
   void TermPlayerLoop();
   static void* AAMPGstPlayer_StreamThread(void *arg);
   static void newAampFrame(void* context, void* data);
 
 private:
-  static constexpr char const *VSHADER =
-      "attribute vec2 vertexIn;"
-      "attribute vec2 textureIn;"
-      "varying vec2 textureOut;"
-      "void main() {"
-      "gl_Position = vec4(vertexIn,0, 1);"
-      "textureOut = textureIn;"
-      "}";
+    static GMainLoop *AAMPGstPlayerMainLoop;
 
-  static constexpr char const *FSHADER =
-      "#ifdef GL_ES \n"
-      "  precision mediump float; \n"
-      "#endif \n"
-      "varying vec2 textureOut;"
-      "uniform sampler2D tex_y;"
-      "uniform sampler2D tex_u;"
-      "uniform sampler2D tex_v;"
-      "void main() {"
-      "vec3 yuv;"
-      "vec3 rgb;"
-      "yuv.x = texture2D(tex_y, textureOut).r;"
-      "yuv.y = texture2D(tex_u, textureOut).r - 0.5;"
-      "yuv.z = texture2D(tex_v, textureOut).r - 0.5;"
-      "rgb = mat3( 1, 1, 1, 0, -0.39465, 2.03211, 1.13983, -0.58060,  0) * yuv;"
-      "gl_FragColor = vec4(rgb, 1);"
-      "}";
+    bool isRotated();
+    bool mEnablePunchThrough;
+    bool mAutoPlay;
+    rtString mUrl;
 
-  static constexpr int ATTRIB_VERTEX=0;
-  static constexpr int ATTRIB_TEXTURE=1;
-  static constexpr int FPS = 60;
-  static GMainLoop *AAMPGstPlayerMainLoop;
+    class PlayerInstanceAAMP* mAamp;
 
-  bool isRotated();
-  pxTextureRef mVideoTexture;
-  bool mEnablePunchThrough;
-  bool mAutoPlay;
-  rtString mUrl;
-
-  pthread_t AAMPrenderThreadID;
-  class PlayerInstanceAAMP* mAamp;
-  GLuint mProgramID;
-  GLuint id_y, id_u, id_v; // texture id
-  GLuint textureUniformY, textureUniformU,textureUniformV;
-  GLuint _vertexArray;
-  GLuint _vertexBuffer[2];
-  GLfloat currentAngleOfRotation = 0.0;
-
-  int FBO_W;
-  int FBO_H;
-  pxSharedContextRef sharedContext;
-  pxContextFramebufferRef gAampFbo;
-  rtMutex gAampFboMutex;
-  bool initialized = false;
-  GThread *aampMainLoopThread;
+    rtMutex mYuvFrameMutex;
+    pxOffscreen mOffscreen;
+    struct YUVBUFFER{
+    	uint8_t *buffer;
+    	int size;
+    	int pixel_w;
+    	int pixel_h;
+    };
+    YUVBUFFER mYuvBuffer;
+    bool initialized = false;
+    GThread *aampMainLoopThread;
 
 public:
-  static pxVideo *pxVideoObj; //This object
+    static pxVideo *pxVideoObj; //This object
 };
 
 #endif // PX_VIDEO_H

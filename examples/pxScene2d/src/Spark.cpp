@@ -86,6 +86,19 @@ vector<AsyncScriptInfo*> scriptsInfo;
 static uv_work_t nodeLoopReq;
 #endif
 
+#ifdef ENABLE_SPARK_VIDEO
+#include "WebCore/config.h"
+#include <wtf/RunLoop.h>
+#include <WebCore/page/ProcessWarming.h>
+#include <WebCore/platform/Timer.h>
+//#include <WebCore/LogInitialization.h>
+#include <wtf/Threading.h>
+#include <gst/gst.h>
+extern "C" {
+#include <X11/Xlib.h>
+}
+#endif
+
 #include "rtThreadPool.h"
 
 #include <stdlib.h>
@@ -151,7 +164,6 @@ public:
   {
     pxWindow::init(x,y,w,h);
 
-    gWindow = mWindow;
     setUrl(url);
   }
 
@@ -459,6 +471,11 @@ protected:
 #ifdef RUNINMAIN
     script.pump();
 #endif
+#ifdef ENABLE_SPARK_VIDEO
+    WebCore::TimerBase::fireTimersInNestedEventLoop();
+    GMainContext* context = WTF::RunLoop::main().mainContext();
+    g_main_context_iteration(context, false);
+#endif
   }
 
   int mWidth;
@@ -595,6 +612,10 @@ namespace OptimusClient
 
 int pxMain(int argc, char* argv[])
 {
+#ifdef ENABLE_SPARK_VIDEO
+  XInitThreads();
+#endif
+
 #ifdef HAS_LINUX_BREAKPAD
   google_breakpad::MinidumpDescriptor descriptor("/tmp");
   google_breakpad::ExceptionHandler eh(descriptor, NULL, dumpCallback, NULL, true, -1);
@@ -732,6 +753,15 @@ if (s && (strcmp(s,"1") == 0))
       curpos = curpos + 35;
   }
   #endif
+#endif
+
+#ifdef ENABLE_SPARK_VIDEO
+  gst_init(NULL, NULL);
+  WTF::initializeMainThread();
+  WTF::RunLoop::initializeMainRunLoop();
+  //WebCore::initializeLogChannelsIfNecessary();
+  WebCore::ProcessWarming::prewarmGlobally();
+  WTF::RunLoop::main();
 #endif
 
 #ifdef RUNINMAIN
