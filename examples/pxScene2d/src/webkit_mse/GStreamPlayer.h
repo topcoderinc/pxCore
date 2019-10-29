@@ -3,8 +3,8 @@
 #ifndef GST_0100_GSTREAMPLAYER_H
 #define GST_0100_GSTREAMPLAYER_H
 
-#include <gl/glew.h>
-#include <gl/glext.h>
+//#include <gl/glew.h>
+//#include <gl/glext.h>
 #include <gst/gl/gl.h>
 //#include <gst/gl/gstglfuncs.h>
 //#include <gst/gl/glprototypes/gstgl_compat.h>

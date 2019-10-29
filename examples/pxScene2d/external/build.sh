@@ -350,30 +350,6 @@ then
     bash buildShakaJS.sh
 fi
 
-# libdash
-if [ ! -e extlibs/lib/libdash.so ]
-then
-    bash ./libdash/libdash/build.sh
-fi
-
-# aampabr
-if [ ! -e extlibs/lib/libabr.so ]
-then
-    bash ./aampabr/build.sh
-fi
-
-# gst-pipeline
-if [ ! -e gst-pipeline/build/libgstpipeline.a ]
-then
-    bash ./gst-pipeline/build.sh
-fi
-
-# aamp
-if [ ! -e extlibs/lib/libaamp.so ]
-then
-    bash ./aamp/build.sh
-fi
-
 if [[ $# -eq 1 ]] && [[ $1 == "SPARK_ENABLE_VIDEO" ]]; then
 #-------- cJSON
 
@@ -525,4 +501,10 @@ then
 fi
 
 #--------
+fi
+
+# gst-pipeline
+if [ ! -e gst-pipeline/build/libgstpipeline.a ]
+then
+    bash ./gst-pipeline/build.sh
 fi

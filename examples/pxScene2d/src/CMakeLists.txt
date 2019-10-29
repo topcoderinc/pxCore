@@ -462,7 +462,6 @@ if (SPARK_ENABLE_OPTIMIZED_UPDATE)
 endif (SPARK_ENABLE_OPTIMIZED_UPDATE)
 
 if (SPARK_ENABLE_VIDEO)
-<<<<<<< HEAD
 
     set(WEBKIT_ROOT ${EXTDIR}/webkit)
     set(WEBKIT_BUILD_ROOT ${WEBKIT_ROOT}/WebKitBuild/Release)
@@ -534,8 +533,7 @@ elseif (CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
 elseif (APPLE)
 
 
-
-    set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES} mse/helper.mm)
+    set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES} webkit_mse/helper.mm)
 
     set(OPT /usr/local/opt)
     set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${OPT}/libffi/lib/pkgconfig:${OPT}/openssl/lib/pkgconfig")

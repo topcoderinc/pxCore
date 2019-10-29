@@ -33,9 +33,9 @@ endif()
 
 pkg_check_modules(CURL REQUIRED libcurl)
 pkg_check_modules(LibXml2 REQUIRED libxml-2.0)
-#pkg_check_modules(LIBDASH REQUIRED libdash)
+pkg_check_modules(LIBDASH REQUIRED libdash)
 pkg_check_modules(OPENSSL REQUIRED openssl)
-#pkg_check_modules(CJSON REQUIRED libcjson)
+pkg_check_modules(CJSON REQUIRED libcjson)
 
 if(CMAKE_QT5WEBKIT_JSBINDINGS)
 	message("CMAKE_QT5WEBKIT_JSBINDINGS set")

@@ -20,12 +20,14 @@
 #define PX_HTML_VIDEO_H
 
 #include <gst/gst.h>
-#include "mse/GStreamPlayer.h"
 #include "pxScene2d.h"
 #include "pxObject.h"
 #include "pxContext.h"
-#include "mse/MediaSource.h"
+#include "webkit_mse/MediaSource.h"
+#include "webkit_mse/GStreamPlayer.h"
 #include <queue>
+
+using WebCore::MediaSource;
 
 class pxHtmlVideo : public pxObject {
 public:
