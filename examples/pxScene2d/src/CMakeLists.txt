@@ -462,6 +462,7 @@ if (SPARK_ENABLE_OPTIMIZED_UPDATE)
 endif (SPARK_ENABLE_OPTIMIZED_UPDATE)
 
 if (SPARK_ENABLE_VIDEO)
+<<<<<<< HEAD
 
     set(WEBKIT_ROOT ${EXTDIR}/webkit)
     set(WEBKIT_BUILD_ROOT ${WEBKIT_ROOT}/WebKitBuild/Release)
@@ -565,11 +566,6 @@ endif()
 
 endif(SPARK_ENABLE_VIDEO)
 
-if (SPARK_ENABLE_VIDEO_PUNCHTHROUGH)
-    message("Enabling video punchthrough")
-    add_definitions(-DENABLE_SPARK_VIDEO_PUNCHTHROUGH)
-endif(SPARK_ENABLE_VIDEO_PUNCHTHROUGH)
-
 set(PXSCENE_COMMON_FILES ${PXSCENE_COMMON_FILES} ${PLATFORM_SOURCES})
 
 set(PXSCENE_APP_FILES ${PXSCENE_COMMON_FILES} Spark.cpp)
@@ -614,6 +610,11 @@ link_directories(${PXSCENE_LINK_DIRECTORIES})
 
 if (SPARK_ENABLE_AAMP)
     set(PXSCENE_APP_FILES ${PXSCENE_APP_FILES} pxAAMPVideo.cpp)
+
+	if (SPARK_ENABLE_VIDEO_PUNCHTHROUGH)
+		message("Enabling video punchthrough")
+		add_definitions(-DENABLE_SPARK_VIDEO_PUNCHTHROUGH)
+	endif(SPARK_ENABLE_VIDEO_PUNCHTHROUGH)
 
     add_definitions(-DENABLE_SPARK_AAMP)
 
@@ -668,7 +669,7 @@ if (BUILD_PXSCENE_APP)
     add_definitions(${PXSCENE_DEFINITIONS})
 
     if (APPLE)
-        add_custom_command(TARGET pxscene_app COMMENT "making app bundle" POST_BUILD COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/mkapp.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+        add_custom_command(TARGET pxscene_app COMMENT "making app bundle" POST_BUILD COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/mkapp.sh ${VIDEO_SUPPORT} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     endif (APPLE)
 
     if (PX_LIBRARY_SUPPORT GREATER 0)
